@@ -694,8 +694,133 @@ function useJerseyDecals(state: any) {
           break;
         }
 
+        case "GreenChevronJersey": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
 
+          // ── Parse primaryColor into RGB for dynamic shades ──────────
+          const gcR = parseInt(primaryColor.slice(1, 3), 16);
+          const gcG = parseInt(primaryColor.slice(3, 5), 16);
+          const gcB = parseInt(primaryColor.slice(5, 7), 16);
 
+          // Dark chevron outline: 40% of primary
+          const dkR = Math.round(gcR * 0.4);
+          const dkG = Math.round(gcG * 0.4);
+          const dkB = Math.round(gcB * 0.4);
+
+          // Deeper dark for halftone / small chevrons: 30%
+          const dpR = Math.round(gcR * 0.3);
+          const dpG = Math.round(gcG * 0.3);
+          const dpB = Math.round(gcB * 0.3);
+
+          // ── 1. BASE BACKGROUND ──────────────────────────────────────
+          ctx.fillStyle = primaryColor;
+          ctx.fillRect(0, 0, W, H);
+
+          // ── 2. CHEVRON / ZIGZAG PATTERN ─────────────────────────────
+          const chevW = 48;
+          const chevH = 28;
+          const cols = Math.ceil(W / chevW) + 2;
+          const rows = Math.ceil(H / chevH) + 2;
+
+          for (let row = 0; row < rows; row++) {
+            for (let col = -1; col < cols; col++) {
+              const cx = col * chevW;
+              const cy = row * chevH;
+
+              ctx.beginPath();
+              ctx.moveTo(cx, cy + chevH);
+              ctx.lineTo(cx + chevW / 2, cy);
+              ctx.lineTo(cx + chevW, cy + chevH);
+              ctx.strokeStyle = `rgba(${dkR}, ${dkG}, ${dkB}, 0.55)`;
+              ctx.lineWidth = 2.2;
+              ctx.lineJoin = "round";
+              ctx.stroke();
+
+              const tickCount = 6;
+              for (let t = 1; t <= tickCount; t++) {
+                const frac = t / (tickCount + 1);
+                const tx = cx + frac * (chevW / 2);
+                const ty = cy + chevH - frac * chevH;
+                const tickLen = (1 - frac) * (chevH * 0.55) + 2;
+                ctx.beginPath();
+                ctx.moveTo(tx, ty);
+                ctx.lineTo(tx, ty + tickLen);
+                ctx.strokeStyle = `rgba(${dkR}, ${dkG}, ${dkB}, ${0.25 + frac * 0.2})`;
+                ctx.lineWidth = 0.7;
+                ctx.stroke();
+              }
+              for (let t = 1; t <= tickCount; t++) {
+                const frac = t / (tickCount + 1);
+                const tx = cx + chevW / 2 + frac * (chevW / 2);
+                const ty = cy + frac * chevH;
+                const tickLen = frac * (chevH * 0.55) + 2;
+                ctx.beginPath();
+                ctx.moveTo(tx, ty);
+                ctx.lineTo(tx, ty + tickLen);
+                ctx.strokeStyle = `rgba(${dkR}, ${dkG}, ${dkB}, ${0.45 - frac * 0.2})`;
+                ctx.lineWidth = 0.7;
+                ctx.stroke();
+              }
+            }
+          }
+
+          // ── 3. SECONDARY SMALLER CHEVRON LAYER (depth effect) ───────
+          const sChevW = 24;
+          const sChevH = 14;
+          const sCols = Math.ceil(W / sChevW) + 2;
+          const sRows = Math.ceil(H / sChevH) + 2;
+
+          for (let sRow = 0; sRow < sRows; sRow++) {
+            for (let sCol = -1; sCol < sCols; sCol++) {
+              const sx = sCol * sChevW + (sRow % 2 === 0 ? 0 : sChevW / 2);
+              const sy = sRow * sChevH;
+              ctx.beginPath();
+              ctx.moveTo(sx, sy + sChevH);
+              ctx.lineTo(sx + sChevW / 2, sy);
+              ctx.lineTo(sx + sChevW, sy + sChevH);
+              ctx.strokeStyle = `rgba(${dpR}, ${dpG}, ${dpB}, 0.18)`;
+              ctx.lineWidth = 1.0;
+              ctx.lineJoin = "round";
+              ctx.stroke();
+            }
+          }
+
+          // ── 4. HALFTONE FADE OVERLAY (bottom corners) ───────────────
+          const dotSpacing = 14;
+          for (let hy = 0; hy < H; hy += dotSpacing) {
+            for (let hx = 0; hx < W; hx += dotSpacing) {
+              const distLeft = Math.sqrt(hx ** 2 + (H - hy) ** 2);
+              const distRight = Math.sqrt((W - hx) ** 2 + (H - hy) ** 2);
+              const minDist = Math.min(distLeft, distRight);
+              const maxDist = Math.sqrt((W / 2) ** 2 + H ** 2);
+              const fade = 1 - Math.min(minDist / (maxDist * 0.65), 1);
+              if (fade < 0.05) continue;
+              const dotR = 3.5 * fade;
+              ctx.beginPath();
+              ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${dpR}, ${dpG}, ${dpB}, ${fade * 0.35})`;
+              ctx.fill();
+            }
+          }
+
+          // ── 5. CENTER VERTICAL SUBTLE LIGHTER STRIP ─────────────────
+          const centerGrad = ctx.createLinearGradient(W * 0.35, 0, W * 0.65, 0);
+          centerGrad.addColorStop(0, "rgba(255,255,255,0)");
+          centerGrad.addColorStop(0.5, "rgba(255,255,255,0.08)");
+          centerGrad.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = centerGrad;
+          ctx.fillRect(0, 0, W, H);
+
+          // ── 6. VIGNETTE ──────────────────────────────────────────────
+          const gcVig = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.85);
+          gcVig.addColorStop(0, "rgba(0,0,0,0)");
+          gcVig.addColorStop(1, "rgba(0,0,0,0.15)");
+          ctx.fillStyle = gcVig;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
 
         case "Stripes": {
           ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
@@ -1035,6 +1160,40 @@ function MiniPatternSVG({
             <circle cx="70" cy="25" r="1.5" fill={white} />
             <circle cx="70" cy="50" r="2" fill={white} />
             <circle cx="70" cy="75" r="1.5" fill={white} />
+          </>
+        );
+      case "GreenChevronJersey":
+        return (
+          <>
+            {/* Chevron path hints */}
+            <path
+              d="M 10,30 L 30,15 L 50,30 L 70,15 L 90,30"
+              fill="none"
+              stroke={white}
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M 10,55 L 30,40 L 50,55 L 70,40 L 90,55"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M 10,80 L 30,65 L 50,80 L 70,65 L 90,80"
+              fill="none"
+              stroke={white}
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            {/* Dots fading in bottom corners */}
+            <circle cx="15" cy="85" r="2.5" fill={secondary} />
+            <circle cx="28" cy="85" r="1.5" fill={secondary} />
+            <circle cx="15" cy="72" r="1.5" fill={secondary} />
+            <circle cx="85" cy="85" r="2.5" fill={secondary} />
+            <circle cx="72" cy="85" r="1.5" fill={secondary} />
+            <circle cx="85" cy="72" r="1.5" fill={secondary} />
           </>
         );
       case "JerseyHexDot":
@@ -2185,6 +2344,7 @@ export default function CustomizerLayout() {
                       { id: "Street Shard", label: "Street Shard" },
                       { id: "JerseyHexDot", label: "Hex Sublimation" },
                       { id: "BlueGrungeJersey", label: "Grunge Panel" },
+                      { id: "GreenChevronJersey", label: "Green Chevron" },
                       { id: "Lightning", label: "Lightning" },
                       { id: "Stripes", label: "Stripes" },
                       { id: "Abstract", label: "Abstract Wave" },
