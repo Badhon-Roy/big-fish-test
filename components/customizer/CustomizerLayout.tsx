@@ -520,6 +520,183 @@ function useJerseyDecals(state: any) {
 
           break;
         }
+
+        case "BlueGrungeJersey": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // ── Parse primaryColor into RGB components ──────────────────
+          const pr = parseInt(primaryColor.slice(1, 3), 16);
+          const pg = parseInt(primaryColor.slice(3, 5), 16);
+          const pb = parseInt(primaryColor.slice(5, 7), 16);
+
+          // Light side color: blend primary with white (60% white)
+          const lr = Math.round(pr * 0.4 + 255 * 0.6);
+          const lg = Math.round(pg * 0.4 + 255 * 0.6);
+          const lb = Math.round(pb * 0.4 + 255 * 0.6);
+          const lightSide = `rgb(${lr}, ${lg}, ${lb})`;
+
+          // Dark center stripe: 45% of primary
+          const darkR = Math.round(pr * 0.45);
+          const darkG = Math.round(pg * 0.45);
+          const darkB = Math.round(pb * 0.45);
+          const darkStripe = `rgb(${darkR}, ${darkG}, ${darkB})`;
+
+          // Deep dark: 35% of primary — for triangles, dots, scratches
+          const deepR = Math.round(pr * 0.35);
+          const deepG = Math.round(pg * 0.35);
+          const deepB = Math.round(pb * 0.35);
+
+          // ── 1. BASE BACKGROUND ──────────────────────────────────────
+          ctx.fillStyle = primaryColor;
+          ctx.fillRect(0, 0, W, H);
+
+          // ── 2. LIGHT SIDE PANELS ─────────────────────────────────────
+          ctx.fillStyle = lightSide;
+          ctx.fillRect(0, 0, W * 0.38, H);
+          ctx.fillRect(W * 0.62, 0, W * 0.38, H);
+
+          // ── 3. RANDOM GRUNGE TRIANGLES (left & right panels) ────────
+          const bgjSeed = (s: number) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+          };
+
+          const drawGrungeTriangles = (
+            areaX: number,
+            areaW: number,
+            count: number,
+            seedOffset: number,
+          ) => {
+            for (let i = 0; i < count; i++) {
+              const r1 = bgjSeed(i * 3 + seedOffset);
+              const r2 = bgjSeed(i * 3 + 1 + seedOffset);
+              const r3 = bgjSeed(i * 3 + 2 + seedOffset);
+              const r4 = bgjSeed(i * 3 + 3 + seedOffset);
+              const r5 = bgjSeed(i * 3 + 4 + seedOffset);
+              const r6 = bgjSeed(i * 3 + 5 + seedOffset);
+
+              const x1 = areaX + r1 * areaW;
+              const y1 = r2 * H;
+              const triSize = 40 + r3 * 120;
+              const angle = r4 * Math.PI * 2;
+
+              const x2 = x1 + Math.cos(angle) * triSize;
+              const y2 = y1 + Math.sin(angle) * triSize;
+              const x3 = x1 + Math.cos(angle + 2.3) * triSize * 0.7;
+              const y3 = y1 + Math.sin(angle + 2.3) * triSize * 0.7;
+
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.lineTo(x3, y3);
+              ctx.closePath();
+
+              if (r5 > 0.5) {
+                ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, 0.75)`;
+                ctx.fill();
+              } else {
+                ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, 0.85)`;
+                ctx.lineWidth = 2 + r6 * 4;
+                ctx.stroke();
+              }
+
+              if (r5 > 0.3) {
+                ctx.save();
+                ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, 0.5)`;
+                ctx.lineWidth = 0.8;
+                for (let sc = 0; sc < 5; sc++) {
+                  const sx = x1 + (bgjSeed(i * 10 + sc) - 0.5) * triSize;
+                  const sy = y1 + (bgjSeed(i * 10 + sc + 1) - 0.5) * triSize;
+                  const ex = sx + (bgjSeed(i * 10 + sc + 2) - 0.5) * 30;
+                  const ey = sy + (bgjSeed(i * 10 + sc + 3) - 0.5) * 30;
+                  ctx.beginPath();
+                  ctx.moveTo(sx, sy);
+                  ctx.lineTo(ex, ey);
+                  ctx.stroke();
+                }
+                ctx.restore();
+              }
+            }
+          };
+
+          drawGrungeTriangles(0, W * 0.4, 60, 1);
+          drawGrungeTriangles(W * 0.6, W * 0.4, 60, 99);
+
+          // ── 4. HALFTONE DOTS (transition zones near center) ─────────
+          const drawHalftone = (
+            startX: number,
+            endX: number,
+            startY: number,
+            endY: number,
+            invertFade: boolean,
+          ) => {
+            const spacing = 18;
+            for (let hy = startY; hy < endY; hy += spacing) {
+              for (let hx = startX; hx < endX; hx += spacing) {
+                const distFromCenter = Math.abs(hx - W / 2) / (W / 2);
+                const fade = invertFade ? 1 - distFromCenter : distFromCenter;
+                const dotR = 6 * fade;
+                if (dotR < 0.5) continue;
+                ctx.beginPath();
+                ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.5 * fade + 0.1})`;
+                ctx.fill();
+              }
+            }
+          };
+
+          drawHalftone(0, W, 0, H * 0.15, false);
+          drawHalftone(0, W, H * 0.82, H, false);
+          drawHalftone(W * 0.3, W * 0.7, 0, H, true);
+
+          // ── 5. CENTER DARK STRIPE ────────────────────────────────────
+          const stripeX = W * 0.33;
+          const stripeW = W * 0.34;
+
+          ctx.fillStyle = darkStripe;
+          ctx.fillRect(stripeX, 0, stripeW, H);
+
+          ctx.save();
+          ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.6)`;
+          for (let i = 0; i < 120; i++) {
+            const sx = stripeX + bgjSeed(i * 2) * stripeW;
+            const sy = bgjSeed(i * 2 + 1) * H;
+            const len = 40 + bgjSeed(i * 3) * 100;
+            const ang = -0.2 + bgjSeed(i * 4) * 0.4;
+            ctx.lineWidth = 0.5 + bgjSeed(i * 5) * 1.5;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + Math.cos(ang) * len, sy + Math.sin(ang) * len);
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          const leftEdge = ctx.createLinearGradient(stripeX - 10, 0, stripeX + 20, 0);
+          leftEdge.addColorStop(0, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
+          leftEdge.addColorStop(1, `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`);
+          ctx.fillStyle = leftEdge;
+          ctx.fillRect(stripeX - 10, 0, 30, H);
+
+          const rightEdge = ctx.createLinearGradient(stripeX + stripeW - 20, 0, stripeX + stripeW + 10, 0);
+          rightEdge.addColorStop(0, `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`);
+          rightEdge.addColorStop(1, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
+          ctx.fillStyle = rightEdge;
+          ctx.fillRect(stripeX + stripeW - 20, 0, 30, H);
+
+          // ── 6. VIGNETTE ───────────────────────────────────────────
+          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.9);
+          vig.addColorStop(0, "rgba(0,0,0,0)");
+          vig.addColorStop(1, "rgba(0,0,0,0.25)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
+
+
+
+
         case "Stripes": {
           ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
           for (let i = 0; i < size; i += 64) {
@@ -838,6 +1015,28 @@ function MiniPatternSVG({
 
   const getPatternContent = () => {
     switch (pattern) {
+      case "BlueGrungeJersey":
+        return (
+          <>
+            {/* Left/right side panels */}
+            <rect x="0" y="0" width="32" height="100" fill="rgba(26,179,232,0.5)" />
+            <rect x="68" y="0" width="32" height="100" fill="rgba(26,179,232,0.5)" />
+            {/* Center dark stripe */}
+            <rect x="33" y="0" width="34" height="100" fill={secondary} />
+            {/* Grunge triangle hints */}
+            <polygon points="5,10 20,5 18,22" fill="rgba(0,0,0,0.25)" />
+            <polygon points="8,55 22,48 20,68" fill="rgba(0,0,0,0.18)" />
+            <polygon points="75,20 90,12 88,32" fill="rgba(0,0,0,0.25)" />
+            <polygon points="80,65 95,58 93,78" fill="rgba(0,0,0,0.18)" />
+            {/* Halftone dot hints */}
+            <circle cx="30" cy="25" r="1.5" fill={white} />
+            <circle cx="30" cy="50" r="2" fill={white} />
+            <circle cx="30" cy="75" r="1.5" fill={white} />
+            <circle cx="70" cy="25" r="1.5" fill={white} />
+            <circle cx="70" cy="50" r="2" fill={white} />
+            <circle cx="70" cy="75" r="1.5" fill={white} />
+          </>
+        );
       case "JerseyHexDot":
         return (
           <>
@@ -1985,6 +2184,7 @@ export default function CustomizerLayout() {
                       { id: "None", label: "Solid Color" },
                       { id: "Street Shard", label: "Street Shard" },
                       { id: "JerseyHexDot", label: "Hex Sublimation" },
+                      { id: "BlueGrungeJersey", label: "Grunge Panel" },
                       { id: "Lightning", label: "Lightning" },
                       { id: "Stripes", label: "Stripes" },
                       { id: "Abstract", label: "Abstract Wave" },
