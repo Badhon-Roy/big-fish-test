@@ -1785,6 +1785,215 @@ function useJerseyDecals(state: any) {
           break;
         }
 
+
+        case "GrungeTriangleJersey": {
+  const W = ctx.canvas.width;
+  const H = ctx.canvas.height;
+
+  // ── Parse primaryColor into RGB ──────────────────────────────
+  const pr = parseInt(primaryColor.slice(1, 3), 16);
+  const pg = parseInt(primaryColor.slice(3, 5), 16);
+  const pb = parseInt(primaryColor.slice(5, 7), 16);
+
+  // Light side: 60% white blend
+  const lr = Math.round(pr * 0.4 + 255 * 0.6);
+  const lg = Math.round(pg * 0.4 + 255 * 0.6);
+  const lb = Math.round(pb * 0.4 + 255 * 0.6);
+
+  // Dark stripe: 40% of primary
+  const darkR = Math.round(pr * 0.40);
+  const darkG = Math.round(pg * 0.40);
+  const darkB = Math.round(pb * 0.40);
+
+  // Deep dark: 28% — triangles, dots, scratches
+  const deepR = Math.round(pr * 0.28);
+  const deepG = Math.round(pg * 0.28);
+  const deepB = Math.round(pb * 0.28);
+
+  const gtSeed = (s: number) => {
+    const x = Math.sin(s) * 10000;
+    return x - Math.floor(x);
+  };
+
+  // ── 1. BASE BACKGROUND ───────────────────────────────────────
+  ctx.fillStyle = `rgb(${lr}, ${lg}, ${lb})`;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── 2. SHARP TRIANGLE + GRUNGE SHAPES (full canvas) ─────────
+  const drawSharpTriangles = (
+    areaX: number,
+    areaW: number,
+    count: number,
+    seedOffset: number,
+  ) => {
+    for (let i = 0; i < count; i++) {
+      const r1 = gtSeed(i * 7 + seedOffset);
+      const r2 = gtSeed(i * 7 + 1 + seedOffset);
+      const r3 = gtSeed(i * 7 + 2 + seedOffset);
+      const r4 = gtSeed(i * 7 + 3 + seedOffset);
+      const r5 = gtSeed(i * 7 + 4 + seedOffset);
+      const r6 = gtSeed(i * 7 + 5 + seedOffset);
+      const r7 = gtSeed(i * 7 + 6 + seedOffset);
+
+      const x1 = areaX + r1 * areaW;
+      const y1 = r2 * H;
+
+      // Sharp elongated triangles — like shattered glass
+      const longSide = 30 + r3 * 130;
+      const shortSide = 8 + r4 * 35;
+      const angle = r5 * Math.PI * 2;
+
+      const x2 = x1 + Math.cos(angle) * longSide;
+      const y2 = y1 + Math.sin(angle) * longSide;
+      const x3 = x1 + Math.cos(angle + 0.25) * shortSide;
+      const y3 = y1 + Math.sin(angle + 0.25) * shortSide;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineTo(x3, y3);
+      ctx.closePath();
+
+      if (r6 > 0.45) {
+        // Filled triangle
+        ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.55 + r7 * 0.30})`;
+        ctx.fill();
+      } else {
+        // Outlined triangle
+        ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.70 + r7 * 0.25})`;
+        ctx.lineWidth = 1.0 + r6 * 2.5;
+        ctx.stroke();
+      }
+
+      // Extra sharp shard lines radiating from triangle
+      if (r6 > 0.2) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.35 + r7 * 0.25})`;
+        for (let sc = 0; sc < 4; sc++) {
+          const sx = x1 + (gtSeed(i * 15 + sc) - 0.5) * longSide * 0.8;
+          const sy = y1 + (gtSeed(i * 15 + sc + 1) - 0.5) * longSide * 0.8;
+          const ex = sx + (gtSeed(i * 15 + sc + 2) - 0.5) * 45;
+          const ey = sy + (gtSeed(i * 15 + sc + 3) - 0.5) * 45;
+          ctx.lineWidth = 0.6 + gtSeed(i * 15 + sc + 4) * 1.2;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // Grunge brush stroke blobs
+      if (r7 > 0.55) {
+        ctx.save();
+        ctx.globalAlpha = 0.18 + r6 * 0.22;
+        ctx.fillStyle = `rgb(${deepR}, ${deepG}, ${deepB})`;
+        const blobX = x1 + (gtSeed(i * 9 + 1) - 0.5) * longSide;
+        const blobY = y1 + (gtSeed(i * 9 + 2) - 0.5) * longSide;
+        const blobW = 10 + gtSeed(i * 9 + 3) * 40;
+        const blobH = 4 + gtSeed(i * 9 + 4) * 15;
+        const blobA = gtSeed(i * 9 + 5) * Math.PI;
+        ctx.translate(blobX, blobY);
+        ctx.rotate(blobA);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, blobW, blobH, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  };
+
+  // Draw triangles all over — dense coverage like image
+  drawSharpTriangles(0,       W * 0.42, 80, 1);
+  drawSharpTriangles(W * 0.58, W * 0.42, 80, 77);
+  // Extra layer for density
+  drawSharpTriangles(0,       W * 0.42, 40, 200);
+  drawSharpTriangles(W * 0.58, W * 0.42, 40, 300);
+
+  // ── 3. HALFTONE DOTS — transition into center stripe ─────────
+  const drawHalftone = (
+    startX: number,
+    endX: number,
+    startY: number,
+    endY: number,
+    fadeToCenter: boolean,
+  ) => {
+    const spacing = 16;
+    for (let hy = startY; hy < endY; hy += spacing) {
+      for (let hx = startX; hx < endX; hx += spacing) {
+        const distFromCenter = Math.abs(hx - W / 2) / (W / 2);
+        const fade = fadeToCenter ? 1 - distFromCenter : distFromCenter;
+        const dotR = 5.5 * fade;
+        if (dotR < 0.4) continue;
+        ctx.beginPath();
+        ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.45 * fade + 0.08})`;
+        ctx.fill();
+      }
+    }
+  };
+
+  // Top halftone band
+  drawHalftone(0, W, 0, H * 0.12, false);
+  // Bottom halftone band
+  drawHalftone(0, W, H * 0.80, H, false);
+  // Flanking the center stripe
+  drawHalftone(W * 0.28, W * 0.72, 0, H, true);
+
+  // ── 4. CENTER DARK STRIPE ────────────────────────────────────
+  const stripeX = W * 0.32;
+  const stripeW = W * 0.36;
+
+  ctx.fillStyle = `rgb(${darkR}, ${darkG}, ${darkB})`;
+  ctx.fillRect(stripeX, 0, stripeW, H);
+
+  // Grunge scratch lines on stripe — near-vertical
+  ctx.save();
+  for (let i = 0; i < 150; i++) {
+    const sx  = stripeX + gtSeed(i * 2) * stripeW;
+    const sy  = gtSeed(i * 2 + 1) * H;
+    const len = 30 + gtSeed(i * 3) * 110;
+    const ang = -0.15 + gtSeed(i * 4) * 0.30;
+    ctx.strokeStyle = `rgba(${darkR * 0.6 | 0}, ${darkG * 0.6 | 0}, ${darkB * 0.6 | 0}, 0.55)`;
+    ctx.lineWidth = 0.4 + gtSeed(i * 5) * 1.8;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + Math.cos(ang) * len, sy + Math.sin(ang) * len);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Stripe soft left edge
+  const leftEdge = ctx.createLinearGradient(stripeX - 12, 0, stripeX + 18, 0);
+  leftEdge.addColorStop(0, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
+  leftEdge.addColorStop(1, `rgba(${darkR}, ${darkG}, ${darkB}, 1.0)`);
+  ctx.fillStyle = leftEdge;
+  ctx.fillRect(stripeX - 12, 0, 30, H);
+
+  // Stripe soft right edge
+  const rightEdge = ctx.createLinearGradient(
+    stripeX + stripeW - 18, 0,
+    stripeX + stripeW + 12, 0,
+  );
+  rightEdge.addColorStop(0, `rgba(${darkR}, ${darkG}, ${darkB}, 1.0)`);
+  rightEdge.addColorStop(1, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
+  ctx.fillStyle = rightEdge;
+  ctx.fillRect(stripeX + stripeW - 18, 0, 30, H);
+
+  // ── 5. HALFTONE DOTS ON STRIPE (top & bottom) ────────────────
+  drawHalftone(stripeX, stripeX + stripeW, 0, H * 0.14, false);
+  drawHalftone(stripeX, stripeX + stripeW, H * 0.78, H, false);
+
+  // ── 6. VIGNETTE ──────────────────────────────────────────────
+  const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.18, W / 2, H / 2, H * 0.92);
+  vig.addColorStop(0, "rgba(0,0,0,0)");
+  vig.addColorStop(1, "rgba(0,0,0,0.30)");
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+
+  break;
+}
+
         case "Stripes": {
           ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
           for (let i = 0; i < size; i += 64) {
@@ -2291,6 +2500,238 @@ function MiniPatternSVG({
             <rect x="92" y="60" width="8" height="40" rx="2" fill={white} opacity="0.8" />
           </>
         );
+
+        case "GrungeTriangleJersey":
+  return (
+    <>
+      {/* ── SIDE GRUNGE TRIANGLES ───────────────────────── */}
+      
+      {/* Left Side */}
+      <polygon
+        points="8,10 42,70 20,78"
+        fill={secondary}
+        opacity="0.45"
+      />
+      <polygon
+        points="20,120 78,190 32,198"
+        fill={secondary}
+        opacity="0.38"
+      />
+      <polygon
+        points="55,40 120,92 72,102"
+        fill="none"
+        stroke={secondary}
+        strokeWidth="2"
+        opacity="0.55"
+      />
+      <polygon
+        points="70,230 132,310 88,320"
+        fill={secondary}
+        opacity="0.42"
+      />
+      <polygon
+        points="28,340 82,410 38,422"
+        fill="none"
+        stroke={secondary}
+        strokeWidth="2"
+        opacity="0.5"
+      />
+
+      {/* Extra shard scratches */}
+      <path
+        d="M18 65 L52 32"
+        stroke={secondary}
+        strokeWidth="1.5"
+        opacity="0.35"
+      />
+      <path
+        d="M36 160 L74 118"
+        stroke={secondary}
+        strokeWidth="1"
+        opacity="0.28"
+      />
+      <path
+        d="M58 285 L108 248"
+        stroke={secondary}
+        strokeWidth="1.3"
+        opacity="0.32"
+      />
+
+      {/* Grunge blobs */}
+      <ellipse
+        cx="42"
+        cy="95"
+        rx="18"
+        ry="6"
+        fill={secondary}
+        opacity="0.18"
+        transform="rotate(-18 42 95)"
+      />
+      <ellipse
+        cx="82"
+        cy="355"
+        rx="26"
+        ry="8"
+        fill={secondary}
+        opacity="0.14"
+        transform="rotate(24 82 355)"
+      />
+
+      {/* ── RIGHT SIDE ─────────────────────────────────── */}
+      
+      <polygon
+        points="930,20 980,88 946,98"
+        fill={secondary}
+        opacity="0.45"
+      />
+      <polygon
+        points="870,130 960,210 902,218"
+        fill={secondary}
+        opacity="0.38"
+      />
+      <polygon
+        points="845,52 928,112 872,122"
+        fill="none"
+        stroke={secondary}
+        strokeWidth="2"
+        opacity="0.55"
+      />
+      <polygon
+        points="882,260 962,340 912,352"
+        fill={secondary}
+        opacity="0.42"
+      />
+      <polygon
+        points="918,370 982,438 944,448"
+        fill="none"
+        stroke={secondary}
+        strokeWidth="2"
+        opacity="0.5"
+      />
+
+      {/* Scratch lines */}
+      <path
+        d="M948 72 L982 38"
+        stroke={secondary}
+        strokeWidth="1.5"
+        opacity="0.35"
+      />
+      <path
+        d="M902 192 L958 148"
+        stroke={secondary}
+        strokeWidth="1"
+        opacity="0.28"
+      />
+      <path
+        d="M914 312 L968 276"
+        stroke={secondary}
+        strokeWidth="1.3"
+        opacity="0.32"
+      />
+
+      {/* Blob textures */}
+      <ellipse
+        cx="930"
+        cy="120"
+        rx="22"
+        ry="7"
+        fill={secondary}
+        opacity="0.18"
+        transform="rotate(16 930 120)"
+      />
+      <ellipse
+        cx="888"
+        cy="388"
+        rx="28"
+        ry="9"
+        fill={secondary}
+        opacity="0.14"
+        transform="rotate(-22 888 388)"
+      />
+
+      {/* ── CENTER STRIPE ──────────────────────────────── */}
+      <rect
+        x="320"
+        y="0"
+        width="360"
+        height="500"
+        fill={primary}
+        opacity="0.88"
+      />
+
+      {/* Stripe edge fades */}
+      <rect
+        x="305"
+        y="0"
+        width="18"
+        height="500"
+        fill={white}
+        opacity="0.08"
+      />
+      <rect
+        x="677"
+        y="0"
+        width="18"
+        height="500"
+        fill={white}
+        opacity="0.08"
+      />
+
+      {/* Vertical grunge scratches */}
+      <path
+        d="M362 20 L378 168"
+        stroke={white}
+        strokeWidth="1"
+        opacity="0.12"
+      />
+      <path
+        d="M418 60 L440 242"
+        stroke={white}
+        strokeWidth="1.5"
+        opacity="0.1"
+      />
+      <path
+        d="M520 10 L548 212"
+        stroke={white}
+        strokeWidth="1.2"
+        opacity="0.11"
+      />
+      <path
+        d="M610 80 L632 282"
+        stroke={white}
+        strokeWidth="1.4"
+        opacity="0.1"
+      />
+
+      {/* ── HALFTONE DOTS ─────────────────────────────── */}
+      
+      {/* Top */}
+      <circle cx="250" cy="22" r="5" fill={secondary} opacity="0.22" />
+      <circle cx="320" cy="32" r="4" fill={secondary} opacity="0.18" />
+      <circle cx="420" cy="18" r="6" fill={secondary} opacity="0.24" />
+      <circle cx="520" cy="28" r="5" fill={secondary} opacity="0.2" />
+      <circle cx="650" cy="20" r="6" fill={secondary} opacity="0.24" />
+      <circle cx="760" cy="34" r="4" fill={secondary} opacity="0.18" />
+
+      {/* Bottom */}
+      <circle cx="240" cy="462" r="5" fill={secondary} opacity="0.22" />
+      <circle cx="352" cy="478" r="4" fill={secondary} opacity="0.18" />
+      <circle cx="448" cy="468" r="6" fill={secondary} opacity="0.24" />
+      <circle cx="548" cy="482" r="5" fill={secondary} opacity="0.2" />
+      <circle cx="662" cy="472" r="6" fill={secondary} opacity="0.24" />
+      <circle cx="742" cy="486" r="4" fill={secondary} opacity="0.18" />
+
+      {/* ── VIGNETTE OVERLAY ───────────────────────────── */}
+      <rect
+        x="0"
+        y="0"
+        width="1000"
+        height="500"
+        fill="url(#grungeVignette)"
+        opacity="0.22"
+      />
+    </>
+  );
       case "JerseyHexDot":
         return (
           <>
@@ -3436,9 +3877,10 @@ export default function CustomizerLayout() {
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     {[
                       { id: "None", label: "Solid Color" },
+                      { id: "BlueGrungeJersey", label: "Grunge Panel" },
+                      { id: "GrungeTriangleJersey", label: "Grunge Triangle" },
                       { id: "Street Shard", label: "Street Shard" },
                       { id: "JerseyHexDot", label: "Hex Sublimation" },
-                      { id: "BlueGrungeJersey", label: "Grunge Panel" },
                       { id: "GreenChevronJersey", label: "Green Chevron" },
                       { id: "RedCarbonJersey", label: "Carbon Fiber" },
                       { id: "GoldDiamondJersey", label: "Gold Diamond" },
@@ -3475,7 +3917,7 @@ export default function CustomizerLayout() {
                               p.id,
                             )
                           }
-                          className={`flex flex-col p-2.5 rounded-xl border-2 transition-all text-left ${
+                          className={`flex flex-col p-2.5 rounded-lg border transition-all text-left ${
                             isSelected
                               ? "border-red-500 bg-red-50/50"
                               : "border-zinc-200 hover:border-zinc-300"
@@ -3488,8 +3930,8 @@ export default function CustomizerLayout() {
                             />
                           </div>
                           <span
-                            className={`text-[11px] font-bold ${
-                              isSelected ? "text-red-700" : "text-zinc-700"
+                            className={`text-[11px] font-medium text-center ${
+                              isSelected ? "text-red-700" : "text-[#002337]"
                             }`}
                           >
                             {p.label}
