@@ -822,6 +822,969 @@ function useJerseyDecals(state: any) {
           break;
         }
 
+        case "RedCarbonJersey": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const rcR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const rcG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const rcB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          // Dark base (10% of primary)
+          const baseR = Math.round(rcR * 0.1);
+          const baseG = Math.round(rcG * 0.1);
+          const baseB = Math.round(rcB * 0.1);
+          ctx.fillStyle = `rgb(${baseR}, ${baseG}, ${baseB})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Carbon fiber weave
+          const tileSize = 16;
+          for (let y = 0; y < H; y += tileSize) {
+            for (let x = 0; x < W; x += tileSize) {
+              const isEven = ((x / tileSize) + (y / tileSize)) % 2 === 0;
+              
+              // Horizontal fiber
+              const hGrad = ctx.createLinearGradient(x, y, x, y + tileSize / 2);
+              const h0 = isEven ? 0.7 : 0.45;
+              const h1 = isEven ? 0.85 : 0.6;
+              const h2 = isEven ? 0.6 : 0.4;
+              
+              hGrad.addColorStop(0, `rgba(${Math.round(rcR * h0)}, ${Math.round(rcG * h0)}, ${Math.round(rcB * h0)}, 0.9)`);
+              hGrad.addColorStop(0.5, `rgba(${Math.round(rcR * h1)}, ${Math.round(rcG * h1)}, ${Math.round(rcB * h1)}, 1)`);
+              hGrad.addColorStop(1, `rgba(${Math.round(rcR * h2)}, ${Math.round(rcG * h2)}, ${Math.round(rcB * h2)}, 0.8)`);
+              ctx.fillStyle = hGrad;
+              ctx.fillRect(x, y, tileSize, tileSize / 2);
+
+              // Vertical fiber
+              const vGrad = ctx.createLinearGradient(x, y + tileSize / 2, x, y + tileSize);
+              const v0 = isEven ? 0.45 : 0.7;
+              const v1 = isEven ? 0.6 : 0.85;
+              const v2 = isEven ? 0.4 : 0.6;
+
+              vGrad.addColorStop(0, `rgba(${Math.round(rcR * v0)}, ${Math.round(rcG * v0)}, ${Math.round(rcB * v0)}, 0.9)`);
+              vGrad.addColorStop(0.5, `rgba(${Math.round(rcR * v1)}, ${Math.round(rcG * v1)}, ${Math.round(rcB * v1)}, 1)`);
+              vGrad.addColorStop(1, `rgba(${Math.round(rcR * v2)}, ${Math.round(rcG * v2)}, ${Math.round(rcB * v2)}, 0.8)`);
+              ctx.fillStyle = vGrad;
+              ctx.fillRect(x, y + tileSize / 2, tileSize, tileSize / 2);
+
+              // Grid lines
+              ctx.strokeStyle = "rgba(0,0,0,0.8)";
+              ctx.lineWidth = 0.8;
+              ctx.strokeRect(x, y, tileSize, tileSize / 2);
+              ctx.strokeRect(x, y + tileSize / 2, tileSize, tileSize / 2);
+            }
+          }
+
+          // Diagonal speed slash — left
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(0, H * 0.3);
+          ctx.lineTo(W * 0.45, 0);
+          ctx.lineTo(W * 0.55, 0);
+          ctx.lineTo(W * 0.1, H);
+          ctx.lineTo(0, H);
+          ctx.closePath();
+          const slashL = ctx.createLinearGradient(0, 0, W * 0.5, 0);
+          slashL.addColorStop(0, `rgba(${rcR}, ${rcG}, ${rcB}, 0.22)`);
+          slashL.addColorStop(1, `rgba(${rcR}, ${rcG}, ${rcB}, 0)`);
+          ctx.fillStyle = slashL;
+          ctx.fill();
+          ctx.restore();
+
+          // Diagonal speed slash — right
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(W, H * 0.3);
+          ctx.lineTo(W * 0.55, 0);
+          ctx.lineTo(W * 0.45, 0);
+          ctx.lineTo(W * 0.9, H);
+          ctx.lineTo(W, H);
+          ctx.closePath();
+          const slashR = ctx.createLinearGradient(W, 0, W * 0.5, 0);
+          slashR.addColorStop(0, `rgba(${rcR}, ${rcG}, ${rcB}, 0.22)`);
+          slashR.addColorStop(1, `rgba(${rcR}, ${rcG}, ${rcB}, 0)`);
+          ctx.fillStyle = slashR;
+          ctx.fill();
+          ctx.restore();
+
+          // Horizontal scan lines
+          for (let y = 0; y < H; y += 3) {
+            ctx.fillStyle = "rgba(0,0,0,0.12)";
+            ctx.fillRect(0, y, W, 1);
+          }
+
+          // Center bright stripe
+          const centerGlow = ctx.createLinearGradient(W * 0.42, 0, W * 0.58, 0);
+          const glowColorStr = `rgba(${Math.min(255, rcR + 30)}, ${Math.min(255, rcG + 30)}, ${Math.min(255, rcB + 30)}, 0.12)`;
+          centerGlow.addColorStop(0, "rgba(255,255,255,0)");
+          centerGlow.addColorStop(0.5, glowColorStr);
+          centerGlow.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = centerGlow;
+          ctx.fillRect(0, 0, W, H);
+
+          // Vignette
+          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.15, W / 2, H / 2, H * 0.9);
+          vig.addColorStop(0, "rgba(0,0,0,0)");
+          vig.addColorStop(1, "rgba(0,0,0,0.55)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
+
+
+
+        case "GoldDiamondJersey": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const gdR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const gdG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const gdB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          const gdSeed = (s: number) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+          };
+
+          // Deep base (10% of primary)
+          ctx.fillStyle = `rgb(${Math.round(gdR * 0.1)}, ${Math.round(gdG * 0.1)}, ${Math.round(gdB * 0.1)})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Diamond grid (accent colors derived from primary)
+          const dSize = 36;
+          const cols = Math.ceil(W / dSize) + 2;
+          const rows = Math.ceil(H / (dSize * 0.5)) + 2;
+
+          for (let row = -1; row < rows; row++) {
+            for (let col = -1; col < cols; col++) {
+              const cx = col * dSize + (row % 2 === 0 ? 0 : dSize / 2);
+              const cy = row * dSize * 0.5;
+
+              // Diamond shape
+              ctx.beginPath();
+              ctx.moveTo(cx, cy - dSize * 0.45);          // top
+              ctx.lineTo(cx + dSize * 0.45, cy);           // right
+              ctx.lineTo(cx, cy + dSize * 0.45);           // bottom
+              ctx.lineTo(cx - dSize * 0.45, cy);           // left
+              ctx.closePath();
+
+              const dGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, dSize * 0.45);
+              dGrad.addColorStop(0, `rgba(${gdR}, ${gdG}, ${gdB}, 0.18)`);
+              dGrad.addColorStop(0.6, `rgba(${Math.round(gdR * 0.8)}, ${Math.round(gdG * 0.8)}, ${Math.round(gdB * 0.8)}, 0.10)`);
+              dGrad.addColorStop(1, `rgba(${Math.round(gdR * 0.6)}, ${Math.round(gdG * 0.6)}, ${Math.round(gdB * 0.6)}, 0.05)`);
+              ctx.fillStyle = dGrad;
+              ctx.fill();
+
+              ctx.strokeStyle = `rgba(${gdR}, ${gdG}, ${gdB}, 0.40)`;
+              ctx.lineWidth = 0.9;
+              ctx.stroke();
+
+              // Inner small diamond
+              ctx.beginPath();
+              ctx.moveTo(cx, cy - dSize * 0.18);
+              ctx.lineTo(cx + dSize * 0.18, cy);
+              ctx.lineTo(cx, cy + dSize * 0.18);
+              ctx.lineTo(cx - dSize * 0.18, cy);
+              ctx.closePath();
+              ctx.strokeStyle = `rgba(${gdR}, ${gdG}, ${gdB}, 0.25)`;
+              ctx.lineWidth = 0.6;
+              ctx.stroke();
+            }
+          }
+
+          // Scattered flare dots
+          for (let i = 0; i < 200; i++) {
+            const x = gdSeed(i * 7) * W;
+            const y = gdSeed(i * 7 + 1) * H;
+            const r = gdSeed(i * 7 + 2) * 1.8 + 0.3;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${gdR}, ${gdG}, ${gdB}, ${0.1 + gdSeed(i * 7 + 3) * 0.35})`;
+            ctx.fill();
+          }
+
+          // Left diagonal band
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(W * 0.18, 0);
+          ctx.lineTo(0, H * 0.35);
+          ctx.closePath();
+          const bandL = ctx.createLinearGradient(0, 0, W * 0.18, H * 0.35);
+          bandL.addColorStop(0, `rgba(${gdR}, ${gdG}, ${gdB}, 0.35)`);
+          bandL.addColorStop(1, `rgba(${gdR}, ${gdG}, ${gdB}, 0)`);
+          ctx.fillStyle = bandL;
+          ctx.fill();
+          ctx.restore();
+
+          // Right diagonal band
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(W, 0);
+          ctx.lineTo(W * 0.82, 0);
+          ctx.lineTo(W, H * 0.35);
+          ctx.closePath();
+          const bandR = ctx.createLinearGradient(W, 0, W * 0.82, H * 0.35);
+          bandR.addColorStop(0, `rgba(${gdR}, ${gdG}, ${gdB}, 0.35)`);
+          bandR.addColorStop(1, `rgba(${gdR}, ${gdG}, ${gdB}, 0)`);
+          ctx.fillStyle = bandR;
+          ctx.fill();
+          ctx.restore();
+
+          // Bottom shimmer
+          const bottomShimmer = ctx.createLinearGradient(0, H * 0.7, 0, H);
+          bottomShimmer.addColorStop(0, `rgba(${gdR}, ${gdG}, ${gdB}, 0)`);
+          bottomShimmer.addColorStop(1, `rgba(${gdR}, ${gdG}, ${gdB}, 0.12)`);
+          ctx.fillStyle = bottomShimmer;
+          ctx.fillRect(0, H * 0.7, W, H * 0.3);
+
+          // Vignette
+          const vig = ctx.createRadialGradient(W / 2, H * 0.4, H * 0.1, W / 2, H / 2, H * 0.9);
+          vig.addColorStop(0, "rgba(0,0,0,0)");
+          vig.addColorStop(1, "rgba(0,0,0,0.6)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
+
+
+        case "PurpleHexTechJersey": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const phR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const phG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const phB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          const phSeed = (s: number) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+          };
+
+          // Dark base (10% of primary)
+          ctx.fillStyle = `rgb(${Math.round(phR * 0.1)}, ${Math.round(phG * 0.1)}, ${Math.round(phB * 0.1)})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Hex grid
+          const hexR = 28;
+          const hexW = hexR * 2;
+          const hexH = Math.sqrt(3) * hexR;
+          const cols = Math.ceil(W / (hexW * 0.75)) + 2;
+          const rows = Math.ceil(H / hexH) + 2;
+
+          const hexPath = (cx: number, cy: number, r: number) => {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const angle = (Math.PI / 3) * i - Math.PI / 6;
+              const px = cx + r * Math.cos(angle);
+              const py = cy + r * Math.sin(angle);
+              if (i === 0) {
+                ctx.moveTo(px, py);
+              } else {
+                ctx.lineTo(px, py);
+              }
+            }
+            ctx.closePath();
+          };
+
+          for (let row = -1; row < rows; row++) {
+            for (let col = -1; col < cols; col++) {
+              const cx = col * hexW * 0.75;
+              const cy = row * hexH + (col % 2 === 0 ? 0 : hexH / 2);
+
+              // Outer hex
+              hexPath(cx, cy, hexR * 0.92);
+              const hGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, hexR);
+              hGrad.addColorStop(0, `rgba(${phR}, ${phG}, ${phB}, 0.12)`);
+              hGrad.addColorStop(1, `rgba(${Math.round(phR * 0.5)}, ${Math.round(phG * 0.5)}, ${Math.round(phB * 0.5)}, 0.04)`);
+              ctx.fillStyle = hGrad;
+              ctx.fill();
+              ctx.strokeStyle = `rgba(${phR}, ${phG}, ${phB}, 0.45)`;
+              ctx.lineWidth = 0.9;
+              ctx.stroke();
+
+              // Inner hex
+              hexPath(cx, cy, hexR * 0.55);
+              ctx.strokeStyle = `rgba(${phR}, ${phG}, ${phB}, 0.20)`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+
+              // Center dot — random intensity
+              const intensity = phSeed(row * 100 + col);
+              if (intensity > 0.6) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, 2.5 * (intensity - 0.6) * 2.5 + 0.5, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${phR}, ${phG}, ${phB}, ${(intensity - 0.6) * 1.5})`;
+                ctx.fill();
+              }
+            }
+          }
+
+          // Diagonal light streaks
+          for (let i = 0; i < 8; i++) {
+            const sx = phSeed(i * 4) * W;
+            const angle = -0.6 + phSeed(i * 4 + 1) * 0.3;
+            const len = H * 1.5;
+            const thick = 1 + phSeed(i * 4 + 2) * 3;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(sx, 0);
+            ctx.lineTo(sx + Math.tan(angle) * len, len);
+            ctx.strokeStyle = `rgba(${phR}, ${phG}, ${phB}, ${0.05 + phSeed(i * 4 + 3) * 0.12})`;
+            ctx.lineWidth = thick;
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Bottom to top gradient glow
+          const glow = ctx.createLinearGradient(0, H, 0, 0);
+          glow.addColorStop(0, `rgba(${phR}, ${phG}, ${phB}, 0.30)`);
+          glow.addColorStop(0.5, `rgba(${phR}, ${phG}, ${phB}, 0.08)`);
+          glow.addColorStop(1, `rgba(${phR}, ${phG}, ${phB}, 0.0)`);
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, W, H);
+
+          // Horizontal scan lines
+          for (let y = 0; y < H; y += 4) {
+            ctx.fillStyle = "rgba(0,0,0,0.08)";
+            ctx.fillRect(0, y, W, 1.5);
+          }
+
+          // Vignette
+          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.1, W / 2, H / 2, H * 0.85);
+          vig.addColorStop(0, "rgba(0,0,0,0)");
+          vig.addColorStop(1, "rgba(0,0,0,0.65)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
+
+        case "OrangeCamoWaveJersey": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const ocR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const ocG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const ocB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          const ocSeed = (s: number) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+          };
+
+          // Deep base (15% of primary)
+          ctx.fillStyle = `rgb(${Math.round(ocR * 0.15)}, ${Math.round(ocG * 0.15)}, ${Math.round(ocB * 0.15)})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Wavy camo blobs
+          const camoColors = [
+            `rgba(${ocR}, ${ocG}, ${ocB}, 0.55)`,
+            `rgba(${Math.round(ocR * 0.85)}, ${Math.round(ocG * 0.85)}, ${Math.round(ocB * 0.85)}, 0.45)`,
+            `rgba(${Math.min(255, Math.round(ocR * 1.15))}, ${Math.min(255, Math.round(ocG * 1.15))}, ${Math.min(255, Math.round(ocB * 1.15))}, 0.35)`,
+            `rgba(${Math.round(ocR * 0.7)}, ${Math.round(ocG * 0.7)}, ${Math.round(ocB * 0.7)}, 0.50)`,
+            `rgba(${Math.min(255, Math.round(ocR * 1.05))}, ${Math.min(255, Math.round(ocG * 1.05))}, ${Math.min(255, Math.round(ocB * 1.05))}, 0.40)`,
+          ];
+
+          for (let i = 0; i < 55; i++) {
+            const cx = ocSeed(i * 5) * W;
+            const cy = ocSeed(i * 5 + 1) * H;
+            const rx = 30 + ocSeed(i * 5 + 2) * 100;
+            const ry = 20 + ocSeed(i * 5 + 3) * 70;
+            const rot = ocSeed(i * 5 + 4) * Math.PI;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(rot);
+
+            ctx.beginPath();
+            const pts = 7;
+            for (let p = 0; p < pts; p++) {
+              const a = (p / pts) * Math.PI * 2;
+              const jitter = 0.6 + ocSeed(i * 20 + p) * 0.8;
+              const bx = Math.cos(a) * rx * jitter;
+              const by = Math.sin(a) * ry * jitter;
+              const cpx = Math.cos(a - 0.4) * rx * (jitter + 0.2);
+              const cpy = Math.sin(a - 0.4) * ry * (jitter + 0.2);
+              if (p === 0) {
+                ctx.moveTo(bx, by);
+              } else {
+                ctx.quadraticCurveTo(cpx, cpy, bx, by);
+              }
+            }
+            ctx.closePath();
+            ctx.fillStyle = camoColors[i % camoColors.length];
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Horizontal wave lines
+          for (let y = 0; y < H; y += 10) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            for (let x = 0; x <= W; x += 8) {
+              const waveY = y + Math.sin((x / W) * Math.PI * 6 + y * 0.05) * 3;
+              ctx.lineTo(x, waveY);
+            }
+            ctx.strokeStyle = `rgba(${ocR}, ${ocG}, ${ocB}, ${0.04 + ((y / H) * 0.06)})`;
+            ctx.lineWidth = 0.7;
+            ctx.stroke();
+          }
+
+          // Scattered pixel noise
+          for (let i = 0; i < 800; i++) {
+            const px = ocSeed(i * 3) * W;
+            const py = ocSeed(i * 3 + 1) * H;
+            const ps = ocSeed(i * 3 + 2) * 2.5 + 0.5;
+            ctx.fillStyle = `rgba(${ocR}, ${ocG}, ${ocB}, ${ocSeed(i * 3 + 3) * 0.3})`;
+            ctx.fillRect(px, py, ps, ps);
+          }
+
+          // Two diagonal dark slash bands
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(W * 0.25, 0);
+          ctx.lineTo(W * 0.35, 0);
+          ctx.lineTo(W * 0.10, H);
+          ctx.lineTo(0, H);
+          ctx.closePath();
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.fill();
+          ctx.restore();
+
+          // Another diagonal dark slash band
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(W * 0.65, 0);
+          ctx.lineTo(W * 0.75, 0);
+          ctx.lineTo(W * 0.90, H);
+          ctx.lineTo(W * 1.0, H);
+          ctx.closePath();
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.fill();
+          ctx.restore();
+
+          // Glow center
+          const glowCenter = ctx.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, W * 0.55);
+          glowCenter.addColorStop(0, `rgba(${ocR}, ${ocG}, ${ocB}, 0.18)`);
+          glowCenter.addColorStop(1, `rgba(${ocR}, ${ocG}, ${ocB}, 0)`);
+          ctx.fillStyle = glowCenter;
+          ctx.fillRect(0, 0, W, H);
+
+          // Vignette
+          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.15, W / 2, H / 2, H * 0.9);
+          vig.addColorStop(0, "rgba(0,0,0,0)");
+          vig.addColorStop(1, "rgba(0,0,0,0.60)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
+
+
+        // ============================================================
+        // 1. RED SHARD ENERGY JERSEY
+        // ============================================================
+
+        case "RedShardEnergy": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const rcR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const rcG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const rcB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          // Base (20% of primary)
+          ctx.fillStyle = `rgb(${Math.round(rcR * 0.2)}, ${Math.round(rcG * 0.2)}, ${Math.round(rcB * 0.2)})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Side panels
+          const sideGrad = ctx.createLinearGradient(0, 0, W, 0);
+          sideGrad.addColorStop(0, `rgb(${rcR}, ${rcG}, ${rcB})`);
+          sideGrad.addColorStop(0.5, `rgb(${Math.round(rcR * 0.35)}, ${Math.round(rcG * 0.35)}, ${Math.round(rcB * 0.35)})`);
+          sideGrad.addColorStop(1, `rgb(${rcR}, ${rcG}, ${rcB})`);
+          ctx.fillStyle = sideGrad;
+          ctx.fillRect(0, 0, W, H);
+
+          // Central dark strip
+          ctx.fillStyle = `rgb(${Math.round(rcR * 0.12)}, ${Math.round(rcG * 0.12)}, ${Math.round(rcB * 0.12)})`;
+          ctx.fillRect(W * 0.32, 0, W * 0.36, H);
+
+          // Random angular shards
+          for (let i = 0; i < 120; i++) {
+            const x = Math.random() * W;
+            const y = Math.random() * H;
+            const size = 20 + Math.random() * 120;
+            const angle = Math.random() * Math.PI * 2;
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(
+              x + Math.cos(angle) * size,
+              y + Math.sin(angle) * size
+            );
+            ctx.lineTo(
+              x + Math.cos(angle + 0.8) * size * 0.5,
+              y + Math.sin(angle + 0.8) * size * 0.5
+            );
+            ctx.closePath();
+
+            if (Math.random() > 0.5) {
+              ctx.fillStyle = "rgba(255,255,255,0.08)";
+              ctx.fill();
+            } else {
+              ctx.strokeStyle = "rgba(255,255,255,0.12)";
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+          }
+
+          // Energy streaks
+          ctx.save();
+          ctx.strokeStyle = `rgba(${Math.min(255, rcR + 50)}, ${Math.min(255, rcG + 50)}, ${Math.min(255, rcB + 50)}, 0.18)`;
+          for (let i = 0; i < 80; i++) {
+            const x = Math.random() * W;
+            ctx.lineWidth = 1 + Math.random() * 2;
+
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x + 100, H);
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          // Vignette
+          const vg = ctx.createRadialGradient(
+            W / 2,
+            H / 2,
+            H * 0.2,
+            W / 2,
+            H / 2,
+            H
+          );
+          vg.addColorStop(0, "rgba(0,0,0,0)");
+          vg.addColorStop(1, "rgba(0,0,0,0.4)");
+
+          ctx.fillStyle = vg;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
+
+        // ============================================================
+        // 2. NEON CYBER GRID JERSEY
+        // ============================================================
+
+        case "NeonCyberGrid": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const ncR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const ncG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const ncB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          // Background (extremely dark primary blend)
+          ctx.fillStyle = `rgb(${Math.round(ncR * 0.05 + 5)}, ${Math.round(ncG * 0.05 + 10)}, ${Math.round(ncB * 0.05 + 20)})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Neon side glow
+          const glow = ctx.createLinearGradient(0, 0, W, 0);
+          glow.addColorStop(0, `rgb(${ncR}, ${ncG}, ${ncB})`);
+          glow.addColorStop(0.5, `rgb(${Math.round(ncR * 0.05 + 5)}, ${Math.round(ncG * 0.05 + 10)}, ${Math.round(ncB * 0.05 + 20)})`);
+          glow.addColorStop(1, `rgb(${Math.min(255, ncR + 80)}, ${Math.min(255, ncG + 80)}, ${Math.min(255, ncB + 80)})`); // Lighter tint of primary
+
+          ctx.fillStyle = glow;
+          ctx.globalAlpha = 0.18;
+          ctx.fillRect(0, 0, W, H);
+          ctx.globalAlpha = 1;
+
+          // Grid lines
+          ctx.strokeStyle = `rgba(${ncR}, ${ncG}, ${ncB}, 0.08)`;
+          ctx.lineWidth = 1;
+
+          for (let x = 0; x < W; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, H);
+            ctx.stroke();
+          }
+
+          for (let y = 0; y < H; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(W, y);
+            ctx.stroke();
+          }
+
+          // Hexagon pattern helper
+          const drawHex = (hx: number, hy: number, hr: number) => {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const a = (Math.PI / 3) * i;
+              const px = hx + Math.cos(a) * hr;
+              const py = hy + Math.sin(a) * hr;
+              if (i === 0) {
+                ctx.moveTo(px, py);
+              } else {
+                ctx.lineTo(px, py);
+              }
+            }
+            ctx.closePath();
+          };
+
+          for (let y = 0; y < H; y += 70) {
+            for (let x = 0; x < W; x += 70) {
+              drawHex(x, y, 24);
+
+              ctx.strokeStyle =
+                Math.random() > 0.5
+                  ? `rgba(${ncR}, ${ncG}, ${ncB}, 0.14)`
+                  : `rgba(${Math.min(255, ncR + 80)}, ${Math.min(255, ncG + 80)}, ${Math.min(255, ncB + 80)}, 0.14)`;
+
+              ctx.lineWidth = 1.5;
+              ctx.stroke();
+            }
+          }
+
+          // Center stripe
+          ctx.fillStyle = "rgba(255,255,255,0.04)";
+          ctx.fillRect(W * 0.42, 0, W * 0.16, H);
+
+          break;
+        }
+
+        // ============================================================
+        // 3. GREEN TOXIC SMOKE JERSEY
+        // ============================================================
+
+        case "GreenToxicSmoke": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const tsR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const tsG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const tsB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          // Base (10% of primary)
+          ctx.fillStyle = `rgb(${Math.round(tsR * 0.1)}, ${Math.round(tsG * 0.1)}, ${Math.round(tsB * 0.1)})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Toxic gradients
+          const grad = ctx.createLinearGradient(0, 0, W, H);
+          grad.addColorStop(0, `rgb(${Math.min(255, Math.round(tsR * 1.3))}, ${Math.min(255, Math.round(tsG * 1.3))}, ${Math.min(255, Math.round(tsB * 1.3))})`);
+          grad.addColorStop(0.5, `rgb(${Math.round(tsR * 0.18)}, ${Math.round(tsG * 0.18)}, ${Math.round(tsB * 0.18)})`);
+          grad.addColorStop(1, `rgb(${Math.min(255, Math.round(tsR * 1.1))}, ${Math.min(255, Math.round(tsG * 1.1))}, ${Math.min(255, Math.round(tsB * 1.1))})`);
+
+          ctx.globalAlpha = 0.25;
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, W, H);
+          ctx.globalAlpha = 1;
+
+          // Smoke blobs
+          for (let i = 0; i < 80; i++) {
+            const x = Math.random() * W;
+            const y = Math.random() * H;
+            const r = 40 + Math.random() * 140;
+
+            const smoke = ctx.createRadialGradient(x, y, 0, x, y, r);
+            smoke.addColorStop(0, `rgba(${tsR}, ${tsG}, ${tsB}, 0.18)`);
+            smoke.addColorStop(1, `rgba(${tsR}, ${tsG}, ${tsB}, 0)`);
+
+            ctx.fillStyle = smoke;
+
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Acid scratches
+          ctx.strokeStyle = `rgba(${Math.min(255, tsR + 80)}, ${Math.min(255, tsG + 80)}, ${Math.min(255, tsB + 80)}, 0.15)`;
+
+          for (let i = 0; i < 150; i++) {
+            const x = Math.random() * W;
+            const y = Math.random() * H;
+
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(
+              x + (Math.random() - 0.5) * 120,
+              y + (Math.random() - 0.5) * 120
+            );
+            ctx.stroke();
+          }
+
+          // Dark center panel
+          ctx.fillStyle = "rgba(0,0,0,0.35)";
+          ctx.fillRect(W * 0.3, 0, W * 0.4, H);
+
+          break;
+        }
+
+        // ============================================================
+        // 4. PURPLE WAVE MOTION JERSEY
+        // ============================================================
+
+        case "PurpleWaveMotion": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const wmR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const wmG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const wmB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          // Background (8% of primary)
+          ctx.fillStyle = `rgb(${Math.round(wmR * 0.08)}, ${Math.round(wmG * 0.08)}, ${Math.round(wmB * 0.08)})`;
+          ctx.fillRect(0, 0, W, H);
+
+          // Side lighting
+          const lg = ctx.createLinearGradient(0, 0, W, 0);
+          lg.addColorStop(0, `rgb(${wmR}, ${wmG}, ${wmB})`);
+          lg.addColorStop(0.5, `rgb(${Math.round(wmR * 0.08)}, ${Math.round(wmG * 0.08)}, ${Math.round(wmB * 0.08)})`);
+          lg.addColorStop(1, `rgb(${Math.min(255, wmR + 80)}, ${Math.min(255, wmG + 80)}, ${Math.min(255, wmB + 80)})`); // Lighter tint of primary
+
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = lg;
+          ctx.fillRect(0, 0, W, H);
+          ctx.globalAlpha = 1;
+
+          // Flowing waves
+          for (let i = 0; i < 18; i++) {
+            const offset = i * 40;
+
+            ctx.beginPath();
+
+            for (let x = 0; x <= W; x += 10) {
+              const y =
+                H / 2 +
+                Math.sin((x + offset) * 0.015) * 40 +
+                i * 18;
+
+              if (x === 0) {
+                ctx.moveTo(x, y);
+              } else {
+                ctx.lineTo(x, y);
+              }
+            }
+
+            ctx.strokeStyle =
+              i % 2 === 0
+                ? "rgba(255,255,255,0.08)"
+                : `rgba(${Math.min(255, wmR + 80)}, ${Math.min(255, wmG + 80)}, ${Math.min(255, wmB + 80)}, 0.12)`;
+
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+
+          // Dots overlay
+          for (let i = 0; i < 500; i++) {
+            const x = Math.random() * W;
+            const y = Math.random() * H;
+
+            ctx.beginPath();
+            ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);
+
+            ctx.fillStyle = "rgba(255,255,255,0.12)";
+            ctx.fill();
+          }
+
+          // Vertical center fade
+          const center = ctx.createLinearGradient(
+            W * 0.3,
+            0,
+            W * 0.7,
+            0
+          );
+
+          center.addColorStop(0, "rgba(0,0,0,0)");
+          center.addColorStop(0.5, "rgba(255,255,255,0.05)");
+          center.addColorStop(1, "rgba(0,0,0,0)");
+
+          ctx.fillStyle = center;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
+        }
+
+
+        case "FlameStripeJersey": {
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
+
+          // Parse primaryColor
+          const fsR = parseInt(primaryColor.slice(1, 3), 16) || 0;
+          const fsG = parseInt(primaryColor.slice(3, 5), 16) || 0;
+          const fsB = parseInt(primaryColor.slice(5, 7), 16) || 0;
+
+          // Derived colors
+          const lightBase = `rgb(${Math.min(255, Math.round(fsR * 0.12 + 230))}, ${Math.min(255, Math.round(fsG * 0.12 + 235))}, ${Math.min(255, Math.round(fsB * 0.12 + 240))})`;
+          const spikeColor = `rgb(${fsR}, ${fsG}, ${fsB})`;  // primary color spikes
+          const darkColor  = `rgb(${Math.round(fsR * 0.15)}, ${Math.round(fsG * 0.15)}, ${Math.round(fsB * 0.15)})`; // very dark accent spikes
+
+          // Light base
+          ctx.fillStyle = lightBase;
+          ctx.fillRect(0, 0, W, H);
+
+          // Flame / Spike generator (arrow function — valid inside case block)
+          const drawSpike = (
+            cx: number,
+            topY: number,
+            botY: number,
+            maxW: number,
+            color: string,
+            pointUp: boolean
+          ) => {
+            const midY = topY + (botY - topY) * 0.35;
+
+            ctx.beginPath();
+            if (!pointUp) {
+              // Wide at top, tapers to point at bottom
+              ctx.moveTo(cx, botY);
+              ctx.bezierCurveTo(
+                cx - maxW * 0.3, botY - (botY - topY) * 0.3,
+                cx - maxW,       midY,
+                cx - maxW * 0.8, topY
+              );
+              ctx.bezierCurveTo(
+                cx - maxW * 0.3, topY,
+                cx + maxW * 0.3, topY,
+                cx + maxW * 0.8, topY
+              );
+              ctx.bezierCurveTo(
+                cx + maxW,       midY,
+                cx + maxW * 0.3, botY - (botY - topY) * 0.3,
+                cx,              botY
+              );
+            } else {
+              // Wide at bottom, tapers to point at top
+              const midY2 = topY + (botY - topY) * 0.65;
+              ctx.moveTo(cx, topY);
+              ctx.bezierCurveTo(
+                cx - maxW * 0.3, topY + (botY - topY) * 0.3,
+                cx - maxW,       midY2,
+                cx - maxW * 0.8, botY
+              );
+              ctx.bezierCurveTo(
+                cx - maxW * 0.3, botY,
+                cx + maxW * 0.3, botY,
+                cx + maxW * 0.8, botY
+              );
+              ctx.bezierCurveTo(
+                cx + maxW,       midY2,
+                cx + maxW * 0.3, topY + (botY - topY) * 0.3,
+                cx,              topY
+              );
+            }
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+          };
+
+          // Column layout: primary | dark | primary | primary | dark | ...
+          const colW = W / 11;
+
+          const colPattern = [
+            spikeColor,  // primary
+            darkColor,   // dark accent
+            spikeColor,
+            spikeColor,
+            darkColor,
+            spikeColor,
+            spikeColor,
+            darkColor,
+            spikeColor,
+            spikeColor,
+            darkColor,
+          ];
+
+          const fsSeed = (s: number) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+          };
+
+          // Downward spikes (tip points down)
+          for (let col = 0; col < colPattern.length; col++) {
+            const cx = (col + 0.5) * colW;
+            const color = colPattern[col];
+            const spikeCount = 4 + Math.floor(fsSeed(col * 3) * 3);
+
+            for (let s = 0; s < spikeCount; s++) {
+              const topY   = -20 + fsSeed(col * 10 + s) * H * 0.15;
+              const height = H * 0.45 + fsSeed(col * 10 + s + 1) * H * 0.45;
+              const botY   = topY + height;
+              const maxW   = colW * (0.35 + fsSeed(col * 10 + s + 2) * 0.30);
+
+              drawSpike(cx, topY, Math.min(botY, H + 20), maxW, color, false);
+            }
+          }
+
+          // Upward spikes (tip points up)
+          for (let col = 0; col < colPattern.length; col++) {
+            const cx = (col + 0.5) * colW;
+            const color = colPattern[col];
+            const spikeCount = 3 + Math.floor(fsSeed(col * 7 + 50) * 3);
+
+            for (let s = 0; s < spikeCount; s++) {
+              const botY   = H + 20 - fsSeed(col * 10 + s + 30) * H * 0.15;
+              const height = H * 0.35 + fsSeed(col * 10 + s + 31) * H * 0.40;
+              const topY   = botY - height;
+              const maxW   = colW * (0.30 + fsSeed(col * 10 + s + 32) * 0.28);
+
+              drawSpike(cx, Math.max(topY, -20), botY, maxW, color, true);
+            }
+          }
+
+          // Half-column offset layer (fills gaps)
+          for (let col = 0; col < colPattern.length - 1; col++) {
+            const cx = (col + 1.0) * colW;
+            const color = colPattern[(col + 1) % colPattern.length];
+            const spikeCount = 2 + Math.floor(fsSeed(col * 13 + 200) * 2);
+
+            for (let s = 0; s < spikeCount; s++) {
+              const topY   = -10 + fsSeed(col * 13 + s + 200) * H * 0.2;
+              const height = H * 0.30 + fsSeed(col * 13 + s + 201) * H * 0.35;
+              const botY   = topY + height;
+              const maxW   = colW * (0.18 + fsSeed(col * 13 + s + 202) * 0.15);
+              drawSpike(cx, topY, Math.min(botY, H + 10), maxW, color, false);
+            }
+
+            for (let s = 0; s < spikeCount; s++) {
+              const botY   = H + 10 - fsSeed(col * 13 + s + 210) * H * 0.15;
+              const height = H * 0.25 + fsSeed(col * 13 + s + 211) * H * 0.30;
+              const topY   = botY - height;
+              const maxW   = colW * (0.18 + fsSeed(col * 13 + s + 212) * 0.15);
+              drawSpike(cx, Math.max(topY, -10), botY, maxW, color, true);
+            }
+          }
+
+          // Thin vertical base lines (between spikes)
+          for (let col = 0; col < colPattern.length; col++) {
+            const cx = (col + 0.5) * colW;
+            ctx.beginPath();
+            ctx.moveTo(cx, 0);
+            ctx.lineTo(cx, H);
+            ctx.strokeStyle = colPattern[col] === darkColor
+              ? `rgba(${Math.round(fsR * 0.15)}, ${Math.round(fsG * 0.15)}, ${Math.round(fsB * 0.15)}, 0.15)`
+              : `rgba(${fsR}, ${fsG}, ${fsB}, 0.12)`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+
+          break;
+        }
+
         case "Stripes": {
           ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
           for (let i = 0; i < size; i += 64) {
@@ -1194,6 +2157,138 @@ function MiniPatternSVG({
             <circle cx="85" cy="85" r="2.5" fill={secondary} />
             <circle cx="72" cy="85" r="1.5" fill={secondary} />
             <circle cx="85" cy="72" r="1.5" fill={secondary} />
+          </>
+        );
+      case "RedCarbonJersey":
+        return (
+          <>
+            {/* Carbon weave tile previews */}
+            <rect x="10" y="20" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
+            <rect x="55" y="20" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
+            <rect x="10" y="55" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
+            <rect x="55" y="55" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
+            {/* Diagonal slashes */}
+            <line x1="0" y1="30" x2="40" y2="0" stroke={white} strokeWidth="3" opacity="0.6" />
+            <line x1="60" y1="100" x2="100" y2="70" stroke={white} strokeWidth="3" opacity="0.6" />
+          </>
+        );
+      case "GoldDiamondJersey":
+        return (
+          <>
+            <polygon points="50,15 75,50 50,85 25,50" fill="none" stroke={white} strokeWidth="2.5" />
+            <polygon points="50,30 63,50 50,70 37,50" fill="none" stroke={white} strokeWidth="1.2" opacity="0.7" />
+            {/* Some flare dots */}
+            <circle cx="20" cy="20" r="1.5" fill={white} />
+            <circle cx="80" cy="20" r="1.5" fill={white} />
+            <circle cx="20" cy="80" r="2" fill={white} />
+            <circle cx="80" cy="80" r="1.5" fill={white} />
+            {/* Corner triangles */}
+            <polygon points="0,0 25,0 0,25" fill={secondary} />
+            <polygon points="100,0 75,0 100,25" fill={secondary} />
+          </>
+        );
+      case "PurpleHexTechJersey":
+        return (
+          <>
+            {/* Multiple hexagons */}
+            <path d="M 50,25 L 72,37 L 72,63 L 50,75 L 28,63 L 28,37 Z" fill="none" stroke={white} strokeWidth="2.2" />
+            <path d="M 50,35 L 63,42 L 63,58 L 50,65 L 37,58 L 37,42 Z" fill="none" stroke={secondary} strokeWidth="1" />
+            <circle cx="50" cy="50" r="3.5" fill={white} />
+            {/* Streaks */}
+            <line x1="10" y1="10" x2="25" y2="90" stroke={secondary} strokeWidth="1.5" />
+            <line x1="90" y1="10" x2="75" y2="90" stroke={secondary} strokeWidth="1.5" />
+          </>
+        );
+      case "OrangeCamoWaveJersey":
+        return (
+          <>
+            {/* Camo blobs */}
+            <path d="M 15,20 Q 30,10 40,25 T 25,50 Z" fill={secondary} />
+            <path d="M 60,60 Q 80,45 90,65 T 75,85 Z" fill={secondary} />
+            <path d="M 70,20 Q 85,15 80,35 T 55,30 Z" fill={white} opacity="0.6" />
+            {/* Waves */}
+            <path d="M 0,35 Q 25,30 50,35 T 100,35" fill="none" stroke={white} strokeWidth="1" />
+            <path d="M 0,65 Q 25,60 50,65 T 100,65" fill="none" stroke={white} strokeWidth="1" />
+          </>
+        );
+      case "RedShardEnergy":
+        return (
+          <>
+            {/* Side panels */}
+            <rect x="0" y="0" width="28" height="100" fill={secondary} />
+            <rect x="72" y="0" width="28" height="100" fill={secondary} />
+            {/* Shard hints */}
+            <polygon points="35,20 45,15 48,25 38,30" fill={white} />
+            <polygon points="55,50 68,45 62,60 52,65" fill={white} />
+            {/* Streaks */}
+            <line x1="30" y1="0" x2="60" y2="100" stroke={white} strokeWidth="1" opacity="0.4" />
+            <line x1="50" y1="0" x2="80" y2="100" stroke={white} strokeWidth="1.5" opacity="0.4" />
+          </>
+        );
+      case "NeonCyberGrid":
+        return (
+          <>
+            {/* Grid */}
+            <line x1="25" y1="0" x2="25" y2="100" stroke={white} strokeWidth="0.8" opacity="0.25" />
+            <line x1="50" y1="0" x2="50" y2="100" stroke={white} strokeWidth="0.8" opacity="0.25" />
+            <line x1="75" y1="0" x2="75" y2="100" stroke={white} strokeWidth="0.8" opacity="0.25" />
+            <line x1="0" y1="30" x2="100" y2="30" stroke={white} strokeWidth="0.8" opacity="0.25" />
+            <line x1="0" y1="65" x2="100" y2="65" stroke={white} strokeWidth="0.8" opacity="0.25" />
+            {/* Hexagons */}
+            <path d="M 50,35 L 63,42 L 63,58 L 50,65 L 37,58 L 37,42 Z" fill="none" stroke={white} strokeWidth="1.5" />
+            <path d="M 15,10 L 25,16 L 25,28 L 15,34 L 5,28 L 5,16 Z" fill="none" stroke={secondary} strokeWidth="1" />
+            <path d="M 85,70 L 95,76 L 95,88 L 85,94 L 75,88 L 75,76 Z" fill="none" stroke={secondary} strokeWidth="1" />
+          </>
+        );
+      case "GreenToxicSmoke":
+        return (
+          <>
+            {/* Smoke circles */}
+            <circle cx="25" cy="30" r="18" fill={white} opacity="0.25" />
+            <circle cx="75" cy="40" r="22" fill={white} opacity="0.2" />
+            <circle cx="45" cy="70" r="25" fill={secondary} opacity="0.5" />
+            {/* Acid scratches */}
+            <line x1="15" y1="15" x2="35" y2="25" stroke={white} strokeWidth="1" />
+            <line x1="65" y1="75" x2="85" y2="65" stroke={white} strokeWidth="1" />
+            {/* Dark center panel */}
+            <rect x="35" y="0" width="30" height="100" fill={secondary} opacity="0.4" />
+          </>
+        );
+      case "PurpleWaveMotion":
+        return (
+          <>
+            {/* Waves */}
+            <path d="M 0,25 Q 25,10 50,25 T 100,25" fill="none" stroke={white} strokeWidth="2" />
+            <path d="M 0,50 Q 25,35 50,50 T 100,50" fill="none" stroke={secondary} strokeWidth="1.5" />
+            <path d="M 0,75 Q 25,60 50,75 T 100,75" fill="none" stroke={white} strokeWidth="2" />
+            {/* Scattered dots */}
+            <circle cx="20" cy="15" r="1" fill={white} />
+            <circle cx="80" cy="15" r="1" fill={white} />
+            <circle cx="45" cy="35" r="1.5" fill={white} />
+            <circle cx="15" cy="65" r="1.5" fill={white} />
+            <circle cx="85" cy="65" r="1" fill={white} />
+            {/* Center glow hint */}
+            <rect x="30" y="0" width="40" height="100" fill={white} opacity="0.08" />
+          </>
+        );
+      case "FlameStripeJersey":
+        return (
+          <>
+            {/* Vertical spike columns */}
+            <rect x="0" y="0" width="8" height="55" rx="2" fill={white} opacity="0.8" />
+            <rect x="0" y="45" width="8" height="55" rx="2" fill={white} opacity="0.8" />
+            <rect x="18" y="0" width="6" height="40" rx="2" fill={secondary} opacity="0.7" />
+            <rect x="18" y="60" width="6" height="40" rx="2" fill={secondary} opacity="0.7" />
+            <rect x="32" y="0" width="8" height="60" rx="2" fill={white} opacity="0.8" />
+            <rect x="32" y="50" width="8" height="50" rx="2" fill={white} opacity="0.8" />
+            <rect x="48" y="0" width="8" height="50" rx="2" fill={white} opacity="0.8" />
+            <rect x="48" y="55" width="8" height="45" rx="2" fill={white} opacity="0.8" />
+            <rect x="64" y="0" width="6" height="40" rx="2" fill={secondary} opacity="0.7" />
+            <rect x="64" y="62" width="6" height="38" rx="2" fill={secondary} opacity="0.7" />
+            <rect x="78" y="0" width="8" height="65" rx="2" fill={white} opacity="0.8" />
+            <rect x="78" y="52" width="8" height="48" rx="2" fill={white} opacity="0.8" />
+            <rect x="92" y="0" width="8" height="50" rx="2" fill={white} opacity="0.8" />
+            <rect x="92" y="60" width="8" height="40" rx="2" fill={white} opacity="0.8" />
           </>
         );
       case "JerseyHexDot":
@@ -2345,6 +3440,15 @@ export default function CustomizerLayout() {
                       { id: "JerseyHexDot", label: "Hex Sublimation" },
                       { id: "BlueGrungeJersey", label: "Grunge Panel" },
                       { id: "GreenChevronJersey", label: "Green Chevron" },
+                      { id: "RedCarbonJersey", label: "Carbon Fiber" },
+                      { id: "GoldDiamondJersey", label: "Gold Diamond" },
+                      { id: "PurpleHexTechJersey", label: "Hex-Tech" },
+                      { id: "OrangeCamoWaveJersey", label: "Camo Wave" },
+                      { id: "RedShardEnergy", label: "Shard Energy" },
+                      { id: "NeonCyberGrid", label: "Cyber Grid" },
+                      { id: "GreenToxicSmoke", label: "Toxic Smoke" },
+                      { id: "PurpleWaveMotion", label: "Wave Motion" },
+                      { id: "FlameStripeJersey", label: "Flame Stripe" },
                       { id: "Lightning", label: "Lightning" },
                       { id: "Stripes", label: "Stripes" },
                       { id: "Abstract", label: "Abstract Wave" },
