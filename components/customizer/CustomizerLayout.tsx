@@ -268,11 +268,258 @@ function useJerseyDecals(state: any) {
     const drawFabricPattern = (
       ctx: CanvasRenderingContext2D,
       patternName: string,
+      primaryColor: string = "#E63946",
     ) => {
       if (!patternName || patternName === "None") return;
       ctx.save();
 
       switch (patternName) {
+        case "Street Shard": {
+          // 1. Draw Abstract Grunge Shards (Graffiti Style) on the left and right sides
+          // We divide the canvas vertically into 3 sections: Left (0 to 35%), Center (35% to 65%), Right (65% to 100%)
+
+          // Seeded/deterministic random helper so the pattern looks consistent on redraws
+          let seed = 12345;
+          const random = () => {
+            const x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+          };
+
+          const drawShard = (
+            x: number,
+            y: number,
+            rSize: number,
+            color: string,
+          ) => {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(
+              x + (random() - 0.5) * rSize,
+              y + (random() - 0.5) * rSize,
+            );
+            const points = 3 + Math.floor(random() * 4); // 3 to 6 points
+            for (let p = 0; p < points; p++) {
+              const angle = (p / points) * Math.PI * 2 + random() * 0.5;
+              const px = x + Math.cos(angle) * rSize * (0.6 + random() * 0.6);
+              const py = y + Math.sin(angle) * rSize * (0.6 + random() * 0.6);
+              ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+          };
+
+          // Draw dark/light shards on the left side
+          for (let i = 0; i < 20; i++) {
+            const rx = random() * (size * 0.33);
+            const ry = random() * size;
+            const rS = 30 + random() * 50;
+            const isDark = random() > 0.3;
+            drawShard(
+              rx,
+              ry,
+              rS,
+              isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)",
+            );
+            // wrap-around for tileability
+            if (rx < rS)
+              drawShard(
+                rx + size,
+                ry,
+                rS,
+                isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)",
+              );
+          }
+
+          // Draw dark/light shards on the right side
+          for (let i = 0; i < 20; i++) {
+            const rx = size * 0.67 + random() * (size * 0.33);
+            const ry = random() * size;
+            const rS = 30 + random() * 50;
+            const isDark = random() > 0.3;
+            drawShard(
+              rx,
+              ry,
+              rS,
+              isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)",
+            );
+            // wrap-around for tileability
+            if (rx + rS > size)
+              drawShard(
+                rx - size,
+                ry,
+                rS,
+                isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)",
+              );
+          }
+
+          // Add some fine lines / scratches for the grunge look
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 15; i++) {
+            ctx.beginPath();
+            const sx = random() * size;
+            const sy = random() * size;
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(
+              sx + (random() - 0.5) * 120,
+              sy + (random() - 0.5) * 120,
+            );
+            ctx.stroke();
+          }
+
+          // 2. Draw Center Band
+          const bandStart = size * 0.36;
+          const bandEnd = size * 0.64;
+          const bandWidth = bandEnd - bandStart;
+
+          // Draw solid background center band with dark overlay
+          ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+          ctx.fillRect(bandStart, 0, bandWidth, size);
+
+          // Center band subtle marble/brush overlay
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+          ctx.lineWidth = 3;
+          for (let i = 0; i < 10; i++) {
+            ctx.beginPath();
+            const sx = bandStart + random() * bandWidth;
+            const sy = random() * size;
+            ctx.moveTo(sx, sy);
+            ctx.quadraticCurveTo(
+              sx + (random() - 0.5) * 30,
+              sy + 50,
+              sx + (random() - 0.5) * 30,
+              sy + 100,
+            );
+            ctx.stroke();
+          }
+
+          // 3. Draw Halftone Dots Gradient fading into center
+          ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+          const dotSpacing = 10;
+
+          // Left Halftone (fades as it goes left, i.e., x decreases from bandStart)
+          for (let x = bandStart - 40; x <= bandStart; x += dotSpacing) {
+            const distance = bandStart - x; // 0 to 40
+            const maxRadius = 3.5;
+            // Radius is largest at bandStart, smallest at bandStart - 40
+            const radius = Math.max(0.5, maxRadius * (1 - distance / 40));
+            for (let y = 0; y < size; y += dotSpacing) {
+              ctx.beginPath();
+              // Offset alternating rows to create a hex/halftone grid look
+              const offset =
+                (Math.round(y / dotSpacing) % 2) * (dotSpacing / 2);
+              ctx.arc(x, y + offset, radius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          // Right Halftone (fades as it goes right, i.e., x increases from bandEnd)
+          for (let x = bandEnd; x <= bandEnd + 40; x += dotSpacing) {
+            const distance = x - bandEnd; // 0 to 40
+            const maxRadius = 3.5;
+            // Radius is largest at bandEnd, smallest at bandEnd + 40
+            const radius = Math.max(0.5, maxRadius * (1 - distance / 40));
+            for (let y = 0; y < size; y += dotSpacing) {
+              ctx.beginPath();
+              // Offset alternating rows
+              const offset =
+                (Math.round(y / dotSpacing) % 2) * (dotSpacing / 2);
+              ctx.arc(x, y + offset, radius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          break;
+        }
+        case "JerseyHexDot": {
+          const size = ctx.canvas.width; // assumes square canvas; adjust as needed
+
+          // 1. Base color — uses the user's chosen primary color
+          ctx.fillStyle = primaryColor;
+          ctx.fillRect(0, 0, size, size);
+
+          // 2. Hex + halftone dot sublimation pattern
+          const hexSize = 48;
+          const cols = Math.ceil(size / (hexSize * 1.6)) + 2;
+          const rows = Math.ceil(size / (hexSize * 1.4)) + 2;
+
+          for (let row = -1; row < rows; row++) {
+            for (let col = -1; col < cols; col++) {
+              const offsetX = row % 2 === 0 ? 0 : hexSize * 0.9;
+              const cx = col * hexSize * 1.7 + offsetX;
+              const cy = row * hexSize * 1.35;
+
+              // Subtle hex outline
+              ctx.beginPath();
+              for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 180) * (60 * i - 30);
+                const x = cx + hexSize * 0.82 * Math.cos(angle);
+                const y = cy + hexSize * 0.82 * Math.sin(angle);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+              }
+              ctx.closePath();
+              // Derive a darkened variant of primary for the hex outline
+              const hexR = parseInt(primaryColor.slice(1, 3), 16);
+              const hexG = parseInt(primaryColor.slice(3, 5), 16);
+              const hexB = parseInt(primaryColor.slice(5, 7), 16);
+              const dr2 = Math.round(hexR * 0.65);
+              const dg2 = Math.round(hexG * 0.65);
+              const db2 = Math.round(hexB * 0.65);
+              ctx.strokeStyle = `rgba(${dr2}, ${dg2}, ${db2}, 0.5)`;
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+
+              // Halftone dots inside each hex cell
+              const dotRows = 5;
+              const dotCols = 5;
+              const dotSpacing = hexSize * 0.32;
+
+              for (let dr = 0; dr < dotRows; dr++) {
+                for (let dc = 0; dc < dotCols; dc++) {
+                  const dx =
+                    cx - ((dotCols - 1) * dotSpacing) / 2 + dc * dotSpacing;
+                  const dy =
+                    cy - ((dotRows - 1) * dotSpacing) / 2 + dr * dotSpacing;
+
+                  const dist = Math.sqrt((dx - cx) ** 2 + (dy - cy) ** 2);
+                  const maxDist = hexSize * 0.75;
+                  if (dist > maxDist) continue; // clip to hex boundary
+
+                  const fade = 1 - dist / maxDist;
+                  const r = 1.6 * fade + 0.4;
+
+                  ctx.beginPath();
+                  ctx.arc(dx, dy, r, 0, Math.PI * 2);
+                  // Derive dot color from primary (darkened)
+                  const pr = parseInt(primaryColor.slice(1, 3), 16);
+                  const pg = parseInt(primaryColor.slice(3, 5), 16);
+                  const pb = parseInt(primaryColor.slice(5, 7), 16);
+                  const dr3 = Math.round(pr * 0.7);
+                  const dg3 = Math.round(pg * 0.7);
+                  const db3 = Math.round(pb * 0.7);
+                  ctx.fillStyle = `rgba(${dr3}, ${dg3}, ${db3}, ${0.55 * fade + 0.15})`;
+                  ctx.fill();
+                }
+              }
+            }
+          }
+
+          // 3. Optional radial vignette overlay
+          const vignette = ctx.createRadialGradient(
+            size / 2,
+            size / 2,
+            size * 0.2,
+            size / 2,
+            size / 2,
+            size * 0.85,
+          );
+          vignette.addColorStop(0, "rgba(0,0,0,0)");
+          vignette.addColorStop(1, "rgba(0,0,0,0.22)");
+          ctx.fillStyle = vignette;
+          ctx.fillRect(0, 0, size, size);
+
+          break;
+        }
         case "Stripes": {
           ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
           for (let i = 0; i < size; i += 64) {
@@ -456,7 +703,7 @@ function useJerseyDecals(state: any) {
       ? makeCanvas((ctx) => {
           // 1. Draw fabric pattern first
           if (state.fabricPatternFront && state.fabricPatternFront !== "None") {
-            drawFabricPattern(ctx, state.fabricPatternFront);
+            drawFabricPattern(ctx, state.fabricPatternFront, state.primary);
           }
           // 2. Draw design pattern on top
           if (
@@ -475,7 +722,7 @@ function useJerseyDecals(state: any) {
       ? makeCanvas((ctx) => {
           // 1. Draw fabric pattern first
           if (state.fabricPatternBack && state.fabricPatternBack !== "None") {
-            drawFabricPattern(ctx, state.fabricPatternBack);
+            drawFabricPattern(ctx, state.fabricPatternBack, state.primary);
           }
           // 2. Draw design pattern on top
           if (
@@ -578,7 +825,6 @@ function useJerseyDecals(state: any) {
   }, [state]);
 }
 
-
 // ─── Mini Pattern Preview SVG Component ─────────────────────────────────────
 function MiniPatternSVG({
   pattern,
@@ -592,6 +838,54 @@ function MiniPatternSVG({
 
   const getPatternContent = () => {
     switch (pattern) {
+      case "JerseyHexDot":
+        return (
+          <>
+            <path
+              d="M 50,15 L 80,32 L 80,67 L 50,85 L 20,67 L 20,32 Z"
+              stroke={white}
+              strokeWidth="2"
+              fill="none"
+            />
+            <circle cx="50" cy="35" r="2" fill={white} />
+            <circle cx="50" cy="50" r="3" fill={white} />
+            <circle cx="50" cy="65" r="2" fill={white} />
+            <circle cx="35" cy="42" r="2.5" fill={white} />
+            <circle cx="35" cy="58" r="2.5" fill={white} />
+            <circle cx="65" cy="42" r="2.5" fill={white} />
+            <circle cx="65" cy="58" r="2.5" fill={white} />
+          </>
+        );
+      case "Street Shard":
+        return (
+          <>
+            {/* Shard shapes */}
+            <polygon points="10,15 25,5 30,25 15,30" fill={secondary} />
+            <polygon points="5,55 20,45 28,60 10,70" fill={white} />
+            <polygon points="80,15 95,5 98,25 75,30" fill={secondary} />
+            <polygon points="70,55 90,45 95,65 80,75" fill={white} />
+
+            {/* Center Band */}
+            <rect
+              x="36"
+              y="0"
+              width="28"
+              height="100"
+              fill={secondary}
+              opacity="0.6"
+            />
+
+            {/* Halftone dots indicators */}
+            <circle cx="33" cy="20" r="1.5" fill={white} />
+            <circle cx="33" cy="40" r="1.5" fill={white} />
+            <circle cx="33" cy="60" r="1.5" fill={white} />
+            <circle cx="33" cy="80" r="1.5" fill={white} />
+            <circle cx="67" cy="20" r="1.5" fill={white} />
+            <circle cx="67" cy="40" r="1.5" fill={white} />
+            <circle cx="67" cy="60" r="1.5" fill={white} />
+            <circle cx="67" cy="80" r="1.5" fill={white} />
+          </>
+        );
       case "Stripes":
         return (
           <>
@@ -1416,7 +1710,10 @@ export default function CustomizerLayout() {
       const dataUrl = event.target?.result as string;
       updateState("logo", dataUrl);
       setUploadedLogos((prev) => {
-        const next = [dataUrl, ...prev.filter((item) => item !== dataUrl)].slice(0, 12);
+        const next = [
+          dataUrl,
+          ...prev.filter((item) => item !== dataUrl),
+        ].slice(0, 12);
         localStorage.setItem("jersey_uploaded_logos", JSON.stringify(next));
         return next;
       });
@@ -1686,6 +1983,8 @@ export default function CustomizerLayout() {
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     {[
                       { id: "None", label: "Solid Color" },
+                      { id: "Street Shard", label: "Street Shard" },
+                      { id: "JerseyHexDot", label: "Hex Sublimation" },
                       { id: "Lightning", label: "Lightning" },
                       { id: "Stripes", label: "Stripes" },
                       { id: "Abstract", label: "Abstract Wave" },
@@ -2115,7 +2414,12 @@ export default function CustomizerLayout() {
                       ].map((preset) => (
                         <button
                           key={preset.name}
-                          onClick={() => updateState("logo", state.logo === preset.url ? null : preset.url)}
+                          onClick={() =>
+                            updateState(
+                              "logo",
+                              state.logo === preset.url ? null : preset.url,
+                            )
+                          }
                           className={`p-2 rounded-lg border flex flex-col items-center justify-center gap-1.5 transition-all bg-white ${
                             state.logo === preset.url
                               ? "border-red-500 bg-red-50/20 shadow-sm"
@@ -2160,7 +2464,12 @@ export default function CustomizerLayout() {
                           return (
                             <div
                               key={index}
-                              onClick={() => updateState("logo", state.logo === url ? null : url)}
+                              onClick={() =>
+                                updateState(
+                                  "logo",
+                                  state.logo === url ? null : url,
+                                )
+                              }
                               className={`relative aspect-square rounded-xl border flex items-center justify-center p-2 transition-all bg-white cursor-pointer group hover:shadow-md ${
                                 isSelected
                                   ? "border-red-500 bg-red-50/10 shadow-sm"
@@ -2172,7 +2481,7 @@ export default function CustomizerLayout() {
                                 alt={`Uploaded badge ${index + 1}`}
                                 className="w-full h-full object-contain"
                               />
-                              
+
                               {/* Top Left Selection Marker */}
                               <div
                                 className={`absolute top-1.5 left-1.5 w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
@@ -2182,8 +2491,18 @@ export default function CustomizerLayout() {
                                 }`}
                               >
                                 {isSelected && (
-                                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
+                                  <svg
+                                    className="w-2.5 h-2.5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={3.5}
+                                      d="M5 13l4 4L19 7"
+                                    />
                                   </svg>
                                 )}
                               </div>
@@ -2193,8 +2512,13 @@ export default function CustomizerLayout() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setUploadedLogos((prev) => {
-                                    const next = prev.filter((item) => item !== url);
-                                    localStorage.setItem("jersey_uploaded_logos", JSON.stringify(next));
+                                    const next = prev.filter(
+                                      (item) => item !== url,
+                                    );
+                                    localStorage.setItem(
+                                      "jersey_uploaded_logos",
+                                      JSON.stringify(next),
+                                    );
                                     return next;
                                   });
                                   if (isSelected) {
@@ -2203,8 +2527,18 @@ export default function CustomizerLayout() {
                                 }}
                                 className="absolute top-1.5 right-1.5 w-5 h-5 bg-white hover:bg-red-50 text-zinc-400 hover:text-red-500 rounded-full border border-zinc-200 shadow-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                               >
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
                                 </svg>
                               </button>
                             </div>
