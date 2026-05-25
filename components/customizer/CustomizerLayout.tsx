@@ -672,20 +672,37 @@ function useJerseyDecals(state: any) {
           }
           ctx.restore();
 
-          const leftEdge = ctx.createLinearGradient(stripeX - 10, 0, stripeX + 20, 0);
+          const leftEdge = ctx.createLinearGradient(
+            stripeX - 10,
+            0,
+            stripeX + 20,
+            0,
+          );
           leftEdge.addColorStop(0, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
           leftEdge.addColorStop(1, `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`);
           ctx.fillStyle = leftEdge;
           ctx.fillRect(stripeX - 10, 0, 30, H);
 
-          const rightEdge = ctx.createLinearGradient(stripeX + stripeW - 20, 0, stripeX + stripeW + 10, 0);
+          const rightEdge = ctx.createLinearGradient(
+            stripeX + stripeW - 20,
+            0,
+            stripeX + stripeW + 10,
+            0,
+          );
           rightEdge.addColorStop(0, `rgba(${darkR}, ${darkG}, ${darkB}, 0.9)`);
           rightEdge.addColorStop(1, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
           ctx.fillStyle = rightEdge;
           ctx.fillRect(stripeX + stripeW - 20, 0, 30, H);
 
           // ── 6. VIGNETTE ───────────────────────────────────────────
-          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.9);
+          const vig = ctx.createRadialGradient(
+            W / 2,
+            H / 2,
+            H * 0.2,
+            W / 2,
+            H / 2,
+            H * 0.9,
+          );
           vig.addColorStop(0, "rgba(0,0,0,0)");
           vig.addColorStop(1, "rgba(0,0,0,0.25)");
           ctx.fillStyle = vig;
@@ -813,7 +830,14 @@ function useJerseyDecals(state: any) {
           ctx.fillRect(0, 0, W, H);
 
           // ── 6. VIGNETTE ──────────────────────────────────────────────
-          const gcVig = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.85);
+          const gcVig = ctx.createRadialGradient(
+            W / 2,
+            H / 2,
+            H * 0.25,
+            W / 2,
+            H / 2,
+            H * 0.85,
+          );
           gcVig.addColorStop(0, "rgba(0,0,0,0)");
           gcVig.addColorStop(1, "rgba(0,0,0,0.15)");
           ctx.fillStyle = gcVig;
@@ -842,29 +866,52 @@ function useJerseyDecals(state: any) {
           const tileSize = 16;
           for (let y = 0; y < H; y += tileSize) {
             for (let x = 0; x < W; x += tileSize) {
-              const isEven = ((x / tileSize) + (y / tileSize)) % 2 === 0;
-              
+              const isEven = (x / tileSize + y / tileSize) % 2 === 0;
+
               // Horizontal fiber
               const hGrad = ctx.createLinearGradient(x, y, x, y + tileSize / 2);
               const h0 = isEven ? 0.7 : 0.45;
               const h1 = isEven ? 0.85 : 0.6;
               const h2 = isEven ? 0.6 : 0.4;
-              
-              hGrad.addColorStop(0, `rgba(${Math.round(rcR * h0)}, ${Math.round(rcG * h0)}, ${Math.round(rcB * h0)}, 0.9)`);
-              hGrad.addColorStop(0.5, `rgba(${Math.round(rcR * h1)}, ${Math.round(rcG * h1)}, ${Math.round(rcB * h1)}, 1)`);
-              hGrad.addColorStop(1, `rgba(${Math.round(rcR * h2)}, ${Math.round(rcG * h2)}, ${Math.round(rcB * h2)}, 0.8)`);
+
+              hGrad.addColorStop(
+                0,
+                `rgba(${Math.round(rcR * h0)}, ${Math.round(rcG * h0)}, ${Math.round(rcB * h0)}, 0.9)`,
+              );
+              hGrad.addColorStop(
+                0.5,
+                `rgba(${Math.round(rcR * h1)}, ${Math.round(rcG * h1)}, ${Math.round(rcB * h1)}, 1)`,
+              );
+              hGrad.addColorStop(
+                1,
+                `rgba(${Math.round(rcR * h2)}, ${Math.round(rcG * h2)}, ${Math.round(rcB * h2)}, 0.8)`,
+              );
               ctx.fillStyle = hGrad;
               ctx.fillRect(x, y, tileSize, tileSize / 2);
 
               // Vertical fiber
-              const vGrad = ctx.createLinearGradient(x, y + tileSize / 2, x, y + tileSize);
+              const vGrad = ctx.createLinearGradient(
+                x,
+                y + tileSize / 2,
+                x,
+                y + tileSize,
+              );
               const v0 = isEven ? 0.45 : 0.7;
               const v1 = isEven ? 0.6 : 0.85;
               const v2 = isEven ? 0.4 : 0.6;
 
-              vGrad.addColorStop(0, `rgba(${Math.round(rcR * v0)}, ${Math.round(rcG * v0)}, ${Math.round(rcB * v0)}, 0.9)`);
-              vGrad.addColorStop(0.5, `rgba(${Math.round(rcR * v1)}, ${Math.round(rcG * v1)}, ${Math.round(rcB * v1)}, 1)`);
-              vGrad.addColorStop(1, `rgba(${Math.round(rcR * v2)}, ${Math.round(rcG * v2)}, ${Math.round(rcB * v2)}, 0.8)`);
+              vGrad.addColorStop(
+                0,
+                `rgba(${Math.round(rcR * v0)}, ${Math.round(rcG * v0)}, ${Math.round(rcB * v0)}, 0.9)`,
+              );
+              vGrad.addColorStop(
+                0.5,
+                `rgba(${Math.round(rcR * v1)}, ${Math.round(rcG * v1)}, ${Math.round(rcB * v1)}, 1)`,
+              );
+              vGrad.addColorStop(
+                1,
+                `rgba(${Math.round(rcR * v2)}, ${Math.round(rcG * v2)}, ${Math.round(rcB * v2)}, 0.8)`,
+              );
               ctx.fillStyle = vGrad;
               ctx.fillRect(x, y + tileSize / 2, tileSize, tileSize / 2);
 
@@ -924,7 +971,14 @@ function useJerseyDecals(state: any) {
           ctx.fillRect(0, 0, W, H);
 
           // Vignette
-          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.15, W / 2, H / 2, H * 0.9);
+          const vig = ctx.createRadialGradient(
+            W / 2,
+            H / 2,
+            H * 0.15,
+            W / 2,
+            H / 2,
+            H * 0.9,
+          );
           vig.addColorStop(0, "rgba(0,0,0,0)");
           vig.addColorStop(1, "rgba(0,0,0,0.55)");
           ctx.fillStyle = vig;
@@ -932,8 +986,6 @@ function useJerseyDecals(state: any) {
 
           break;
         }
-
-
 
         case "GoldDiamondJersey": {
           const W = ctx.canvas.width;
@@ -965,16 +1017,29 @@ function useJerseyDecals(state: any) {
 
               // Diamond shape
               ctx.beginPath();
-              ctx.moveTo(cx, cy - dSize * 0.45);          // top
-              ctx.lineTo(cx + dSize * 0.45, cy);           // right
-              ctx.lineTo(cx, cy + dSize * 0.45);           // bottom
-              ctx.lineTo(cx - dSize * 0.45, cy);           // left
+              ctx.moveTo(cx, cy - dSize * 0.45); // top
+              ctx.lineTo(cx + dSize * 0.45, cy); // right
+              ctx.lineTo(cx, cy + dSize * 0.45); // bottom
+              ctx.lineTo(cx - dSize * 0.45, cy); // left
               ctx.closePath();
 
-              const dGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, dSize * 0.45);
+              const dGrad = ctx.createRadialGradient(
+                cx,
+                cy,
+                0,
+                cx,
+                cy,
+                dSize * 0.45,
+              );
               dGrad.addColorStop(0, `rgba(${gdR}, ${gdG}, ${gdB}, 0.18)`);
-              dGrad.addColorStop(0.6, `rgba(${Math.round(gdR * 0.8)}, ${Math.round(gdG * 0.8)}, ${Math.round(gdB * 0.8)}, 0.10)`);
-              dGrad.addColorStop(1, `rgba(${Math.round(gdR * 0.6)}, ${Math.round(gdG * 0.6)}, ${Math.round(gdB * 0.6)}, 0.05)`);
+              dGrad.addColorStop(
+                0.6,
+                `rgba(${Math.round(gdR * 0.8)}, ${Math.round(gdG * 0.8)}, ${Math.round(gdB * 0.8)}, 0.10)`,
+              );
+              dGrad.addColorStop(
+                1,
+                `rgba(${Math.round(gdR * 0.6)}, ${Math.round(gdG * 0.6)}, ${Math.round(gdB * 0.6)}, 0.05)`,
+              );
               ctx.fillStyle = dGrad;
               ctx.fill();
 
@@ -1042,7 +1107,14 @@ function useJerseyDecals(state: any) {
           ctx.fillRect(0, H * 0.7, W, H * 0.3);
 
           // Vignette
-          const vig = ctx.createRadialGradient(W / 2, H * 0.4, H * 0.1, W / 2, H / 2, H * 0.9);
+          const vig = ctx.createRadialGradient(
+            W / 2,
+            H * 0.4,
+            H * 0.1,
+            W / 2,
+            H / 2,
+            H * 0.9,
+          );
           vig.addColorStop(0, "rgba(0,0,0,0)");
           vig.addColorStop(1, "rgba(0,0,0,0.6)");
           ctx.fillStyle = vig;
@@ -1050,7 +1122,6 @@ function useJerseyDecals(state: any) {
 
           break;
         }
-
 
         case "PurpleHexTechJersey": {
           const W = ctx.canvas.width;
@@ -1101,7 +1172,10 @@ function useJerseyDecals(state: any) {
               hexPath(cx, cy, hexR * 0.92);
               const hGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, hexR);
               hGrad.addColorStop(0, `rgba(${phR}, ${phG}, ${phB}, 0.12)`);
-              hGrad.addColorStop(1, `rgba(${Math.round(phR * 0.5)}, ${Math.round(phG * 0.5)}, ${Math.round(phB * 0.5)}, 0.04)`);
+              hGrad.addColorStop(
+                1,
+                `rgba(${Math.round(phR * 0.5)}, ${Math.round(phG * 0.5)}, ${Math.round(phB * 0.5)}, 0.04)`,
+              );
               ctx.fillStyle = hGrad;
               ctx.fill();
               ctx.strokeStyle = `rgba(${phR}, ${phG}, ${phB}, 0.45)`;
@@ -1118,7 +1192,13 @@ function useJerseyDecals(state: any) {
               const intensity = phSeed(row * 100 + col);
               if (intensity > 0.6) {
                 ctx.beginPath();
-                ctx.arc(cx, cy, 2.5 * (intensity - 0.6) * 2.5 + 0.5, 0, Math.PI * 2);
+                ctx.arc(
+                  cx,
+                  cy,
+                  2.5 * (intensity - 0.6) * 2.5 + 0.5,
+                  0,
+                  Math.PI * 2,
+                );
                 ctx.fillStyle = `rgba(${phR}, ${phG}, ${phB}, ${(intensity - 0.6) * 1.5})`;
                 ctx.fill();
               }
@@ -1157,7 +1237,14 @@ function useJerseyDecals(state: any) {
           }
 
           // Vignette
-          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.1, W / 2, H / 2, H * 0.85);
+          const vig = ctx.createRadialGradient(
+            W / 2,
+            H / 2,
+            H * 0.1,
+            W / 2,
+            H / 2,
+            H * 0.85,
+          );
           vig.addColorStop(0, "rgba(0,0,0,0)");
           vig.addColorStop(1, "rgba(0,0,0,0.65)");
           ctx.fillStyle = vig;
@@ -1233,7 +1320,7 @@ function useJerseyDecals(state: any) {
               const waveY = y + Math.sin((x / W) * Math.PI * 6 + y * 0.05) * 3;
               ctx.lineTo(x, waveY);
             }
-            ctx.strokeStyle = `rgba(${ocR}, ${ocG}, ${ocB}, ${0.04 + ((y / H) * 0.06)})`;
+            ctx.strokeStyle = `rgba(${ocR}, ${ocG}, ${ocB}, ${0.04 + (y / H) * 0.06})`;
             ctx.lineWidth = 0.7;
             ctx.stroke();
           }
@@ -1252,7 +1339,7 @@ function useJerseyDecals(state: any) {
           ctx.beginPath();
           ctx.moveTo(W * 0.25, 0);
           ctx.lineTo(W * 0.35, 0);
-          ctx.lineTo(W * 0.10, H);
+          ctx.lineTo(W * 0.1, H);
           ctx.lineTo(0, H);
           ctx.closePath();
           ctx.fillStyle = "rgba(0,0,0,0.25)";
@@ -1264,7 +1351,7 @@ function useJerseyDecals(state: any) {
           ctx.beginPath();
           ctx.moveTo(W * 0.65, 0);
           ctx.lineTo(W * 0.75, 0);
-          ctx.lineTo(W * 0.90, H);
+          ctx.lineTo(W * 0.9, H);
           ctx.lineTo(W * 1.0, H);
           ctx.closePath();
           ctx.fillStyle = "rgba(0,0,0,0.25)";
@@ -1272,14 +1359,28 @@ function useJerseyDecals(state: any) {
           ctx.restore();
 
           // Glow center
-          const glowCenter = ctx.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, W * 0.55);
+          const glowCenter = ctx.createRadialGradient(
+            W / 2,
+            H * 0.45,
+            0,
+            W / 2,
+            H * 0.45,
+            W * 0.55,
+          );
           glowCenter.addColorStop(0, `rgba(${ocR}, ${ocG}, ${ocB}, 0.18)`);
           glowCenter.addColorStop(1, `rgba(${ocR}, ${ocG}, ${ocB}, 0)`);
           ctx.fillStyle = glowCenter;
           ctx.fillRect(0, 0, W, H);
 
           // Vignette
-          const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.15, W / 2, H / 2, H * 0.9);
+          const vig = ctx.createRadialGradient(
+            W / 2,
+            H / 2,
+            H * 0.15,
+            W / 2,
+            H / 2,
+            H * 0.9,
+          );
           vig.addColorStop(0, "rgba(0,0,0,0)");
           vig.addColorStop(1, "rgba(0,0,0,0.60)");
           ctx.fillStyle = vig;
@@ -1287,7 +1388,6 @@ function useJerseyDecals(state: any) {
 
           break;
         }
-
 
         // ============================================================
         // 1. RED SHARD ENERGY JERSEY
@@ -1309,7 +1409,10 @@ function useJerseyDecals(state: any) {
           // Side panels
           const sideGrad = ctx.createLinearGradient(0, 0, W, 0);
           sideGrad.addColorStop(0, `rgb(${rcR}, ${rcG}, ${rcB})`);
-          sideGrad.addColorStop(0.5, `rgb(${Math.round(rcR * 0.35)}, ${Math.round(rcG * 0.35)}, ${Math.round(rcB * 0.35)})`);
+          sideGrad.addColorStop(
+            0.5,
+            `rgb(${Math.round(rcR * 0.35)}, ${Math.round(rcG * 0.35)}, ${Math.round(rcB * 0.35)})`,
+          );
           sideGrad.addColorStop(1, `rgb(${rcR}, ${rcG}, ${rcB})`);
           ctx.fillStyle = sideGrad;
           ctx.fillRect(0, 0, W, H);
@@ -1327,13 +1430,10 @@ function useJerseyDecals(state: any) {
 
             ctx.beginPath();
             ctx.moveTo(x, y);
-            ctx.lineTo(
-              x + Math.cos(angle) * size,
-              y + Math.sin(angle) * size
-            );
+            ctx.lineTo(x + Math.cos(angle) * size, y + Math.sin(angle) * size);
             ctx.lineTo(
               x + Math.cos(angle + 0.8) * size * 0.5,
-              y + Math.sin(angle + 0.8) * size * 0.5
+              y + Math.sin(angle + 0.8) * size * 0.5,
             );
             ctx.closePath();
 
@@ -1368,7 +1468,7 @@ function useJerseyDecals(state: any) {
             H * 0.2,
             W / 2,
             H / 2,
-            H
+            H,
           );
           vg.addColorStop(0, "rgba(0,0,0,0)");
           vg.addColorStop(1, "rgba(0,0,0,0.4)");
@@ -1399,8 +1499,14 @@ function useJerseyDecals(state: any) {
           // Neon side glow
           const glow = ctx.createLinearGradient(0, 0, W, 0);
           glow.addColorStop(0, `rgb(${ncR}, ${ncG}, ${ncB})`);
-          glow.addColorStop(0.5, `rgb(${Math.round(ncR * 0.05 + 5)}, ${Math.round(ncG * 0.05 + 10)}, ${Math.round(ncB * 0.05 + 20)})`);
-          glow.addColorStop(1, `rgb(${Math.min(255, ncR + 80)}, ${Math.min(255, ncG + 80)}, ${Math.min(255, ncB + 80)})`); // Lighter tint of primary
+          glow.addColorStop(
+            0.5,
+            `rgb(${Math.round(ncR * 0.05 + 5)}, ${Math.round(ncG * 0.05 + 10)}, ${Math.round(ncB * 0.05 + 20)})`,
+          );
+          glow.addColorStop(
+            1,
+            `rgb(${Math.min(255, ncR + 80)}, ${Math.min(255, ncG + 80)}, ${Math.min(255, ncB + 80)})`,
+          ); // Lighter tint of primary
 
           ctx.fillStyle = glow;
           ctx.globalAlpha = 0.18;
@@ -1481,9 +1587,18 @@ function useJerseyDecals(state: any) {
 
           // Toxic gradients
           const grad = ctx.createLinearGradient(0, 0, W, H);
-          grad.addColorStop(0, `rgb(${Math.min(255, Math.round(tsR * 1.3))}, ${Math.min(255, Math.round(tsG * 1.3))}, ${Math.min(255, Math.round(tsB * 1.3))})`);
-          grad.addColorStop(0.5, `rgb(${Math.round(tsR * 0.18)}, ${Math.round(tsG * 0.18)}, ${Math.round(tsB * 0.18)})`);
-          grad.addColorStop(1, `rgb(${Math.min(255, Math.round(tsR * 1.1))}, ${Math.min(255, Math.round(tsG * 1.1))}, ${Math.min(255, Math.round(tsB * 1.1))})`);
+          grad.addColorStop(
+            0,
+            `rgb(${Math.min(255, Math.round(tsR * 1.3))}, ${Math.min(255, Math.round(tsG * 1.3))}, ${Math.min(255, Math.round(tsB * 1.3))})`,
+          );
+          grad.addColorStop(
+            0.5,
+            `rgb(${Math.round(tsR * 0.18)}, ${Math.round(tsG * 0.18)}, ${Math.round(tsB * 0.18)})`,
+          );
+          grad.addColorStop(
+            1,
+            `rgb(${Math.min(255, Math.round(tsR * 1.1))}, ${Math.min(255, Math.round(tsG * 1.1))}, ${Math.min(255, Math.round(tsB * 1.1))})`,
+          );
 
           ctx.globalAlpha = 0.25;
           ctx.fillStyle = grad;
@@ -1520,7 +1635,7 @@ function useJerseyDecals(state: any) {
             ctx.moveTo(x, y);
             ctx.lineTo(
               x + (Math.random() - 0.5) * 120,
-              y + (Math.random() - 0.5) * 120
+              y + (Math.random() - 0.5) * 120,
             );
             ctx.stroke();
           }
@@ -1552,8 +1667,14 @@ function useJerseyDecals(state: any) {
           // Side lighting
           const lg = ctx.createLinearGradient(0, 0, W, 0);
           lg.addColorStop(0, `rgb(${wmR}, ${wmG}, ${wmB})`);
-          lg.addColorStop(0.5, `rgb(${Math.round(wmR * 0.08)}, ${Math.round(wmG * 0.08)}, ${Math.round(wmB * 0.08)})`);
-          lg.addColorStop(1, `rgb(${Math.min(255, wmR + 80)}, ${Math.min(255, wmG + 80)}, ${Math.min(255, wmB + 80)})`); // Lighter tint of primary
+          lg.addColorStop(
+            0.5,
+            `rgb(${Math.round(wmR * 0.08)}, ${Math.round(wmG * 0.08)}, ${Math.round(wmB * 0.08)})`,
+          );
+          lg.addColorStop(
+            1,
+            `rgb(${Math.min(255, wmR + 80)}, ${Math.min(255, wmG + 80)}, ${Math.min(255, wmB + 80)})`,
+          ); // Lighter tint of primary
 
           ctx.globalAlpha = 0.3;
           ctx.fillStyle = lg;
@@ -1567,10 +1688,7 @@ function useJerseyDecals(state: any) {
             ctx.beginPath();
 
             for (let x = 0; x <= W; x += 10) {
-              const y =
-                H / 2 +
-                Math.sin((x + offset) * 0.015) * 40 +
-                i * 18;
+              const y = H / 2 + Math.sin((x + offset) * 0.015) * 40 + i * 18;
 
               if (x === 0) {
                 ctx.moveTo(x, y);
@@ -1601,12 +1719,7 @@ function useJerseyDecals(state: any) {
           }
 
           // Vertical center fade
-          const center = ctx.createLinearGradient(
-            W * 0.3,
-            0,
-            W * 0.7,
-            0
-          );
+          const center = ctx.createLinearGradient(W * 0.3, 0, W * 0.7, 0);
 
           center.addColorStop(0, "rgba(0,0,0,0)");
           center.addColorStop(0.5, "rgba(255,255,255,0.05)");
@@ -1617,7 +1730,6 @@ function useJerseyDecals(state: any) {
 
           break;
         }
-
 
         case "FlameStripeJersey": {
           const W = ctx.canvas.width;
@@ -1630,8 +1742,8 @@ function useJerseyDecals(state: any) {
 
           // Derived colors
           const lightBase = `rgb(${Math.min(255, Math.round(fsR * 0.12 + 230))}, ${Math.min(255, Math.round(fsG * 0.12 + 235))}, ${Math.min(255, Math.round(fsB * 0.12 + 240))})`;
-          const spikeColor = `rgb(${fsR}, ${fsG}, ${fsB})`;  // primary color spikes
-          const darkColor  = `rgb(${Math.round(fsR * 0.15)}, ${Math.round(fsG * 0.15)}, ${Math.round(fsB * 0.15)})`; // very dark accent spikes
+          const spikeColor = `rgb(${fsR}, ${fsG}, ${fsB})`; // primary color spikes
+          const darkColor = `rgb(${Math.round(fsR * 0.15)}, ${Math.round(fsG * 0.15)}, ${Math.round(fsB * 0.15)})`; // very dark accent spikes
 
           // Light base
           ctx.fillStyle = lightBase;
@@ -1644,7 +1756,7 @@ function useJerseyDecals(state: any) {
             botY: number,
             maxW: number,
             color: string,
-            pointUp: boolean
+            pointUp: boolean,
           ) => {
             const midY = topY + (botY - topY) * 0.35;
 
@@ -1653,38 +1765,56 @@ function useJerseyDecals(state: any) {
               // Wide at top, tapers to point at bottom
               ctx.moveTo(cx, botY);
               ctx.bezierCurveTo(
-                cx - maxW * 0.3, botY - (botY - topY) * 0.3,
-                cx - maxW,       midY,
-                cx - maxW * 0.8, topY
+                cx - maxW * 0.3,
+                botY - (botY - topY) * 0.3,
+                cx - maxW,
+                midY,
+                cx - maxW * 0.8,
+                topY,
               );
               ctx.bezierCurveTo(
-                cx - maxW * 0.3, topY,
-                cx + maxW * 0.3, topY,
-                cx + maxW * 0.8, topY
+                cx - maxW * 0.3,
+                topY,
+                cx + maxW * 0.3,
+                topY,
+                cx + maxW * 0.8,
+                topY,
               );
               ctx.bezierCurveTo(
-                cx + maxW,       midY,
-                cx + maxW * 0.3, botY - (botY - topY) * 0.3,
-                cx,              botY
+                cx + maxW,
+                midY,
+                cx + maxW * 0.3,
+                botY - (botY - topY) * 0.3,
+                cx,
+                botY,
               );
             } else {
               // Wide at bottom, tapers to point at top
               const midY2 = topY + (botY - topY) * 0.65;
               ctx.moveTo(cx, topY);
               ctx.bezierCurveTo(
-                cx - maxW * 0.3, topY + (botY - topY) * 0.3,
-                cx - maxW,       midY2,
-                cx - maxW * 0.8, botY
+                cx - maxW * 0.3,
+                topY + (botY - topY) * 0.3,
+                cx - maxW,
+                midY2,
+                cx - maxW * 0.8,
+                botY,
               );
               ctx.bezierCurveTo(
-                cx - maxW * 0.3, botY,
-                cx + maxW * 0.3, botY,
-                cx + maxW * 0.8, botY
+                cx - maxW * 0.3,
+                botY,
+                cx + maxW * 0.3,
+                botY,
+                cx + maxW * 0.8,
+                botY,
               );
               ctx.bezierCurveTo(
-                cx + maxW,       midY2,
-                cx + maxW * 0.3, topY + (botY - topY) * 0.3,
-                cx,              topY
+                cx + maxW,
+                midY2,
+                cx + maxW * 0.3,
+                topY + (botY - topY) * 0.3,
+                cx,
+                topY,
               );
             }
             ctx.closePath();
@@ -1696,8 +1826,8 @@ function useJerseyDecals(state: any) {
           const colW = W / 11;
 
           const colPattern = [
-            spikeColor,  // primary
-            darkColor,   // dark accent
+            spikeColor, // primary
+            darkColor, // dark accent
             spikeColor,
             spikeColor,
             darkColor,
@@ -1721,10 +1851,10 @@ function useJerseyDecals(state: any) {
             const spikeCount = 4 + Math.floor(fsSeed(col * 3) * 3);
 
             for (let s = 0; s < spikeCount; s++) {
-              const topY   = -20 + fsSeed(col * 10 + s) * H * 0.15;
+              const topY = -20 + fsSeed(col * 10 + s) * H * 0.15;
               const height = H * 0.45 + fsSeed(col * 10 + s + 1) * H * 0.45;
-              const botY   = topY + height;
-              const maxW   = colW * (0.35 + fsSeed(col * 10 + s + 2) * 0.30);
+              const botY = topY + height;
+              const maxW = colW * (0.35 + fsSeed(col * 10 + s + 2) * 0.3);
 
               drawSpike(cx, topY, Math.min(botY, H + 20), maxW, color, false);
             }
@@ -1737,10 +1867,10 @@ function useJerseyDecals(state: any) {
             const spikeCount = 3 + Math.floor(fsSeed(col * 7 + 50) * 3);
 
             for (let s = 0; s < spikeCount; s++) {
-              const botY   = H + 20 - fsSeed(col * 10 + s + 30) * H * 0.15;
-              const height = H * 0.35 + fsSeed(col * 10 + s + 31) * H * 0.40;
-              const topY   = botY - height;
-              const maxW   = colW * (0.30 + fsSeed(col * 10 + s + 32) * 0.28);
+              const botY = H + 20 - fsSeed(col * 10 + s + 30) * H * 0.15;
+              const height = H * 0.35 + fsSeed(col * 10 + s + 31) * H * 0.4;
+              const topY = botY - height;
+              const maxW = colW * (0.3 + fsSeed(col * 10 + s + 32) * 0.28);
 
               drawSpike(cx, Math.max(topY, -20), botY, maxW, color, true);
             }
@@ -1753,18 +1883,18 @@ function useJerseyDecals(state: any) {
             const spikeCount = 2 + Math.floor(fsSeed(col * 13 + 200) * 2);
 
             for (let s = 0; s < spikeCount; s++) {
-              const topY   = -10 + fsSeed(col * 13 + s + 200) * H * 0.2;
-              const height = H * 0.30 + fsSeed(col * 13 + s + 201) * H * 0.35;
-              const botY   = topY + height;
-              const maxW   = colW * (0.18 + fsSeed(col * 13 + s + 202) * 0.15);
+              const topY = -10 + fsSeed(col * 13 + s + 200) * H * 0.2;
+              const height = H * 0.3 + fsSeed(col * 13 + s + 201) * H * 0.35;
+              const botY = topY + height;
+              const maxW = colW * (0.18 + fsSeed(col * 13 + s + 202) * 0.15);
               drawSpike(cx, topY, Math.min(botY, H + 10), maxW, color, false);
             }
 
             for (let s = 0; s < spikeCount; s++) {
-              const botY   = H + 10 - fsSeed(col * 13 + s + 210) * H * 0.15;
-              const height = H * 0.25 + fsSeed(col * 13 + s + 211) * H * 0.30;
-              const topY   = botY - height;
-              const maxW   = colW * (0.18 + fsSeed(col * 13 + s + 212) * 0.15);
+              const botY = H + 10 - fsSeed(col * 13 + s + 210) * H * 0.15;
+              const height = H * 0.25 + fsSeed(col * 13 + s + 211) * H * 0.3;
+              const topY = botY - height;
+              const maxW = colW * (0.18 + fsSeed(col * 13 + s + 212) * 0.15);
               drawSpike(cx, Math.max(topY, -10), botY, maxW, color, true);
             }
           }
@@ -1775,9 +1905,10 @@ function useJerseyDecals(state: any) {
             ctx.beginPath();
             ctx.moveTo(cx, 0);
             ctx.lineTo(cx, H);
-            ctx.strokeStyle = colPattern[col] === darkColor
-              ? `rgba(${Math.round(fsR * 0.15)}, ${Math.round(fsG * 0.15)}, ${Math.round(fsB * 0.15)}, 0.15)`
-              : `rgba(${fsR}, ${fsG}, ${fsB}, 0.12)`;
+            ctx.strokeStyle =
+              colPattern[col] === darkColor
+                ? `rgba(${Math.round(fsR * 0.15)}, ${Math.round(fsG * 0.15)}, ${Math.round(fsB * 0.15)}, 0.15)`
+                : `rgba(${fsR}, ${fsG}, ${fsB}, 0.12)`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -1785,214 +1916,228 @@ function useJerseyDecals(state: any) {
           break;
         }
 
-
         case "GrungeTriangleJersey": {
-  const W = ctx.canvas.width;
-  const H = ctx.canvas.height;
+          const W = ctx.canvas.width;
+          const H = ctx.canvas.height;
 
-  // ── Parse primaryColor into RGB ──────────────────────────────
-  const pr = parseInt(primaryColor.slice(1, 3), 16);
-  const pg = parseInt(primaryColor.slice(3, 5), 16);
-  const pb = parseInt(primaryColor.slice(5, 7), 16);
+          // ── Parse primaryColor into RGB ──────────────────────────────
+          const pr = parseInt(primaryColor.slice(1, 3), 16);
+          const pg = parseInt(primaryColor.slice(3, 5), 16);
+          const pb = parseInt(primaryColor.slice(5, 7), 16);
 
-  // Light side: 60% white blend
-  const lr = Math.round(pr * 0.4 + 255 * 0.6);
-  const lg = Math.round(pg * 0.4 + 255 * 0.6);
-  const lb = Math.round(pb * 0.4 + 255 * 0.6);
+          // Light side: 60% white blend
+          const lr = Math.round(pr * 0.4 + 255 * 0.6);
+          const lg = Math.round(pg * 0.4 + 255 * 0.6);
+          const lb = Math.round(pb * 0.4 + 255 * 0.6);
 
-  // Dark stripe: 40% of primary
-  const darkR = Math.round(pr * 0.40);
-  const darkG = Math.round(pg * 0.40);
-  const darkB = Math.round(pb * 0.40);
+          // Dark stripe: 40% of primary
+          const darkR = Math.round(pr * 0.4);
+          const darkG = Math.round(pg * 0.4);
+          const darkB = Math.round(pb * 0.4);
 
-  // Deep dark: 28% — triangles, dots, scratches
-  const deepR = Math.round(pr * 0.28);
-  const deepG = Math.round(pg * 0.28);
-  const deepB = Math.round(pb * 0.28);
+          // Deep dark: 28% — triangles, dots, scratches
+          const deepR = Math.round(pr * 0.28);
+          const deepG = Math.round(pg * 0.28);
+          const deepB = Math.round(pb * 0.28);
 
-  const gtSeed = (s: number) => {
-    const x = Math.sin(s) * 10000;
-    return x - Math.floor(x);
-  };
+          const gtSeed = (s: number) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+          };
 
-  // ── 1. BASE BACKGROUND ───────────────────────────────────────
-  ctx.fillStyle = `rgb(${lr}, ${lg}, ${lb})`;
-  ctx.fillRect(0, 0, W, H);
+          // ── 1. BASE BACKGROUND ───────────────────────────────────────
+          ctx.fillStyle = `rgb(${lr}, ${lg}, ${lb})`;
+          ctx.fillRect(0, 0, W, H);
 
-  // ── 2. SHARP TRIANGLE + GRUNGE SHAPES (full canvas) ─────────
-  const drawSharpTriangles = (
-    areaX: number,
-    areaW: number,
-    count: number,
-    seedOffset: number,
-  ) => {
-    for (let i = 0; i < count; i++) {
-      const r1 = gtSeed(i * 7 + seedOffset);
-      const r2 = gtSeed(i * 7 + 1 + seedOffset);
-      const r3 = gtSeed(i * 7 + 2 + seedOffset);
-      const r4 = gtSeed(i * 7 + 3 + seedOffset);
-      const r5 = gtSeed(i * 7 + 4 + seedOffset);
-      const r6 = gtSeed(i * 7 + 5 + seedOffset);
-      const r7 = gtSeed(i * 7 + 6 + seedOffset);
+          // ── 2. SHARP TRIANGLE + GRUNGE SHAPES (full canvas) ─────────
+          const drawSharpTriangles = (
+            areaX: number,
+            areaW: number,
+            count: number,
+            seedOffset: number,
+          ) => {
+            for (let i = 0; i < count; i++) {
+              const r1 = gtSeed(i * 7 + seedOffset);
+              const r2 = gtSeed(i * 7 + 1 + seedOffset);
+              const r3 = gtSeed(i * 7 + 2 + seedOffset);
+              const r4 = gtSeed(i * 7 + 3 + seedOffset);
+              const r5 = gtSeed(i * 7 + 4 + seedOffset);
+              const r6 = gtSeed(i * 7 + 5 + seedOffset);
+              const r7 = gtSeed(i * 7 + 6 + seedOffset);
 
-      const x1 = areaX + r1 * areaW;
-      const y1 = r2 * H;
+              const x1 = areaX + r1 * areaW;
+              const y1 = r2 * H;
 
-      // Sharp elongated triangles — like shattered glass
-      const longSide = 30 + r3 * 130;
-      const shortSide = 8 + r4 * 35;
-      const angle = r5 * Math.PI * 2;
+              // Sharp elongated triangles — like shattered glass
+              const longSide = 30 + r3 * 130;
+              const shortSide = 8 + r4 * 35;
+              const angle = r5 * Math.PI * 2;
 
-      const x2 = x1 + Math.cos(angle) * longSide;
-      const y2 = y1 + Math.sin(angle) * longSide;
-      const x3 = x1 + Math.cos(angle + 0.25) * shortSide;
-      const y3 = y1 + Math.sin(angle + 0.25) * shortSide;
+              const x2 = x1 + Math.cos(angle) * longSide;
+              const y2 = y1 + Math.sin(angle) * longSide;
+              const x3 = x1 + Math.cos(angle + 0.25) * shortSide;
+              const y3 = y1 + Math.sin(angle + 0.25) * shortSide;
 
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.lineTo(x3, y3);
-      ctx.closePath();
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.lineTo(x3, y3);
+              ctx.closePath();
 
-      if (r6 > 0.45) {
-        // Filled triangle
-        ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.55 + r7 * 0.30})`;
-        ctx.fill();
-      } else {
-        // Outlined triangle
-        ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.70 + r7 * 0.25})`;
-        ctx.lineWidth = 1.0 + r6 * 2.5;
-        ctx.stroke();
-      }
+              if (r6 > 0.45) {
+                // Filled triangle
+                ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.55 + r7 * 0.3})`;
+                ctx.fill();
+              } else {
+                // Outlined triangle
+                ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.7 + r7 * 0.25})`;
+                ctx.lineWidth = 1.0 + r6 * 2.5;
+                ctx.stroke();
+              }
 
-      // Extra sharp shard lines radiating from triangle
-      if (r6 > 0.2) {
-        ctx.save();
-        ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.35 + r7 * 0.25})`;
-        for (let sc = 0; sc < 4; sc++) {
-          const sx = x1 + (gtSeed(i * 15 + sc) - 0.5) * longSide * 0.8;
-          const sy = y1 + (gtSeed(i * 15 + sc + 1) - 0.5) * longSide * 0.8;
-          const ex = sx + (gtSeed(i * 15 + sc + 2) - 0.5) * 45;
-          const ey = sy + (gtSeed(i * 15 + sc + 3) - 0.5) * 45;
-          ctx.lineWidth = 0.6 + gtSeed(i * 15 + sc + 4) * 1.2;
-          ctx.beginPath();
-          ctx.moveTo(sx, sy);
-          ctx.lineTo(ex, ey);
-          ctx.stroke();
+              // Extra sharp shard lines radiating from triangle
+              if (r6 > 0.2) {
+                ctx.save();
+                ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.35 + r7 * 0.25})`;
+                for (let sc = 0; sc < 4; sc++) {
+                  const sx = x1 + (gtSeed(i * 15 + sc) - 0.5) * longSide * 0.8;
+                  const sy =
+                    y1 + (gtSeed(i * 15 + sc + 1) - 0.5) * longSide * 0.8;
+                  const ex = sx + (gtSeed(i * 15 + sc + 2) - 0.5) * 45;
+                  const ey = sy + (gtSeed(i * 15 + sc + 3) - 0.5) * 45;
+                  ctx.lineWidth = 0.6 + gtSeed(i * 15 + sc + 4) * 1.2;
+                  ctx.beginPath();
+                  ctx.moveTo(sx, sy);
+                  ctx.lineTo(ex, ey);
+                  ctx.stroke();
+                }
+                ctx.restore();
+              }
+
+              // Grunge brush stroke blobs
+              if (r7 > 0.55) {
+                ctx.save();
+                ctx.globalAlpha = 0.18 + r6 * 0.22;
+                ctx.fillStyle = `rgb(${deepR}, ${deepG}, ${deepB})`;
+                const blobX = x1 + (gtSeed(i * 9 + 1) - 0.5) * longSide;
+                const blobY = y1 + (gtSeed(i * 9 + 2) - 0.5) * longSide;
+                const blobW = 10 + gtSeed(i * 9 + 3) * 40;
+                const blobH = 4 + gtSeed(i * 9 + 4) * 15;
+                const blobA = gtSeed(i * 9 + 5) * Math.PI;
+                ctx.translate(blobX, blobY);
+                ctx.rotate(blobA);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, blobW, blobH, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+              }
+            }
+          };
+
+          // Draw triangles all over — dense coverage like image
+          drawSharpTriangles(0, W * 0.42, 80, 1);
+          drawSharpTriangles(W * 0.58, W * 0.42, 80, 77);
+          // Extra layer for density
+          drawSharpTriangles(0, W * 0.42, 40, 200);
+          drawSharpTriangles(W * 0.58, W * 0.42, 40, 300);
+
+          // ── 3. HALFTONE DOTS — transition into center stripe ─────────
+          const drawHalftone = (
+            startX: number,
+            endX: number,
+            startY: number,
+            endY: number,
+            fadeToCenter: boolean,
+          ) => {
+            const spacing = 16;
+            for (let hy = startY; hy < endY; hy += spacing) {
+              for (let hx = startX; hx < endX; hx += spacing) {
+                const distFromCenter = Math.abs(hx - W / 2) / (W / 2);
+                const fade = fadeToCenter ? 1 - distFromCenter : distFromCenter;
+                const dotR = 5.5 * fade;
+                if (dotR < 0.4) continue;
+                ctx.beginPath();
+                ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.45 * fade + 0.08})`;
+                ctx.fill();
+              }
+            }
+          };
+
+          // Top halftone band
+          drawHalftone(0, W, 0, H * 0.12, false);
+          // Bottom halftone band
+          drawHalftone(0, W, H * 0.8, H, false);
+          // Flanking the center stripe
+          drawHalftone(W * 0.28, W * 0.72, 0, H, true);
+
+          // ── 4. CENTER DARK STRIPE ────────────────────────────────────
+          const stripeX = W * 0.32;
+          const stripeW = W * 0.36;
+
+          ctx.fillStyle = `rgb(${darkR}, ${darkG}, ${darkB})`;
+          ctx.fillRect(stripeX, 0, stripeW, H);
+
+          // Grunge scratch lines on stripe — near-vertical
+          ctx.save();
+          for (let i = 0; i < 150; i++) {
+            const sx = stripeX + gtSeed(i * 2) * stripeW;
+            const sy = gtSeed(i * 2 + 1) * H;
+            const len = 30 + gtSeed(i * 3) * 110;
+            const ang = -0.15 + gtSeed(i * 4) * 0.3;
+            ctx.strokeStyle = `rgba(${(darkR * 0.6) | 0}, ${(darkG * 0.6) | 0}, ${(darkB * 0.6) | 0}, 0.55)`;
+            ctx.lineWidth = 0.4 + gtSeed(i * 5) * 1.8;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + Math.cos(ang) * len, sy + Math.sin(ang) * len);
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          // Stripe soft left edge
+          const leftEdge = ctx.createLinearGradient(
+            stripeX - 12,
+            0,
+            stripeX + 18,
+            0,
+          );
+          leftEdge.addColorStop(0, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
+          leftEdge.addColorStop(1, `rgba(${darkR}, ${darkG}, ${darkB}, 1.0)`);
+          ctx.fillStyle = leftEdge;
+          ctx.fillRect(stripeX - 12, 0, 30, H);
+
+          // Stripe soft right edge
+          const rightEdge = ctx.createLinearGradient(
+            stripeX + stripeW - 18,
+            0,
+            stripeX + stripeW + 12,
+            0,
+          );
+          rightEdge.addColorStop(0, `rgba(${darkR}, ${darkG}, ${darkB}, 1.0)`);
+          rightEdge.addColorStop(1, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
+          ctx.fillStyle = rightEdge;
+          ctx.fillRect(stripeX + stripeW - 18, 0, 30, H);
+
+          // ── 5. HALFTONE DOTS ON STRIPE (top & bottom) ────────────────
+          drawHalftone(stripeX, stripeX + stripeW, 0, H * 0.14, false);
+          drawHalftone(stripeX, stripeX + stripeW, H * 0.78, H, false);
+
+          // ── 6. VIGNETTE ──────────────────────────────────────────────
+          const vig = ctx.createRadialGradient(
+            W / 2,
+            H / 2,
+            H * 0.18,
+            W / 2,
+            H / 2,
+            H * 0.92,
+          );
+          vig.addColorStop(0, "rgba(0,0,0,0)");
+          vig.addColorStop(1, "rgba(0,0,0,0.30)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, W, H);
+
+          break;
         }
-        ctx.restore();
-      }
-
-      // Grunge brush stroke blobs
-      if (r7 > 0.55) {
-        ctx.save();
-        ctx.globalAlpha = 0.18 + r6 * 0.22;
-        ctx.fillStyle = `rgb(${deepR}, ${deepG}, ${deepB})`;
-        const blobX = x1 + (gtSeed(i * 9 + 1) - 0.5) * longSide;
-        const blobY = y1 + (gtSeed(i * 9 + 2) - 0.5) * longSide;
-        const blobW = 10 + gtSeed(i * 9 + 3) * 40;
-        const blobH = 4 + gtSeed(i * 9 + 4) * 15;
-        const blobA = gtSeed(i * 9 + 5) * Math.PI;
-        ctx.translate(blobX, blobY);
-        ctx.rotate(blobA);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, blobW, blobH, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-  };
-
-  // Draw triangles all over — dense coverage like image
-  drawSharpTriangles(0,       W * 0.42, 80, 1);
-  drawSharpTriangles(W * 0.58, W * 0.42, 80, 77);
-  // Extra layer for density
-  drawSharpTriangles(0,       W * 0.42, 40, 200);
-  drawSharpTriangles(W * 0.58, W * 0.42, 40, 300);
-
-  // ── 3. HALFTONE DOTS — transition into center stripe ─────────
-  const drawHalftone = (
-    startX: number,
-    endX: number,
-    startY: number,
-    endY: number,
-    fadeToCenter: boolean,
-  ) => {
-    const spacing = 16;
-    for (let hy = startY; hy < endY; hy += spacing) {
-      for (let hx = startX; hx < endX; hx += spacing) {
-        const distFromCenter = Math.abs(hx - W / 2) / (W / 2);
-        const fade = fadeToCenter ? 1 - distFromCenter : distFromCenter;
-        const dotR = 5.5 * fade;
-        if (dotR < 0.4) continue;
-        ctx.beginPath();
-        ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, ${0.45 * fade + 0.08})`;
-        ctx.fill();
-      }
-    }
-  };
-
-  // Top halftone band
-  drawHalftone(0, W, 0, H * 0.12, false);
-  // Bottom halftone band
-  drawHalftone(0, W, H * 0.80, H, false);
-  // Flanking the center stripe
-  drawHalftone(W * 0.28, W * 0.72, 0, H, true);
-
-  // ── 4. CENTER DARK STRIPE ────────────────────────────────────
-  const stripeX = W * 0.32;
-  const stripeW = W * 0.36;
-
-  ctx.fillStyle = `rgb(${darkR}, ${darkG}, ${darkB})`;
-  ctx.fillRect(stripeX, 0, stripeW, H);
-
-  // Grunge scratch lines on stripe — near-vertical
-  ctx.save();
-  for (let i = 0; i < 150; i++) {
-    const sx  = stripeX + gtSeed(i * 2) * stripeW;
-    const sy  = gtSeed(i * 2 + 1) * H;
-    const len = 30 + gtSeed(i * 3) * 110;
-    const ang = -0.15 + gtSeed(i * 4) * 0.30;
-    ctx.strokeStyle = `rgba(${darkR * 0.6 | 0}, ${darkG * 0.6 | 0}, ${darkB * 0.6 | 0}, 0.55)`;
-    ctx.lineWidth = 0.4 + gtSeed(i * 5) * 1.8;
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(sx + Math.cos(ang) * len, sy + Math.sin(ang) * len);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Stripe soft left edge
-  const leftEdge = ctx.createLinearGradient(stripeX - 12, 0, stripeX + 18, 0);
-  leftEdge.addColorStop(0, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
-  leftEdge.addColorStop(1, `rgba(${darkR}, ${darkG}, ${darkB}, 1.0)`);
-  ctx.fillStyle = leftEdge;
-  ctx.fillRect(stripeX - 12, 0, 30, H);
-
-  // Stripe soft right edge
-  const rightEdge = ctx.createLinearGradient(
-    stripeX + stripeW - 18, 0,
-    stripeX + stripeW + 12, 0,
-  );
-  rightEdge.addColorStop(0, `rgba(${darkR}, ${darkG}, ${darkB}, 1.0)`);
-  rightEdge.addColorStop(1, `rgba(${lr}, ${lg}, ${lb}, 0.0)`);
-  ctx.fillStyle = rightEdge;
-  ctx.fillRect(stripeX + stripeW - 18, 0, 30, H);
-
-  // ── 5. HALFTONE DOTS ON STRIPE (top & bottom) ────────────────
-  drawHalftone(stripeX, stripeX + stripeW, 0, H * 0.14, false);
-  drawHalftone(stripeX, stripeX + stripeW, H * 0.78, H, false);
-
-  // ── 6. VIGNETTE ──────────────────────────────────────────────
-  const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.18, W / 2, H / 2, H * 0.92);
-  vig.addColorStop(0, "rgba(0,0,0,0)");
-  vig.addColorStop(1, "rgba(0,0,0,0.30)");
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, W, H);
-
-  break;
-}
 
         case "Stripes": {
           ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
@@ -2316,8 +2461,20 @@ function MiniPatternSVG({
         return (
           <>
             {/* Left/right side panels */}
-            <rect x="0" y="0" width="32" height="100" fill="rgba(26,179,232,0.5)" />
-            <rect x="68" y="0" width="32" height="100" fill="rgba(26,179,232,0.5)" />
+            <rect
+              x="0"
+              y="0"
+              width="32"
+              height="100"
+              fill="rgba(26,179,232,0.5)"
+            />
+            <rect
+              x="68"
+              y="0"
+              width="32"
+              height="100"
+              fill="rgba(26,179,232,0.5)"
+            />
             {/* Center dark stripe */}
             <rect x="33" y="0" width="34" height="100" fill={secondary} />
             {/* Grunge triangle hints */}
@@ -2372,20 +2529,79 @@ function MiniPatternSVG({
         return (
           <>
             {/* Carbon weave tile previews */}
-            <rect x="10" y="20" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
-            <rect x="55" y="20" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
-            <rect x="10" y="55" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
-            <rect x="55" y="55" width="35" height="25" fill={secondary} stroke={white} strokeWidth="1" />
+            <rect
+              x="10"
+              y="20"
+              width="35"
+              height="25"
+              fill={secondary}
+              stroke={white}
+              strokeWidth="1"
+            />
+            <rect
+              x="55"
+              y="20"
+              width="35"
+              height="25"
+              fill={secondary}
+              stroke={white}
+              strokeWidth="1"
+            />
+            <rect
+              x="10"
+              y="55"
+              width="35"
+              height="25"
+              fill={secondary}
+              stroke={white}
+              strokeWidth="1"
+            />
+            <rect
+              x="55"
+              y="55"
+              width="35"
+              height="25"
+              fill={secondary}
+              stroke={white}
+              strokeWidth="1"
+            />
             {/* Diagonal slashes */}
-            <line x1="0" y1="30" x2="40" y2="0" stroke={white} strokeWidth="3" opacity="0.6" />
-            <line x1="60" y1="100" x2="100" y2="70" stroke={white} strokeWidth="3" opacity="0.6" />
+            <line
+              x1="0"
+              y1="30"
+              x2="40"
+              y2="0"
+              stroke={white}
+              strokeWidth="3"
+              opacity="0.6"
+            />
+            <line
+              x1="60"
+              y1="100"
+              x2="100"
+              y2="70"
+              stroke={white}
+              strokeWidth="3"
+              opacity="0.6"
+            />
           </>
         );
       case "GoldDiamondJersey":
         return (
           <>
-            <polygon points="50,15 75,50 50,85 25,50" fill="none" stroke={white} strokeWidth="2.5" />
-            <polygon points="50,30 63,50 50,70 37,50" fill="none" stroke={white} strokeWidth="1.2" opacity="0.7" />
+            <polygon
+              points="50,15 75,50 50,85 25,50"
+              fill="none"
+              stroke={white}
+              strokeWidth="2.5"
+            />
+            <polygon
+              points="50,30 63,50 50,70 37,50"
+              fill="none"
+              stroke={white}
+              strokeWidth="1.2"
+              opacity="0.7"
+            />
             {/* Some flare dots */}
             <circle cx="20" cy="20" r="1.5" fill={white} />
             <circle cx="80" cy="20" r="1.5" fill={white} />
@@ -2400,12 +2616,36 @@ function MiniPatternSVG({
         return (
           <>
             {/* Multiple hexagons */}
-            <path d="M 50,25 L 72,37 L 72,63 L 50,75 L 28,63 L 28,37 Z" fill="none" stroke={white} strokeWidth="2.2" />
-            <path d="M 50,35 L 63,42 L 63,58 L 50,65 L 37,58 L 37,42 Z" fill="none" stroke={secondary} strokeWidth="1" />
+            <path
+              d="M 50,25 L 72,37 L 72,63 L 50,75 L 28,63 L 28,37 Z"
+              fill="none"
+              stroke={white}
+              strokeWidth="2.2"
+            />
+            <path
+              d="M 50,35 L 63,42 L 63,58 L 50,65 L 37,58 L 37,42 Z"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="1"
+            />
             <circle cx="50" cy="50" r="3.5" fill={white} />
             {/* Streaks */}
-            <line x1="10" y1="10" x2="25" y2="90" stroke={secondary} strokeWidth="1.5" />
-            <line x1="90" y1="10" x2="75" y2="90" stroke={secondary} strokeWidth="1.5" />
+            <line
+              x1="10"
+              y1="10"
+              x2="25"
+              y2="90"
+              stroke={secondary}
+              strokeWidth="1.5"
+            />
+            <line
+              x1="90"
+              y1="10"
+              x2="75"
+              y2="90"
+              stroke={secondary}
+              strokeWidth="1.5"
+            />
           </>
         );
       case "OrangeCamoWaveJersey":
@@ -2414,10 +2654,24 @@ function MiniPatternSVG({
             {/* Camo blobs */}
             <path d="M 15,20 Q 30,10 40,25 T 25,50 Z" fill={secondary} />
             <path d="M 60,60 Q 80,45 90,65 T 75,85 Z" fill={secondary} />
-            <path d="M 70,20 Q 85,15 80,35 T 55,30 Z" fill={white} opacity="0.6" />
+            <path
+              d="M 70,20 Q 85,15 80,35 T 55,30 Z"
+              fill={white}
+              opacity="0.6"
+            />
             {/* Waves */}
-            <path d="M 0,35 Q 25,30 50,35 T 100,35" fill="none" stroke={white} strokeWidth="1" />
-            <path d="M 0,65 Q 25,60 50,65 T 100,65" fill="none" stroke={white} strokeWidth="1" />
+            <path
+              d="M 0,35 Q 25,30 50,35 T 100,35"
+              fill="none"
+              stroke={white}
+              strokeWidth="1"
+            />
+            <path
+              d="M 0,65 Q 25,60 50,65 T 100,65"
+              fill="none"
+              stroke={white}
+              strokeWidth="1"
+            />
           </>
         );
       case "RedShardEnergy":
@@ -2430,23 +2684,94 @@ function MiniPatternSVG({
             <polygon points="35,20 45,15 48,25 38,30" fill={white} />
             <polygon points="55,50 68,45 62,60 52,65" fill={white} />
             {/* Streaks */}
-            <line x1="30" y1="0" x2="60" y2="100" stroke={white} strokeWidth="1" opacity="0.4" />
-            <line x1="50" y1="0" x2="80" y2="100" stroke={white} strokeWidth="1.5" opacity="0.4" />
+            <line
+              x1="30"
+              y1="0"
+              x2="60"
+              y2="100"
+              stroke={white}
+              strokeWidth="1"
+              opacity="0.4"
+            />
+            <line
+              x1="50"
+              y1="0"
+              x2="80"
+              y2="100"
+              stroke={white}
+              strokeWidth="1.5"
+              opacity="0.4"
+            />
           </>
         );
       case "NeonCyberGrid":
         return (
           <>
             {/* Grid */}
-            <line x1="25" y1="0" x2="25" y2="100" stroke={white} strokeWidth="0.8" opacity="0.25" />
-            <line x1="50" y1="0" x2="50" y2="100" stroke={white} strokeWidth="0.8" opacity="0.25" />
-            <line x1="75" y1="0" x2="75" y2="100" stroke={white} strokeWidth="0.8" opacity="0.25" />
-            <line x1="0" y1="30" x2="100" y2="30" stroke={white} strokeWidth="0.8" opacity="0.25" />
-            <line x1="0" y1="65" x2="100" y2="65" stroke={white} strokeWidth="0.8" opacity="0.25" />
+            <line
+              x1="25"
+              y1="0"
+              x2="25"
+              y2="100"
+              stroke={white}
+              strokeWidth="0.8"
+              opacity="0.25"
+            />
+            <line
+              x1="50"
+              y1="0"
+              x2="50"
+              y2="100"
+              stroke={white}
+              strokeWidth="0.8"
+              opacity="0.25"
+            />
+            <line
+              x1="75"
+              y1="0"
+              x2="75"
+              y2="100"
+              stroke={white}
+              strokeWidth="0.8"
+              opacity="0.25"
+            />
+            <line
+              x1="0"
+              y1="30"
+              x2="100"
+              y2="30"
+              stroke={white}
+              strokeWidth="0.8"
+              opacity="0.25"
+            />
+            <line
+              x1="0"
+              y1="65"
+              x2="100"
+              y2="65"
+              stroke={white}
+              strokeWidth="0.8"
+              opacity="0.25"
+            />
             {/* Hexagons */}
-            <path d="M 50,35 L 63,42 L 63,58 L 50,65 L 37,58 L 37,42 Z" fill="none" stroke={white} strokeWidth="1.5" />
-            <path d="M 15,10 L 25,16 L 25,28 L 15,34 L 5,28 L 5,16 Z" fill="none" stroke={secondary} strokeWidth="1" />
-            <path d="M 85,70 L 95,76 L 95,88 L 85,94 L 75,88 L 75,76 Z" fill="none" stroke={secondary} strokeWidth="1" />
+            <path
+              d="M 50,35 L 63,42 L 63,58 L 50,65 L 37,58 L 37,42 Z"
+              fill="none"
+              stroke={white}
+              strokeWidth="1.5"
+            />
+            <path
+              d="M 15,10 L 25,16 L 25,28 L 15,34 L 5,28 L 5,16 Z"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="1"
+            />
+            <path
+              d="M 85,70 L 95,76 L 95,88 L 85,94 L 75,88 L 75,76 Z"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="1"
+            />
           </>
         );
       case "GreenToxicSmoke":
@@ -2457,19 +2782,55 @@ function MiniPatternSVG({
             <circle cx="75" cy="40" r="22" fill={white} opacity="0.2" />
             <circle cx="45" cy="70" r="25" fill={secondary} opacity="0.5" />
             {/* Acid scratches */}
-            <line x1="15" y1="15" x2="35" y2="25" stroke={white} strokeWidth="1" />
-            <line x1="65" y1="75" x2="85" y2="65" stroke={white} strokeWidth="1" />
+            <line
+              x1="15"
+              y1="15"
+              x2="35"
+              y2="25"
+              stroke={white}
+              strokeWidth="1"
+            />
+            <line
+              x1="65"
+              y1="75"
+              x2="85"
+              y2="65"
+              stroke={white}
+              strokeWidth="1"
+            />
             {/* Dark center panel */}
-            <rect x="35" y="0" width="30" height="100" fill={secondary} opacity="0.4" />
+            <rect
+              x="35"
+              y="0"
+              width="30"
+              height="100"
+              fill={secondary}
+              opacity="0.4"
+            />
           </>
         );
       case "PurpleWaveMotion":
         return (
           <>
             {/* Waves */}
-            <path d="M 0,25 Q 25,10 50,25 T 100,25" fill="none" stroke={white} strokeWidth="2" />
-            <path d="M 0,50 Q 25,35 50,50 T 100,50" fill="none" stroke={secondary} strokeWidth="1.5" />
-            <path d="M 0,75 Q 25,60 50,75 T 100,75" fill="none" stroke={white} strokeWidth="2" />
+            <path
+              d="M 0,25 Q 25,10 50,25 T 100,25"
+              fill="none"
+              stroke={white}
+              strokeWidth="2"
+            />
+            <path
+              d="M 0,50 Q 25,35 50,50 T 100,50"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="1.5"
+            />
+            <path
+              d="M 0,75 Q 25,60 50,75 T 100,75"
+              fill="none"
+              stroke={white}
+              strokeWidth="2"
+            />
             {/* Scattered dots */}
             <circle cx="20" cy="15" r="1" fill={white} />
             <circle cx="80" cy="15" r="1" fill={white} />
@@ -2477,261 +2838,380 @@ function MiniPatternSVG({
             <circle cx="15" cy="65" r="1.5" fill={white} />
             <circle cx="85" cy="65" r="1" fill={white} />
             {/* Center glow hint */}
-            <rect x="30" y="0" width="40" height="100" fill={white} opacity="0.08" />
+            <rect
+              x="30"
+              y="0"
+              width="40"
+              height="100"
+              fill={white}
+              opacity="0.08"
+            />
           </>
         );
       case "FlameStripeJersey":
         return (
           <>
             {/* Vertical spike columns */}
-            <rect x="0" y="0" width="8" height="55" rx="2" fill={white} opacity="0.8" />
-            <rect x="0" y="45" width="8" height="55" rx="2" fill={white} opacity="0.8" />
-            <rect x="18" y="0" width="6" height="40" rx="2" fill={secondary} opacity="0.7" />
-            <rect x="18" y="60" width="6" height="40" rx="2" fill={secondary} opacity="0.7" />
-            <rect x="32" y="0" width="8" height="60" rx="2" fill={white} opacity="0.8" />
-            <rect x="32" y="50" width="8" height="50" rx="2" fill={white} opacity="0.8" />
-            <rect x="48" y="0" width="8" height="50" rx="2" fill={white} opacity="0.8" />
-            <rect x="48" y="55" width="8" height="45" rx="2" fill={white} opacity="0.8" />
-            <rect x="64" y="0" width="6" height="40" rx="2" fill={secondary} opacity="0.7" />
-            <rect x="64" y="62" width="6" height="38" rx="2" fill={secondary} opacity="0.7" />
-            <rect x="78" y="0" width="8" height="65" rx="2" fill={white} opacity="0.8" />
-            <rect x="78" y="52" width="8" height="48" rx="2" fill={white} opacity="0.8" />
-            <rect x="92" y="0" width="8" height="50" rx="2" fill={white} opacity="0.8" />
-            <rect x="92" y="60" width="8" height="40" rx="2" fill={white} opacity="0.8" />
+            <rect
+              x="0"
+              y="0"
+              width="8"
+              height="55"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="0"
+              y="45"
+              width="8"
+              height="55"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="18"
+              y="0"
+              width="6"
+              height="40"
+              rx="2"
+              fill={secondary}
+              opacity="0.7"
+            />
+            <rect
+              x="18"
+              y="60"
+              width="6"
+              height="40"
+              rx="2"
+              fill={secondary}
+              opacity="0.7"
+            />
+            <rect
+              x="32"
+              y="0"
+              width="8"
+              height="60"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="32"
+              y="50"
+              width="8"
+              height="50"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="48"
+              y="0"
+              width="8"
+              height="50"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="48"
+              y="55"
+              width="8"
+              height="45"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="64"
+              y="0"
+              width="6"
+              height="40"
+              rx="2"
+              fill={secondary}
+              opacity="0.7"
+            />
+            <rect
+              x="64"
+              y="62"
+              width="6"
+              height="38"
+              rx="2"
+              fill={secondary}
+              opacity="0.7"
+            />
+            <rect
+              x="78"
+              y="0"
+              width="8"
+              height="65"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="78"
+              y="52"
+              width="8"
+              height="48"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="92"
+              y="0"
+              width="8"
+              height="50"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
+            <rect
+              x="92"
+              y="60"
+              width="8"
+              height="40"
+              rx="2"
+              fill={white}
+              opacity="0.8"
+            />
           </>
         );
 
-        case "GrungeTriangleJersey":
-  return (
-    <>
-      {/* ── SIDE GRUNGE TRIANGLES ───────────────────────── */}
-      
-      {/* Left Side */}
-      <polygon
-        points="8,10 42,70 20,78"
-        fill={secondary}
-        opacity="0.45"
-      />
-      <polygon
-        points="20,120 78,190 32,198"
-        fill={secondary}
-        opacity="0.38"
-      />
-      <polygon
-        points="55,40 120,92 72,102"
-        fill="none"
-        stroke={secondary}
-        strokeWidth="2"
-        opacity="0.55"
-      />
-      <polygon
-        points="70,230 132,310 88,320"
-        fill={secondary}
-        opacity="0.42"
-      />
-      <polygon
-        points="28,340 82,410 38,422"
-        fill="none"
-        stroke={secondary}
-        strokeWidth="2"
-        opacity="0.5"
-      />
+      case "GrungeTriangleJersey":
+        return (
+          <>
+            {/* ── SIDE GRUNGE TRIANGLES ───────────────────────── */}
 
-      {/* Extra shard scratches */}
-      <path
-        d="M18 65 L52 32"
-        stroke={secondary}
-        strokeWidth="1.5"
-        opacity="0.35"
-      />
-      <path
-        d="M36 160 L74 118"
-        stroke={secondary}
-        strokeWidth="1"
-        opacity="0.28"
-      />
-      <path
-        d="M58 285 L108 248"
-        stroke={secondary}
-        strokeWidth="1.3"
-        opacity="0.32"
-      />
+            {/* Left Side */}
+            <polygon
+              points="8,10 42,70 20,78"
+              fill={secondary}
+              opacity="0.45"
+            />
+            <polygon
+              points="20,120 78,190 32,198"
+              fill={secondary}
+              opacity="0.38"
+            />
+            <polygon
+              points="55,40 120,92 72,102"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="2"
+              opacity="0.55"
+            />
+            <polygon
+              points="70,230 132,310 88,320"
+              fill={secondary}
+              opacity="0.42"
+            />
+            <polygon
+              points="28,340 82,410 38,422"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="2"
+              opacity="0.5"
+            />
 
-      {/* Grunge blobs */}
-      <ellipse
-        cx="42"
-        cy="95"
-        rx="18"
-        ry="6"
-        fill={secondary}
-        opacity="0.18"
-        transform="rotate(-18 42 95)"
-      />
-      <ellipse
-        cx="82"
-        cy="355"
-        rx="26"
-        ry="8"
-        fill={secondary}
-        opacity="0.14"
-        transform="rotate(24 82 355)"
-      />
+            {/* Extra shard scratches */}
+            <path
+              d="M18 65 L52 32"
+              stroke={secondary}
+              strokeWidth="1.5"
+              opacity="0.35"
+            />
+            <path
+              d="M36 160 L74 118"
+              stroke={secondary}
+              strokeWidth="1"
+              opacity="0.28"
+            />
+            <path
+              d="M58 285 L108 248"
+              stroke={secondary}
+              strokeWidth="1.3"
+              opacity="0.32"
+            />
 
-      {/* ── RIGHT SIDE ─────────────────────────────────── */}
-      
-      <polygon
-        points="930,20 980,88 946,98"
-        fill={secondary}
-        opacity="0.45"
-      />
-      <polygon
-        points="870,130 960,210 902,218"
-        fill={secondary}
-        opacity="0.38"
-      />
-      <polygon
-        points="845,52 928,112 872,122"
-        fill="none"
-        stroke={secondary}
-        strokeWidth="2"
-        opacity="0.55"
-      />
-      <polygon
-        points="882,260 962,340 912,352"
-        fill={secondary}
-        opacity="0.42"
-      />
-      <polygon
-        points="918,370 982,438 944,448"
-        fill="none"
-        stroke={secondary}
-        strokeWidth="2"
-        opacity="0.5"
-      />
+            {/* Grunge blobs */}
+            <ellipse
+              cx="42"
+              cy="95"
+              rx="18"
+              ry="6"
+              fill={secondary}
+              opacity="0.18"
+              transform="rotate(-18 42 95)"
+            />
+            <ellipse
+              cx="82"
+              cy="355"
+              rx="26"
+              ry="8"
+              fill={secondary}
+              opacity="0.14"
+              transform="rotate(24 82 355)"
+            />
 
-      {/* Scratch lines */}
-      <path
-        d="M948 72 L982 38"
-        stroke={secondary}
-        strokeWidth="1.5"
-        opacity="0.35"
-      />
-      <path
-        d="M902 192 L958 148"
-        stroke={secondary}
-        strokeWidth="1"
-        opacity="0.28"
-      />
-      <path
-        d="M914 312 L968 276"
-        stroke={secondary}
-        strokeWidth="1.3"
-        opacity="0.32"
-      />
+            {/* ── RIGHT SIDE ─────────────────────────────────── */}
 
-      {/* Blob textures */}
-      <ellipse
-        cx="930"
-        cy="120"
-        rx="22"
-        ry="7"
-        fill={secondary}
-        opacity="0.18"
-        transform="rotate(16 930 120)"
-      />
-      <ellipse
-        cx="888"
-        cy="388"
-        rx="28"
-        ry="9"
-        fill={secondary}
-        opacity="0.14"
-        transform="rotate(-22 888 388)"
-      />
+            <polygon
+              points="930,20 980,88 946,98"
+              fill={secondary}
+              opacity="0.45"
+            />
+            <polygon
+              points="870,130 960,210 902,218"
+              fill={secondary}
+              opacity="0.38"
+            />
+            <polygon
+              points="845,52 928,112 872,122"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="2"
+              opacity="0.55"
+            />
+            <polygon
+              points="882,260 962,340 912,352"
+              fill={secondary}
+              opacity="0.42"
+            />
+            <polygon
+              points="918,370 982,438 944,448"
+              fill="none"
+              stroke={secondary}
+              strokeWidth="2"
+              opacity="0.5"
+            />
 
-      {/* ── CENTER STRIPE ──────────────────────────────── */}
-      <rect
-        x="320"
-        y="0"
-        width="360"
-        height="500"
-        fill={primary}
-        opacity="0.88"
-      />
+            {/* Scratch lines */}
+            <path
+              d="M948 72 L982 38"
+              stroke={secondary}
+              strokeWidth="1.5"
+              opacity="0.35"
+            />
+            <path
+              d="M902 192 L958 148"
+              stroke={secondary}
+              strokeWidth="1"
+              opacity="0.28"
+            />
+            <path
+              d="M914 312 L968 276"
+              stroke={secondary}
+              strokeWidth="1.3"
+              opacity="0.32"
+            />
 
-      {/* Stripe edge fades */}
-      <rect
-        x="305"
-        y="0"
-        width="18"
-        height="500"
-        fill={white}
-        opacity="0.08"
-      />
-      <rect
-        x="677"
-        y="0"
-        width="18"
-        height="500"
-        fill={white}
-        opacity="0.08"
-      />
+            {/* Blob textures */}
+            <ellipse
+              cx="930"
+              cy="120"
+              rx="22"
+              ry="7"
+              fill={secondary}
+              opacity="0.18"
+              transform="rotate(16 930 120)"
+            />
+            <ellipse
+              cx="888"
+              cy="388"
+              rx="28"
+              ry="9"
+              fill={secondary}
+              opacity="0.14"
+              transform="rotate(-22 888 388)"
+            />
 
-      {/* Vertical grunge scratches */}
-      <path
-        d="M362 20 L378 168"
-        stroke={white}
-        strokeWidth="1"
-        opacity="0.12"
-      />
-      <path
-        d="M418 60 L440 242"
-        stroke={white}
-        strokeWidth="1.5"
-        opacity="0.1"
-      />
-      <path
-        d="M520 10 L548 212"
-        stroke={white}
-        strokeWidth="1.2"
-        opacity="0.11"
-      />
-      <path
-        d="M610 80 L632 282"
-        stroke={white}
-        strokeWidth="1.4"
-        opacity="0.1"
-      />
+            {/* ── CENTER STRIPE ──────────────────────────────── */}
+            <rect
+              x="320"
+              y="0"
+              width="360"
+              height="500"
+              fill={primary}
+              opacity="0.88"
+            />
 
-      {/* ── HALFTONE DOTS ─────────────────────────────── */}
-      
-      {/* Top */}
-      <circle cx="250" cy="22" r="5" fill={secondary} opacity="0.22" />
-      <circle cx="320" cy="32" r="4" fill={secondary} opacity="0.18" />
-      <circle cx="420" cy="18" r="6" fill={secondary} opacity="0.24" />
-      <circle cx="520" cy="28" r="5" fill={secondary} opacity="0.2" />
-      <circle cx="650" cy="20" r="6" fill={secondary} opacity="0.24" />
-      <circle cx="760" cy="34" r="4" fill={secondary} opacity="0.18" />
+            {/* Stripe edge fades */}
+            <rect
+              x="305"
+              y="0"
+              width="18"
+              height="500"
+              fill={white}
+              opacity="0.08"
+            />
+            <rect
+              x="677"
+              y="0"
+              width="18"
+              height="500"
+              fill={white}
+              opacity="0.08"
+            />
 
-      {/* Bottom */}
-      <circle cx="240" cy="462" r="5" fill={secondary} opacity="0.22" />
-      <circle cx="352" cy="478" r="4" fill={secondary} opacity="0.18" />
-      <circle cx="448" cy="468" r="6" fill={secondary} opacity="0.24" />
-      <circle cx="548" cy="482" r="5" fill={secondary} opacity="0.2" />
-      <circle cx="662" cy="472" r="6" fill={secondary} opacity="0.24" />
-      <circle cx="742" cy="486" r="4" fill={secondary} opacity="0.18" />
+            {/* Vertical grunge scratches */}
+            <path
+              d="M362 20 L378 168"
+              stroke={white}
+              strokeWidth="1"
+              opacity="0.12"
+            />
+            <path
+              d="M418 60 L440 242"
+              stroke={white}
+              strokeWidth="1.5"
+              opacity="0.1"
+            />
+            <path
+              d="M520 10 L548 212"
+              stroke={white}
+              strokeWidth="1.2"
+              opacity="0.11"
+            />
+            <path
+              d="M610 80 L632 282"
+              stroke={white}
+              strokeWidth="1.4"
+              opacity="0.1"
+            />
 
-      {/* ── VIGNETTE OVERLAY ───────────────────────────── */}
-      <rect
-        x="0"
-        y="0"
-        width="1000"
-        height="500"
-        fill="url(#grungeVignette)"
-        opacity="0.22"
-      />
-    </>
-  );
+            {/* ── HALFTONE DOTS ─────────────────────────────── */}
+
+            {/* Top */}
+            <circle cx="250" cy="22" r="5" fill={secondary} opacity="0.22" />
+            <circle cx="320" cy="32" r="4" fill={secondary} opacity="0.18" />
+            <circle cx="420" cy="18" r="6" fill={secondary} opacity="0.24" />
+            <circle cx="520" cy="28" r="5" fill={secondary} opacity="0.2" />
+            <circle cx="650" cy="20" r="6" fill={secondary} opacity="0.24" />
+            <circle cx="760" cy="34" r="4" fill={secondary} opacity="0.18" />
+
+            {/* Bottom */}
+            <circle cx="240" cy="462" r="5" fill={secondary} opacity="0.22" />
+            <circle cx="352" cy="478" r="4" fill={secondary} opacity="0.18" />
+            <circle cx="448" cy="468" r="6" fill={secondary} opacity="0.24" />
+            <circle cx="548" cy="482" r="5" fill={secondary} opacity="0.2" />
+            <circle cx="662" cy="472" r="6" fill={secondary} opacity="0.24" />
+            <circle cx="742" cy="486" r="4" fill={secondary} opacity="0.18" />
+
+            {/* ── VIGNETTE OVERLAY ───────────────────────────── */}
+            <rect
+              x="0"
+              y="0"
+              width="1000"
+              height="500"
+              fill="url(#grungeVignette)"
+              opacity="0.22"
+            />
+          </>
+        );
       case "JerseyHexDot":
         return (
           <>
@@ -3082,8 +3562,18 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
     });
   }, [roughness, colors.primary]);
 
+  let scaleX = 2.2;
+  let scaleZ = 2.2;
+  if (colors.cutFit === "Slim Fit") {
+    scaleX = 2.05;
+    scaleZ = 2.05;
+  } else if (colors.cutFit === "Relaxed") {
+    scaleX = 2.35;
+    scaleZ = 2.35;
+  }
+
   return (
-    <group scale={[2.2, 2.2, 2.2]} position={[0, -0.1, 0]}>
+    <group scale={[scaleX, 2.2, scaleZ]} position={[0, -0.1, 0]}>
       <mesh
         castShadow
         receiveShadow
@@ -3185,6 +3675,112 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
           </Decal>
         )}
       </mesh>
+
+      {/* ── Dynamic Collar Implementation ── */}
+      {colors.collarType === "Polo" && (
+        <group>
+          {/* Polo Neck band */}
+          <mesh castShadow receiveShadow position={[0, 0.205, -0.015]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.8]}>
+            <torusGeometry args={[0.076, 0.009, 16, 48]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          {/* Front Placket */}
+          <mesh castShadow receiveShadow position={[0, 0.128, 0.125]} rotation={[0.13, 0, 0]}>
+            <boxGeometry args={[0.024, 0.12, 0.006]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          {/* Folded Wings */}
+          <mesh castShadow receiveShadow position={[-0.042, 0.202, 0.06]} rotation={[0.42, -0.45, -0.5]}>
+            <boxGeometry args={[0.065, 0.006, 0.075]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          <mesh castShadow receiveShadow position={[0.042, 0.202, 0.06]} rotation={[0.42, 0.45, 0.5]}>
+            <boxGeometry args={[0.065, 0.006, 0.075]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+        </group>
+      )}
+
+      {colors.collarType === "Henley" && (
+        <group>
+          {/* Henley Round Neck Band */}
+          <mesh castShadow receiveShadow position={[0, 0.205, -0.015]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.8]}>
+            <torusGeometry args={[0.076, 0.004, 16, 48]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          {/* Front Placket with Buttons */}
+          <mesh castShadow receiveShadow position={[0, 0.128, 0.125]} rotation={[0.13, 0, 0]}>
+            <boxGeometry args={[0.024, 0.12, 0.003]} />
+            <meshStandardMaterial color={colors.primary} roughness={0.7} />
+          </mesh>
+          {/* Buttons */}
+          {[0.11, 0.14, 0.17].map((y, i) => (
+            <mesh key={i} castShadow position={[0, y, 0.128]} rotation={[Math.PI / 2 + 0.13, 0, 0]}>
+              <cylinderGeometry args={[0.004, 0.004, 0.002, 16]} />
+              <meshStandardMaterial color="#222222" roughness={0.5} />
+            </mesh>
+          ))}
+        </group>
+      )}
+
+      {colors.collarType === "V-Neck" && (
+        <group>
+          {/* V-Neck Trim */}
+          <mesh castShadow receiveShadow position={[-0.035, 0.15, 0.11]} rotation={[0.2, 0, 0.4]}>
+            <boxGeometry args={[0.012, 0.1, 0.004]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          <mesh castShadow receiveShadow position={[0.035, 0.15, 0.11]} rotation={[0.2, 0, -0.4]}>
+            <boxGeometry args={[0.012, 0.1, 0.004]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          {/* Back neck ring */}
+          <mesh castShadow receiveShadow position={[0, 0.21, -0.02]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.6]}>
+            <torusGeometry args={[0.076, 0.006, 16, 48, Math.PI]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+        </group>
+      )}
+
+      {colors.collarType === "Round" && (
+        <group>
+          {/* Standard Round Neck Trim */}
+          <mesh castShadow receiveShadow position={[0, 0.205, -0.015]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.8]}>
+            <torusGeometry args={[0.076, 0.005, 16, 48]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+        </group>
+      )}
+
+      {/* ── Dynamic Sleeves Implementation ── */}
+      {(colors.sleeve === "Long" || colors.sleeve === "3/4") && (
+        <group>
+          {/* Left Sleeve Extension */}
+          <mesh castShadow receiveShadow position={[0.22, 0.06, 0]} rotation={[0, 0, 0.4]}>
+            <cylinderGeometry args={[0.045, 0.035, colors.sleeve === "Long" ? 0.4 : 0.2, 32]} />
+            <meshStandardMaterial color={colors.primary} roughness={0.7} />
+          </mesh>
+          {/* Right Sleeve Extension */}
+          <mesh castShadow receiveShadow position={[-0.22, 0.06, 0]} rotation={[0, 0, -0.4]}>
+            <cylinderGeometry args={[0.045, 0.035, colors.sleeve === "Long" ? 0.4 : 0.2, 32]} />
+            <meshStandardMaterial color={colors.primary} roughness={0.7} />
+          </mesh>
+        </group>
+      )}
+
+      {colors.sleeve === "Sleeveless" && (
+        <group>
+          {/* Sleeveless Trim - we add a contrasting ring to make it look like a tank top */}
+          <mesh castShadow receiveShadow position={[0.165, 0.16, 0]} rotation={[0, Math.PI / 2, Math.PI / 6]}>
+            <torusGeometry args={[0.08, 0.006, 16, 48]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          <mesh castShadow receiveShadow position={[-0.165, 0.16, 0]} rotation={[0, Math.PI / 2, -Math.PI / 6]}>
+            <torusGeometry args={[0.08, 0.006, 16, 48]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+        </group>
+      )}
     </group>
   );
 }
@@ -3494,18 +4090,20 @@ export default function CustomizerLayout() {
     fabricPatternFront: "None",
     fabricPatternBack: "None",
     frontText: "VALKYRIE",
-    frontFont: "Bold",
+    frontFont: "Varsity",
     frontTextColor: "#FFFFFF",
-    frontTextSize: 110,
+    frontTextSize: 220,
     backText: "PLAYER",
-    backFont: "Bold",
+    backFont: "Varsity",
     backTextColor: "#FFFFFF",
-    backTextSize: 80,
+    backTextSize: 200,
     number: "10",
     numberFont: "Bold",
     numberColor: "#111111",
     numberPosition: "Both",
     sleeve: "Short",
+    collarType: "None",
+    cutFit: "None",
     fabric: "Polyester",
     collar: true,
     zipper: false,
@@ -3851,10 +4449,10 @@ export default function CustomizerLayout() {
               {activeTab === "patterns" && (
                 <div className="space-y-4">
                   {/* Pattern Side Selector */}
-                  <div className="flex gap-1.5 p-1 bg-zinc-100 rounded-xl">
+                  <div className="flex gap-1.5 p-1 bg-zinc-100 rounded border">
                     <button
                       onClick={() => setActivePatternSide("Front")}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all text-center ${
+                      className={`flex-1 py-2 text-xs font-bold rounded cursor-pointer transition-all text-center ${
                         activePatternSide === "Front"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-800"
@@ -3864,7 +4462,7 @@ export default function CustomizerLayout() {
                     </button>
                     <button
                       onClick={() => setActivePatternSide("Back")}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all text-center ${
+                      className={`flex-1 py-2 text-xs font-bold rounded cursor-pointer transition-all text-center ${
                         activePatternSide === "Back"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-800"
@@ -3978,7 +4576,7 @@ export default function CustomizerLayout() {
                           <button
                             key={f}
                             onClick={() => updateState("frontFont", f)}
-                            className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all ${state.frontFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-600 hover:border-zinc-300"}`}
+                            className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all active:scale-90 duration-300 ${state.frontFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                           >
                             {f}
                           </button>
@@ -4068,7 +4666,7 @@ export default function CustomizerLayout() {
                           <button
                             key={f}
                             onClick={() => updateState("backFont", f)}
-                            className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all ${state.backFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-600 hover:border-zinc-300"}`}
+                            className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all active:scale-90 duration-300 ${state.backFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                           >
                             {f}
                           </button>
@@ -4158,7 +4756,7 @@ export default function CustomizerLayout() {
                           <button
                             key={f}
                             onClick={() => updateState("numberFont", f)}
-                            className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all ${state.numberFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-600 hover:border-zinc-300"}`}
+                            className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all duration-300 active:scale-90 ${state.numberFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                           >
                             {f}
                           </button>
@@ -4205,7 +4803,7 @@ export default function CustomizerLayout() {
                           <button
                             key={p}
                             onClick={() => updateState("numberPosition", p)}
-                            className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all ${state.numberPosition === p ? "border-red-500 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-600 hover:border-zinc-300"}`}
+                            className={`p-1.5 rounded cursor-pointer active:scale-90 duration-300 border text-[10px] font-bold transition-all ${state.numberPosition === p ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                           >
                             {p}
                           </button>
@@ -4471,10 +5069,10 @@ export default function CustomizerLayout() {
                         <button
                           key={p}
                           onClick={() => setLogoPositionPreset(p)}
-                          className={`p-2 rounded-lg border text-[10px] font-bold transition-all leading-tight text-center ${
+                          className={`p-2 rounded cursor-pointer border text-[10px] font-medium transition-all duration-300 active:scale-90 leading-tight text-center ${
                             state.logoPosition === p
                               ? "border-red-500 bg-red-50 text-red-600 font-extrabold shadow-sm"
-                              : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                              : "border-[#002337] text-[#002337] hover:border-zinc-300"
                           }`}
                         >
                           {p}
@@ -4519,7 +5117,7 @@ export default function CustomizerLayout() {
                         <button
                           key={s}
                           onClick={() => updateState("sleeve", s)}
-                          className={`p-3 rounded-xl border text-sm font-bold transition-all ${state.sleeve === s ? "border-red-500 bg-red-50 text-red-600" : "border-zinc-200 text-zinc-600 hover:border-zinc-300"}`}
+                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${state.sleeve === s ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                         >
                           {s}
                         </button>
@@ -4531,10 +5129,11 @@ export default function CustomizerLayout() {
                       Collar Type
                     </label>
                     <div className="grid grid-cols-2 gap-2">
-                      {["V-Neck", "Round", "Polo", "Henley"].map((c) => (
+                      {["None","V-Neck", "Round", "Polo", "Henley"].map((c) => (
                         <button
                           key={c}
-                          className="p-3 rounded-xl border text-sm font-bold border-zinc-200 text-zinc-600 hover:border-red-400 hover:bg-red-50 transition-all"
+                          onClick={() => updateState("collarType", c)}
+                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${state.collarType === c ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                         >
                           {c}
                         </button>
@@ -4546,10 +5145,11 @@ export default function CustomizerLayout() {
                       Cut & Fit
                     </label>
                     <div className="grid grid-cols-3 gap-2">
-                      {["Slim Fit", "Regular", "Relaxed"].map((f) => (
+                      {["None", "Slim Fit", "Regular", "Relaxed"].map((f) => (
                         <button
                           key={f}
-                          className="p-2.5 rounded-lg border text-xs font-bold border-zinc-200 text-zinc-600 hover:border-red-400 hover:bg-red-50 transition-all"
+                          onClick={() => updateState("cutFit", f)}
+                          className={`p-2.5 rounded-full cursor-pointer border text-xs font-bold transition-all active:scale-90 duration-300 ${state.cutFit === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                         >
                           {f}
                         </button>
