@@ -34,7 +34,7 @@ import { useGLTF, Decal } from "@react-three/drei";
 
 function useStyleDecals(colors: any) {
   return useMemo(() => {
-    if (!colors?.collarType || colors.collarType === "None")
+    if (!colors?.collar || !colors?.collarType || colors.collarType === "None")
       return { collarDecal: null };
 
     const S = 1024;
@@ -64,6 +64,104 @@ function useStyleDecals(colors: any) {
       ctx.lineTo(x, y + r);
       ctx.quadraticCurveTo(x, y, x + r, y);
       ctx.closePath();
+    };
+
+    const drawPlacket = (
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      r: number,
+    ) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + w, y);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.closePath();
+    };
+
+    const drawRealisticButton = (
+      cx: number,
+      cy: number,
+      r: number,
+    ) => {
+      ctx.save();
+      
+      // 1. Drop shadow (subtle dark glow under the button)
+      ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 2;
+
+      // 2. Outer button body (slight gradient for rounded 3D effect)
+      const btnGrad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
+      btnGrad.addColorStop(0, "#ffffff"); // Highlight
+      btnGrad.addColorStop(0.7, "#eaeaea"); // Base cream/white
+      btnGrad.addColorStop(1, "#c0c0c0"); // Outer shaded edge
+      
+      ctx.fillStyle = btnGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Reset shadow so it doesn't apply to inner details
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 3. Button Rim (thin outline on the very edge)
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 4. Inner Recess (inner circle rim)
+      const innerR = r * 0.6;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 5. Four Button Holes in the center
+      const holeOffset = r * 0.25;
+      const holeR = r * 0.08;
+      const holes = [
+        { x: cx - holeOffset, y: cy - holeOffset },
+        { x: cx + holeOffset, y: cy - holeOffset },
+        { x: cx - holeOffset, y: cy + holeOffset },
+        { x: cx + holeOffset, y: cy + holeOffset },
+      ];
+
+      ctx.fillStyle = "#333333"; // Dark holes
+      holes.forEach(h => {
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, holeR, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 6. Cross stitch threads (connecting the holes)
+      ctx.strokeStyle = "#888888"; // Thread color
+      ctx.lineWidth = 1.2;
+      
+      // Diagonal 1
+      ctx.beginPath();
+      ctx.moveTo(cx - holeOffset, cy - holeOffset);
+      ctx.lineTo(cx + holeOffset, cy + holeOffset);
+      ctx.stroke();
+      
+      // Diagonal 2
+      ctx.beginPath();
+      ctx.moveTo(cx + holeOffset, cy - holeOffset);
+      ctx.lineTo(cx - holeOffset, cy + holeOffset);
+      ctx.stroke();
+
+      ctx.restore();
     };
 
     const trim = colors.designColor || colors.secondary || "#1A1A2E";
@@ -171,29 +269,105 @@ function useStyleDecals(colors: any) {
       pkGrad.addColorStop(0, lighten(trim, 20));
       pkGrad.addColorStop(1, darken(trim, 10));
       ctx.fillStyle = pkGrad;
-      ctx.fillRect(S * 0.46, S * 0.34, S * 0.08, S * 0.42);
+      drawPlacket(S * 0.46, S * 0.34, S * 0.08, S * 0.34, S * 0.04);
+      ctx.fill();
       ctx.strokeStyle = darken(trim, 40);
       ctx.lineWidth = 2;
-      ctx.strokeRect(S * 0.46, S * 0.34, S * 0.08, S * 0.42);
-      // 2 buttons
-      [0.44, 0.6].forEach((yf) => {
-        ctx.fillStyle = "#fff";
+      drawPlacket(S * 0.46, S * 0.34, S * 0.08, S * 0.34, S * 0.04);
+      ctx.stroke();
+
+      if (colors.zipper) {
+        // 1. Draw clean zipper tape background (optional: dark border)
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(S * 0.5, S * yf, S * 0.022, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#888";
+        ctx.moveTo(S * 0.492, S * 0.34);
+        ctx.lineTo(S * 0.492, S * 0.68);
+        ctx.moveTo(S * 0.508, S * 0.34);
+        ctx.lineTo(S * 0.508, S * 0.68);
+        ctx.stroke();
+
+        // 3. Draw dark gunmetal grey slider (matha) and pull tab
+        const sliderY = S * 0.41;
+
+        // 2. Draw metallic silver zipper track/teeth (looks like a coil)
+        ctx.strokeStyle = "#a0a0a0"; // Metallic grey
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, sliderY);
+        ctx.lineTo(S * 0.5, S * 0.68);
+        ctx.stroke();
+
+        // Draw horizontal silver teeth segments
+        ctx.strokeStyle = "#d8d8d8"; // Silver shine
         ctx.lineWidth = 2;
+        for (let y = sliderY + S * 0.01; y <= S * 0.68; y += 5) {
+          // Left side tooth
+          ctx.beginPath();
+          ctx.moveTo(S * 0.493, y);
+          ctx.lineTo(S * 0.5, y);
+          ctx.stroke();
+
+          // Right side tooth (interlocking offset)
+          ctx.beginPath();
+          ctx.moveTo(S * 0.5, y + 2.5);
+          ctx.lineTo(S * 0.507, y + 2.5);
+          ctx.stroke();
+        }
+
+        // Draw dark center line for the track separation
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, S * 0.34);
+        ctx.lineTo(S * 0.5, S * 0.68);
         ctx.stroke();
-        // button holes
-        ctx.strokeStyle = "#555";
+
+        // Loop / cap at the top (silver metallic)
+        ctx.fillStyle = "#a0a0a0";
+        ctx.strokeStyle = "#666666";
+        ctx.lineWidth = 1;
+        drawRoundRect(S * 0.491, sliderY - S * 0.008, S * 0.018, S * 0.012, 1);
+        ctx.fill();
+        ctx.stroke();
+
+        // Main dark gunmetal rectangular slider body
+        ctx.fillStyle = "#2d2d2d";
+        ctx.strokeStyle = "#1a1a1a";
         ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(S * 0.497, S * yf, 4, 0, Math.PI * 2);
+        // Rectangular with slightly rounded corners
+        drawRoundRect(S * 0.48, sliderY, S * 0.04, S * 0.05, 1.5);
+        ctx.fill();
         ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(S * 0.503, S * yf, 4, 0, Math.PI * 2);
+
+        // Inner vertical groove on slider (like in the image)
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(S * 0.495, sliderY + S * 0.008, S * 0.01, S * 0.034);
+
+        // Puller attachment bracket on slider
+        ctx.fillStyle = "#555555";
+        drawRoundRect(S * 0.492, sliderY + S * 0.015, S * 0.016, S * 0.018, 1);
+        ctx.fill();
+
+        // Long rectangular pull tab hanging down (matching the image)
+        ctx.fillStyle = "#333333";
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(S * 0.487, sliderY + S * 0.042, S * 0.026, S * 0.065, 2);
+        ctx.fill();
         ctx.stroke();
-      });
+
+        // Embossed slot detail in the center of the tab
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 2;
+        drawRoundRect(S * 0.493, sliderY + S * 0.048, S * 0.014, S * 0.053, 1);
+        ctx.stroke();
+      } else {
+        // 2 realistic buttons
+        [0.45, 0.57].forEach((yf) => {
+          drawRealisticButton(S * 0.5, S * yf, S * 0.02);
+        });
+      }
     } else if (colors.collarType === "Henley") {
       // Round neck band
       const hb = ctx.createLinearGradient(0, 0, 0, S * 0.14);
@@ -221,32 +395,102 @@ function useStyleDecals(colors: any) {
       pg2.addColorStop(0.5, base);
       pg2.addColorStop(1, darken(base, 15));
       ctx.fillStyle = pg2;
-      drawRoundRect(S * 0.44, S * 0.28, S * 0.12, S * 0.58, 4);
+      drawPlacket(S * 0.44, S * 0.28, S * 0.12, S * 0.42, S * 0.06);
       ctx.fill();
       ctx.strokeStyle = darken(trim, 35);
       ctx.lineWidth = 2;
-      drawRoundRect(S * 0.44, S * 0.28, S * 0.12, S * 0.58, 4);
+      drawPlacket(S * 0.44, S * 0.28, S * 0.12, S * 0.42, S * 0.06);
       ctx.stroke();
-      // 3 buttons
-      [0.37, 0.52, 0.67].forEach((yf) => {
-        ctx.fillStyle = "#f0f0f0";
-        ctx.beginPath();
-        ctx.ellipse(S * 0.5, S * yf, S * 0.02, S * 0.018, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#999";
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.strokeStyle = "#666";
+
+      if (colors.zipper) {
+        // 1. Draw clean zipper tape background
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(S * 0.496, S * yf);
-        ctx.lineTo(S * 0.504, S * yf);
+        ctx.moveTo(S * 0.492, S * 0.28);
+        ctx.lineTo(S * 0.492, S * 0.70);
+        ctx.moveTo(S * 0.508, S * 0.28);
+        ctx.lineTo(S * 0.508, S * 0.70);
         ctx.stroke();
+
+        // 3. Draw dark gunmetal grey slider and pull tab
+        const sliderY = S * 0.43;
+
+        // 2. Draw metallic silver zipper track/teeth
+        ctx.strokeStyle = "#a0a0a0";
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
-        ctx.moveTo(S * 0.5, S * yf - 3);
-        ctx.lineTo(S * 0.5, S * yf + 3);
+        ctx.moveTo(S * 0.5, sliderY);
+        ctx.lineTo(S * 0.5, S * 0.70);
         ctx.stroke();
-      });
+
+        // Draw horizontal silver teeth segments
+        ctx.strokeStyle = "#d8d8d8";
+        ctx.lineWidth = 2;
+        for (let y = sliderY + S * 0.01; y <= S * 0.70; y += 5) {
+          ctx.beginPath();
+          ctx.moveTo(S * 0.493, y);
+          ctx.lineTo(S * 0.5, y);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(S * 0.5, y + 2.5);
+          ctx.lineTo(S * 0.507, y + 2.5);
+          ctx.stroke();
+        }
+
+        // Draw dark center line
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, S * 0.28);
+        ctx.lineTo(S * 0.5, S * 0.70);
+        ctx.stroke();
+
+        // Loop / cap at the top
+        ctx.fillStyle = "#a0a0a0";
+        ctx.strokeStyle = "#666666";
+        ctx.lineWidth = 1;
+        drawRoundRect(S * 0.491, sliderY - S * 0.008, S * 0.018, S * 0.012, 1);
+        ctx.fill();
+        ctx.stroke();
+
+        // Main dark gunmetal rectangular slider body
+        ctx.fillStyle = "#2d2d2d";
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(S * 0.48, sliderY, S * 0.04, S * 0.05, 1.5);
+        ctx.fill();
+        ctx.stroke();
+
+        // Inner vertical groove
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(S * 0.495, sliderY + S * 0.008, S * 0.01, S * 0.034);
+
+        // Puller attachment bracket
+        ctx.fillStyle = "#555555";
+        drawRoundRect(S * 0.492, sliderY + S * 0.015, S * 0.016, S * 0.018, 1);
+        ctx.fill();
+
+        // Long rectangular pull tab
+        ctx.fillStyle = "#333333";
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(S * 0.487, sliderY + S * 0.042, S * 0.026, S * 0.065, 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Embossed slot detail
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 2;
+        drawRoundRect(S * 0.493, sliderY + S * 0.048, S * 0.014, S * 0.053, 1);
+        ctx.stroke();
+      } else {
+        // 2 realistic buttons
+        [0.48, 0.60].forEach((yf) => {
+          drawRealisticButton(S * 0.5, S * yf, S * 0.02);
+        });
+      }
     }
 
     const tex = new THREE.CanvasTexture(cv);
@@ -254,7 +498,9 @@ function useStyleDecals(colors: any) {
     tex.needsUpdate = true;
     return { collarDecal: tex };
   }, [
+    colors?.collar,
     colors?.collarType,
+    colors?.zipper,
     colors?.designColor,
     colors?.secondary,
     colors?.primary,
@@ -4038,9 +4284,9 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
         {/* ── Collar Decal: wrapped flat onto the chest/neckline surface ── */}
         {collarDecal && (
           <Decal
-            position={[0.0, 0.212, 0.118]}
+            position={[0.0, 0.19, 0.118]}
             rotation={[0.15, 0, 0]}
-            scale={[0.21, 0.21, 0.18]}
+            scale={[0.22, 0.22, 0.12]}
           >
             <meshStandardMaterial
               map={collarDecal}
@@ -4057,7 +4303,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
       </mesh>
 
       {/* ── Dynamic Collar Elements (Polo 3D Wings, now flush and realistic) ── */}
-      {colors.collarType === "Polo" && (
+      {colors.collar && colors.collarType === "Polo" && (
         <group>
           {/* Folded Wings - perfectly scaled and nested into the neckbed */}
           <mesh
@@ -4524,11 +4770,11 @@ export default function CustomizerLayout() {
     numberColor: "#111111",
     numberPosition: "Both",
     sleeve: "Short",
-    collarType: "None",
+    collarType: "Polo",
     cutFit: "None",
     fabric: "Polyester",
     collar: true,
-    zipper: false,
+    zipper: true,
     designSide: "Both",
     logo: null as string | null,
     logoPosition: "Left Chest",
@@ -4729,19 +4975,44 @@ export default function CustomizerLayout() {
                     </span>
                     <Toggle
                       value={state.collar}
-                      onChange={(v) => updateState("collar", v)}
+                      onChange={(v) => {
+                        updateState("collar", v);
+                        if (v && state.collarType === "None") {
+                          updateState("collarType", "Polo");
+                        }
+                      }}
                     />
                   </div>
-                  {/* Zipper toggle */}
-                  <div className="flex items-center justify-between py-3 border-b border-zinc-100">
-                    <span className="text-sm font-semibold text-zinc-800">
-                      Add Zipper
-                    </span>
-                    <Toggle
-                      value={state.zipper}
-                      onChange={(v) => updateState("zipper", v)}
-                    />
-                  </div>
+                  {/* Closure selection */}
+                  {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && (
+                    <div className="py-3 border-b border-zinc-100 space-y-2">
+                      <span className="text-sm font-semibold text-zinc-800 block">
+                        Closure Type
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => updateState("zipper", false)}
+                          className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
+                            !state.zipper
+                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                              : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                          }`}
+                        >
+                          Button Placket
+                        </button>
+                        <button
+                          onClick={() => updateState("zipper", true)}
+                          className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
+                            state.zipper
+                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                              : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                          }`}
+                        >
+                          Zipper (+$5)
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Grid of designs */}
                   <div className="grid grid-cols-4 gap-3 pt-1">
@@ -5829,7 +6100,10 @@ export default function CustomizerLayout() {
                         (c) => (
                           <button
                             key={c}
-                            onClick={() => updateState("collarType", c)}
+                            onClick={() => {
+                              updateState("collarType", c);
+                              updateState("collar", c !== "None");
+                            }}
                             className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${state.collarType === c ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
                           >
                             {c}
@@ -5838,6 +6112,35 @@ export default function CustomizerLayout() {
                       )}
                     </div>
                   </div>
+                  {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && (
+                    <div>
+                      <label className="text-sm font-bold text-zinc-900 mb-2 block">
+                        Closure Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => updateState("zipper", false)}
+                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
+                            !state.zipper
+                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                              : "border-[#002337] text-[#002337] hover:border-zinc-300"
+                          }`}
+                        >
+                          Button Placket
+                        </button>
+                        <button
+                          onClick={() => updateState("zipper", true)}
+                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
+                            state.zipper
+                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                              : "border-[#002337] text-[#002337] hover:border-zinc-300"
+                          }`}
+                        >
+                          Zipper (+$5)
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="text-sm font-bold text-zinc-900 mb-2 block">
                       Cut & Fit
@@ -5934,8 +6237,8 @@ export default function CustomizerLayout() {
             {JERSEY_DESIGNS.find((d) => d.id === selectedDesign)?.label ??
               "Custom"}{" "}
             Design
-            {state.collar ? " • Collar" : ""}
-            {state.zipper ? " • Zipper" : ""}
+            {state.collar ? ` • ${state.collarType} Collar` : ""}
+            {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") ? ` (${state.zipper ? "Zipper" : "Buttons"})` : ""}
           </span>
         </div>
 
@@ -6047,10 +6350,12 @@ export default function CustomizerLayout() {
                 <span className="font-bold text-zinc-900">Included</span>
               </div>
             )}
-            {state.zipper && (
+            {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && (
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Zipper</span>
-                <span className="font-bold text-zinc-900">+$5</span>
+                <span className="text-zinc-500">Closure</span>
+                <span className="font-bold text-zinc-900">
+                  {state.zipper ? "Zipper (+$5)" : "Button Placket"}
+                </span>
               </div>
             )}
 
@@ -6082,7 +6387,7 @@ export default function CustomizerLayout() {
           <div className="flex justify-between items-center mb-4">
             <span className="font-bold text-zinc-600">Total</span>
             <span className="text-3xl font-extrabold text-zinc-900">
-              ${calculatePrice() + (state.zipper ? 5 * qty : 0)}
+              ${calculatePrice() + (state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && state.zipper ? 5 * qty : 0)}
             </span>
           </div>
           <button className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] text-sm">
