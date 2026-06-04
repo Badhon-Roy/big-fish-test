@@ -32,6 +32,243 @@ import { motion, AnimatePresence } from "framer-motion";
 // ─── Realistic GLTF Jersey Model using Decals ─────────────────────────────────
 import { useGLTF, Decal } from "@react-three/drei";
 
+function useStyleDecals(colors: any) {
+  return useMemo(() => {
+    if (!colors?.collarType || colors.collarType === "None")
+      return { collarDecal: null };
+
+    const S = 1024;
+    const cv = document.createElement("canvas");
+    cv.width = S;
+    cv.height = S;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return { collarDecal: null };
+    ctx.clearRect(0, 0, S, S);
+
+    // Polyfill for roundRect (not in all TS lib versions)
+    const drawRoundRect = (
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      r: number,
+    ) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    };
+
+    const trim = colors.designColor || colors.secondary || "#1A1A2E";
+    const base = colors.primary || "#2196F3";
+
+    // Helper: parse hex to rgb
+    const hexRgb = (h: string) => {
+      const c = parseInt(h.replace("#", ""), 16);
+      return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+    };
+    const lighten = (h: string, amt: number) => {
+      const [r, g, b] = hexRgb(h);
+      return `rgba(${Math.min(255, r + amt)},${Math.min(255, g + amt)},${Math.min(255, b + amt)},1)`;
+    };
+    const darken = (h: string, amt: number) => {
+      const [r, g, b] = hexRgb(h);
+      return `rgba(${Math.max(0, r - amt)},${Math.max(0, g - amt)},${Math.max(0, b - amt)},1)`;
+    };
+
+    if (colors.collarType === "Round") {
+      // Thick crew neck rib band — semi-circle at top
+      const grad = ctx.createLinearGradient(0, 0, 0, S * 0.22);
+      grad.addColorStop(0, lighten(trim, 40));
+      grad.addColorStop(0.5, trim);
+      grad.addColorStop(1, darken(trim, 30));
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = S * 0.085;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.38, 0.08, Math.PI - 0.08);
+      ctx.stroke();
+      // Rib stitch lines
+      ctx.strokeStyle = darken(trim, 50);
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        const r2 = S * 0.34 + i * S * 0.013;
+        ctx.beginPath();
+        ctx.arc(S / 2, 0, r2, 0.12, Math.PI - 0.12);
+        ctx.stroke();
+      }
+    } else if (colors.collarType === "V-Neck") {
+      // Left leg of V
+      const makeVLeg = (x1: number, y1: number, x2: number, y2: number) => {
+        const lg = ctx.createLinearGradient(x1, y1, x2, y2);
+        lg.addColorStop(0, lighten(trim, 35));
+        lg.addColorStop(0.45, trim);
+        lg.addColorStop(1, darken(trim, 25));
+        ctx.strokeStyle = lg;
+        ctx.lineWidth = S * 0.075;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        // inner rib
+        ctx.strokeStyle = darken(trim, 55);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      };
+      makeVLeg(S * 0.18, 0, S * 0.5, S * 0.52);
+      makeVLeg(S * 0.82, 0, S * 0.5, S * 0.52);
+    } else if (colors.collarType === "Polo") {
+      // Collar band at top
+      const band = ctx.createLinearGradient(0, 0, 0, S * 0.18);
+      band.addColorStop(0, lighten(trim, 45));
+      band.addColorStop(1, darken(trim, 20));
+      ctx.fillStyle = band;
+      drawRoundRect(S * 0.08, 0, S * 0.84, S * 0.18, 6);
+      ctx.fill();
+
+      // Left wing
+      const leftGrad = ctx.createLinearGradient(S * 0.1, 0, S * 0.5, S * 0.5);
+      leftGrad.addColorStop(0, lighten(trim, 30));
+      leftGrad.addColorStop(1, darken(trim, 15));
+      ctx.fillStyle = leftGrad;
+      ctx.beginPath();
+      ctx.moveTo(S * 0.08, S * 0.14);
+      ctx.lineTo(S * 0.08, S * 0.56);
+      ctx.lineTo(S * 0.5, S * 0.35);
+      ctx.lineTo(S * 0.5, S * 0.14);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right wing
+      const rightGrad = ctx.createLinearGradient(S * 0.5, 0, S * 0.9, S * 0.5);
+      rightGrad.addColorStop(0, lighten(trim, 30));
+      rightGrad.addColorStop(1, darken(trim, 15));
+      ctx.fillStyle = rightGrad;
+      ctx.beginPath();
+      ctx.moveTo(S * 0.92, S * 0.14);
+      ctx.lineTo(S * 0.92, S * 0.56);
+      ctx.lineTo(S * 0.5, S * 0.35);
+      ctx.lineTo(S * 0.5, S * 0.14);
+      ctx.closePath();
+      ctx.fill();
+
+      // Placket strip
+      const pkGrad = ctx.createLinearGradient(
+        S * 0.45,
+        S * 0.34,
+        S * 0.55,
+        S * 0.34,
+      );
+      pkGrad.addColorStop(0, lighten(trim, 20));
+      pkGrad.addColorStop(1, darken(trim, 10));
+      ctx.fillStyle = pkGrad;
+      ctx.fillRect(S * 0.46, S * 0.34, S * 0.08, S * 0.42);
+      ctx.strokeStyle = darken(trim, 40);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(S * 0.46, S * 0.34, S * 0.08, S * 0.42);
+      // 2 buttons
+      [0.44, 0.6].forEach((yf) => {
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(S * 0.5, S * yf, S * 0.022, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#888";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // button holes
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(S * 0.497, S * yf, 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(S * 0.503, S * yf, 4, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+    } else if (colors.collarType === "Henley") {
+      // Round neck band
+      const hb = ctx.createLinearGradient(0, 0, 0, S * 0.14);
+      hb.addColorStop(0, lighten(trim, 40));
+      hb.addColorStop(1, darken(trim, 20));
+      ctx.strokeStyle = hb;
+      ctx.lineWidth = S * 0.07;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.38, 0.08, Math.PI - 0.08);
+      ctx.stroke();
+      // Rib stitches on band
+      ctx.strokeStyle = darken(trim, 50);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.35, 0.1, Math.PI - 0.1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.37, 0.1, Math.PI - 0.1);
+      ctx.stroke();
+
+      // Placket
+      const pg2 = ctx.createLinearGradient(S * 0.44, 0, S * 0.56, 0);
+      pg2.addColorStop(0, lighten(base, 20));
+      pg2.addColorStop(0.5, base);
+      pg2.addColorStop(1, darken(base, 15));
+      ctx.fillStyle = pg2;
+      drawRoundRect(S * 0.44, S * 0.28, S * 0.12, S * 0.58, 4);
+      ctx.fill();
+      ctx.strokeStyle = darken(trim, 35);
+      ctx.lineWidth = 2;
+      drawRoundRect(S * 0.44, S * 0.28, S * 0.12, S * 0.58, 4);
+      ctx.stroke();
+      // 3 buttons
+      [0.37, 0.52, 0.67].forEach((yf) => {
+        ctx.fillStyle = "#f0f0f0";
+        ctx.beginPath();
+        ctx.ellipse(S * 0.5, S * yf, S * 0.02, S * 0.018, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#999";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.strokeStyle = "#666";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.496, S * yf);
+        ctx.lineTo(S * 0.504, S * yf);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, S * yf - 3);
+        ctx.lineTo(S * 0.5, S * yf + 3);
+        ctx.stroke();
+      });
+    }
+
+    const tex = new THREE.CanvasTexture(cv);
+    tex.anisotropy = 16;
+    tex.needsUpdate = true;
+    return { collarDecal: tex };
+  }, [
+    colors?.collarType,
+    colors?.designColor,
+    colors?.secondary,
+    colors?.primary,
+  ]);
+}
+
+const PATTERN_DEFAULT_COLORS: Record<string, { bg: string; design: string }> = {
+  "/assets/images/patterns/pattern_1.png": { bg: "#FFFFFF", design: "#d73099" },
+  "/assets/images/patterns/pattern_2.png": { bg: "#FFFFFF", design: "#5A6B7C" },
+  "/assets/images/patterns/pattern_3.png": { bg: "#FFFFFF", design: "#0F7643" },
+  "/assets/images/patterns/pattern_4.png": { bg: "#FFFFFF", design: "#8db97b" },
+  "/assets/images/patterns/pattern_5.png": { bg: "#FFFFFF", design: "#E52E2E" },
+};
+
 function useJerseyDecals(state: any) {
   return useMemo(() => {
     const size = 1024;
@@ -265,7 +502,8 @@ function useJerseyDecals(state: any) {
     };
 
     // ── Fabric Pattern Canvas Drawer ──────────────────────────────────────────
-    const drawFabricPattern = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _drawFabricPatternOld = (
       ctx: CanvasRenderingContext2D,
       patternName: string,
       primaryColor: string = "#E63946",
@@ -2301,8 +2539,96 @@ function useJerseyDecals(state: any) {
       ctx.restore();
     };
 
+    const drawFabricPattern = (
+      ctx: CanvasRenderingContext2D,
+      patternName: string,
+      isFront: boolean,
+    ) => {
+      if (!patternName || patternName === "None") return;
+      const loadedImg = state.loadedPatterns?.[patternName];
+      if (loadedImg) {
+        const customize = isFront
+          ? state.fabricPatternCustomizeFront
+          : state.fabricPatternCustomizeBack;
+
+        if (!customize) {
+          ctx.save();
+          ctx.drawImage(loadedImg, 0, 0, size, size);
+          ctx.restore();
+          return;
+        }
+
+        const fgColor = isFront
+          ? state.fabricPatternColorFront
+          : state.fabricPatternColorBack;
+        const bgColor = isFront
+          ? state.fabricPatternBgFront
+          : state.fabricPatternBgBack;
+
+        const hexToRgb = (hex: string) => {
+          const cleanHex = hex.replace("#", "");
+          const num = parseInt(cleanHex, 16);
+          return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255,
+          };
+        };
+
+        const bgIsTransparent =
+          bgColor.toLowerCase() === "transparent" || bgColor === "";
+        const fgRgb = hexToRgb(fgColor);
+
+        // Process pixel data to extract foreground shapes with transparency
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = size;
+        tempCanvas.height = size;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (!tempCtx) return;
+
+        tempCtx.drawImage(loadedImg, 0, 0, size, size);
+        const imgData = tempCtx.getImageData(0, 0, size, size);
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          // Calculate distance from white (255, 255, 255)
+          const dist = Math.sqrt(
+            (255 - r) ** 2 + (255 - g) ** 2 + (255 - b) ** 2,
+          );
+
+          // Interpolation factor t:
+          // dist < 30 -> background
+          // dist > 90 -> foreground
+          const t = Math.max(0, Math.min(1, (dist - 30) / 60));
+
+          data[i] = fgRgb.r;
+          data[i + 1] = fgRgb.g;
+          data[i + 2] = fgRgb.b;
+          data[i + 3] = Math.round(a * t);
+        }
+
+        tempCtx.putImageData(imgData, 0, 0);
+
+        ctx.save();
+        if (!bgIsTransparent) {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, size, size);
+        }
+        ctx.drawImage(tempCanvas, 0, 0, size, size);
+        ctx.restore();
+      }
+    };
+
     // ── Separate full-body pattern canvases (large decals) ─────────────────
+    const isSplit = state.primaryColorSide && state.primaryColorSide !== "Both";
+
     const showFrontDecal =
+      isSplit ||
       (state.designPattern &&
         state.designPattern !== "plain" &&
         (state.designSide === "Front" ||
@@ -2311,6 +2637,7 @@ function useJerseyDecals(state: any) {
       (state.fabricPatternFront && state.fabricPatternFront !== "None");
 
     const showBackDecal =
+      isSplit ||
       (state.designPattern &&
         state.designPattern !== "plain" &&
         (state.designSide === "Back" ||
@@ -2320,9 +2647,13 @@ function useJerseyDecals(state: any) {
 
     const patternFront = showFrontDecal
       ? makeCanvas((ctx) => {
-          // 1. Draw fabric pattern first
+          // 1. Draw base color / fabric pattern first
           if (state.fabricPatternFront && state.fabricPatternFront !== "None") {
-            drawFabricPattern(ctx, state.fabricPatternFront, state.primary);
+            drawFabricPattern(ctx, state.fabricPatternFront, true);
+          } else {
+            // Fill with front primary color
+            ctx.fillStyle = state.primaryFront || state.primary;
+            ctx.fillRect(0, 0, size, size);
           }
           // 2. Draw design pattern on top
           if (
@@ -2339,9 +2670,13 @@ function useJerseyDecals(state: any) {
 
     const patternBack = showBackDecal
       ? makeCanvas((ctx) => {
-          // 1. Draw fabric pattern first
+          // 1. Draw base color / fabric pattern first
           if (state.fabricPatternBack && state.fabricPatternBack !== "None") {
-            drawFabricPattern(ctx, state.fabricPatternBack, state.primary);
+            drawFabricPattern(ctx, state.fabricPatternBack, false);
+          } else {
+            // Fill with back primary color
+            ctx.fillStyle = state.primaryBack || state.primary;
+            ctx.fillRect(0, 0, size, size);
           }
           // 2. Draw design pattern on top
           if (
@@ -3453,6 +3788,7 @@ useGLTF.preload("/models/shirt_baked.glb");
 function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
   const { nodes } = useGLTF("/models/shirt_baked.glb") as any;
   const { front, back, patternFront, patternBack } = useJerseyDecals(colors);
+  const { collarDecal } = useStyleDecals(colors);
 
   const [logoTexture, setLogoTexture] = useState<THREE.Texture | null>(null);
   const [logoAspect, setLogoAspect] = useState(1);
@@ -3555,12 +3891,12 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
 
   const shirtMat = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: colors.primary,
+      color: colors.primaryFront || colors.primary,
       roughness,
       metalness: 0.06,
       envMapIntensity: 1.2,
     });
-  }, [roughness, colors.primary]);
+  }, [roughness, colors.primaryFront, colors.primary]);
 
   let scaleX = 2.2;
   let scaleZ = 2.2;
@@ -3571,6 +3907,30 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
     scaleX = 2.35;
     scaleZ = 2.35;
   }
+
+  // ── Sleeve geometry pre-computation ─────────────────────────────────────────
+  // The base GLB short sleeve seam sits at ≈ (±0.187, 0.087) in local space.
+  // For rotation.z = -ROT_Z, the cylinder axis (from Y=[0,1,0]) rotates to:
+  //   axis = (-sin(-ROT_Z), cos(-ROT_Z)) = (sin(ROT_Z), cos(ROT_Z))
+  //   where ROT_Z = π/2 + 0.35:
+  //     AX = sin(π/2+0.35) = cos(0.35) ≈ +0.939  →  pointing right ✓
+  //     AY = cos(π/2+0.35) = -sin(0.35) ≈ -0.342 →  pointing downward ✓
+  const SLEEVE_SEAM_X = 0.187;
+  const SLEEVE_SEAM_Y = 0.087;
+  const SLEEVE_ROT_Z = Math.PI / 2 + 0.35; // ≈ 1.921 rad
+  const SLEEVE_AX = Math.sin(SLEEVE_ROT_Z); // ≈ +0.939 (rightward)
+  const SLEEVE_AY = Math.cos(SLEEVE_ROT_Z); // ≈ -0.342 (downward) ← no minus needed!
+
+  const sleeveLen = colors.sleeve === "Long" ? 0.34 : 0.17;
+  const sleeveHalf = sleeveLen / 2;
+  // Cylinder center = seam + halfLen × axisDir  (top cap flush with seam)
+  const sleeveCX = SLEEVE_SEAM_X + sleeveHalf * SLEEVE_AX;
+  const sleeveCY = SLEEVE_SEAM_Y + sleeveHalf * SLEEVE_AY;
+  // Wrist = seam + fullLen × axisDir
+  const sleeveWristX = SLEEVE_SEAM_X + sleeveLen * SLEEVE_AX;
+  const sleeveWristY = SLEEVE_SEAM_Y + sleeveLen * SLEEVE_AY;
+
+  const trimColor = colors.designColor || colors.secondary || "#ffffff";
 
   return (
     <group scale={[scaleX, 2.2, scaleZ]} position={[0, -0.1, 0]}>
@@ -3674,110 +4034,164 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
             />
           </Decal>
         )}
+
+        {/* ── Collar Decal: wrapped flat onto the chest/neckline surface ── */}
+        {collarDecal && (
+          <Decal
+            position={[0.0, 0.212, 0.118]}
+            rotation={[0.15, 0, 0]}
+            scale={[0.21, 0.21, 0.18]}
+          >
+            <meshStandardMaterial
+              map={collarDecal}
+              transparent
+              alphaTest={0.008}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-7}
+              roughness={roughness}
+              envMapIntensity={1.3}
+            />
+          </Decal>
+        )}
       </mesh>
 
-      {/* ── Dynamic Collar Implementation ── */}
+      {/* ── Dynamic Collar Elements (Polo 3D Wings, now flush and realistic) ── */}
       {colors.collarType === "Polo" && (
         <group>
-          {/* Polo Neck band */}
-          <mesh castShadow receiveShadow position={[0, 0.205, -0.015]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.8]}>
-            <torusGeometry args={[0.076, 0.009, 16, 48]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          {/* Folded Wings - perfectly scaled and nested into the neckbed */}
+          <mesh
+            castShadow
+            receiveShadow
+            position={[-0.038, 0.198, 0.045]}
+            rotation={[0.35, -0.35, -0.4]}
+          >
+            <boxGeometry args={[0.055, 0.004, 0.065]} />
+            <meshStandardMaterial
+              color={colors.designColor || colors.secondary || "#ffffff"}
+              roughness={0.7}
+            />
           </mesh>
-          {/* Front Placket */}
-          <mesh castShadow receiveShadow position={[0, 0.128, 0.125]} rotation={[0.13, 0, 0]}>
-            <boxGeometry args={[0.024, 0.12, 0.006]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-          {/* Folded Wings */}
-          <mesh castShadow receiveShadow position={[-0.042, 0.202, 0.06]} rotation={[0.42, -0.45, -0.5]}>
-            <boxGeometry args={[0.065, 0.006, 0.075]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-          <mesh castShadow receiveShadow position={[0.042, 0.202, 0.06]} rotation={[0.42, 0.45, 0.5]}>
-            <boxGeometry args={[0.065, 0.006, 0.075]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-        </group>
-      )}
-
-      {colors.collarType === "Henley" && (
-        <group>
-          {/* Henley Round Neck Band */}
-          <mesh castShadow receiveShadow position={[0, 0.205, -0.015]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.8]}>
-            <torusGeometry args={[0.076, 0.004, 16, 48]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-          {/* Front Placket with Buttons */}
-          <mesh castShadow receiveShadow position={[0, 0.128, 0.125]} rotation={[0.13, 0, 0]}>
-            <boxGeometry args={[0.024, 0.12, 0.003]} />
-            <meshStandardMaterial color={colors.primary} roughness={0.7} />
-          </mesh>
-          {/* Buttons */}
-          {[0.11, 0.14, 0.17].map((y, i) => (
-            <mesh key={i} castShadow position={[0, y, 0.128]} rotation={[Math.PI / 2 + 0.13, 0, 0]}>
-              <cylinderGeometry args={[0.004, 0.004, 0.002, 16]} />
-              <meshStandardMaterial color="#222222" roughness={0.5} />
-            </mesh>
-          ))}
-        </group>
-      )}
-
-      {colors.collarType === "V-Neck" && (
-        <group>
-          {/* V-Neck Trim */}
-          <mesh castShadow receiveShadow position={[-0.035, 0.15, 0.11]} rotation={[0.2, 0, 0.4]}>
-            <boxGeometry args={[0.012, 0.1, 0.004]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-          <mesh castShadow receiveShadow position={[0.035, 0.15, 0.11]} rotation={[0.2, 0, -0.4]}>
-            <boxGeometry args={[0.012, 0.1, 0.004]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-          {/* Back neck ring */}
-          <mesh castShadow receiveShadow position={[0, 0.21, -0.02]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.6]}>
-            <torusGeometry args={[0.076, 0.006, 16, 48, Math.PI]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          <mesh
+            castShadow
+            receiveShadow
+            position={[0.038, 0.198, 0.045]}
+            rotation={[0.35, 0.35, 0.4]}
+          >
+            <boxGeometry args={[0.055, 0.004, 0.065]} />
+            <meshStandardMaterial
+              color={colors.designColor || colors.secondary || "#ffffff"}
+              roughness={0.7}
+            />
           </mesh>
         </group>
       )}
 
-      {colors.collarType === "Round" && (
-        <group>
-          {/* Standard Round Neck Trim */}
-          <mesh castShadow receiveShadow position={[0, 0.205, -0.015]} rotation={[Math.PI / 2.1, 0, 0]} scale={[1, 1, 0.8]}>
-            <torusGeometry args={[0.076, 0.005, 16, 48]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-        </group>
-      )}
-
-      {/* ── Dynamic Sleeves Implementation ── */}
+      {/* ── Long / 3/4 Sleeve Extensions ─────────────────────────────────── */}
+      {/* One arm cylinder per side, center-placed so the top cap sits exactly   */}
+      {/* on the base-model's short-sleeve seam at (SLEEVE_SEAM_X, SLEEVE_SEAM_Y) */}
       {(colors.sleeve === "Long" || colors.sleeve === "3/4") && (
         <group>
-          {/* Left Sleeve Extension */}
-          <mesh castShadow receiveShadow position={[0.22, 0.06, 0]} rotation={[0, 0, 0.4]}>
-            <cylinderGeometry args={[0.045, 0.035, colors.sleeve === "Long" ? 0.4 : 0.2, 32]} />
-            <meshStandardMaterial color={colors.primary} roughness={0.7} />
+          {/* Right viewer side (+x = wearer's left arm) */}
+          <mesh
+            castShadow
+            receiveShadow
+            position={[sleeveCX, sleeveCY, -0.01]}
+            rotation={[0, 0, -SLEEVE_ROT_Z]}
+          >
+            <cylinderGeometry
+              args={[
+                0.042,
+                colors.sleeve === "Long" ? 0.028 : 0.034,
+                sleeveLen,
+                32,
+              ]}
+            />
+            <meshStandardMaterial
+              color={colors.primaryFront || colors.primary}
+              roughness={roughness}
+              metalness={0.03}
+              envMapIntensity={1.1}
+            />
           </mesh>
-          {/* Right Sleeve Extension */}
-          <mesh castShadow receiveShadow position={[-0.22, 0.06, 0]} rotation={[0, 0, -0.4]}>
-            <cylinderGeometry args={[0.045, 0.035, colors.sleeve === "Long" ? 0.4 : 0.2, 32]} />
-            <meshStandardMaterial color={colors.primary} roughness={0.7} />
+          {/* Wrist cuff highlight — Long only */}
+          {colors.sleeve === "Long" && (
+            <mesh
+              castShadow
+              receiveShadow
+              position={[sleeveWristX, sleeveWristY, -0.01]}
+              rotation={[0, 0, -SLEEVE_ROT_Z]}
+            >
+              <cylinderGeometry args={[0.029, 0.028, 0.018, 32]} />
+              <meshStandardMaterial
+                color={trimColor}
+                roughness={0.5}
+                metalness={0.02}
+              />
+            </mesh>
+          )}
+
+          {/* Left viewer side (-x = wearer's right arm) */}
+          <mesh
+            castShadow
+            receiveShadow
+            position={[-sleeveCX, sleeveCY, -0.01]}
+            rotation={[0, 0, SLEEVE_ROT_Z]}
+          >
+            <cylinderGeometry
+              args={[
+                0.042,
+                colors.sleeve === "Long" ? 0.028 : 0.034,
+                sleeveLen,
+                32,
+              ]}
+            />
+            <meshStandardMaterial
+              color={colors.primaryFront || colors.primary}
+              roughness={roughness}
+              metalness={0.03}
+              envMapIntensity={1.1}
+            />
           </mesh>
+          {/* Wrist cuff highlight — Long only */}
+          {colors.sleeve === "Long" && (
+            <mesh
+              castShadow
+              receiveShadow
+              position={[-sleeveWristX, sleeveWristY, -0.01]}
+              rotation={[0, 0, SLEEVE_ROT_Z]}
+            >
+              <cylinderGeometry args={[0.029, 0.028, 0.018, 32]} />
+              <meshStandardMaterial
+                color={trimColor}
+                roughness={0.5}
+                metalness={0.02}
+              />
+            </mesh>
+          )}
         </group>
       )}
 
+      {/* ── Sleeveless: armhole trim ring ─────────────────────────────────── */}
       {colors.sleeve === "Sleeveless" && (
         <group>
-          {/* Sleeveless Trim - we add a contrasting ring to make it look like a tank top */}
-          <mesh castShadow receiveShadow position={[0.165, 0.16, 0]} rotation={[0, Math.PI / 2, Math.PI / 6]}>
-            <torusGeometry args={[0.08, 0.006, 16, 48]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          <mesh
+            castShadow
+            receiveShadow
+            position={[SLEEVE_SEAM_X, SLEEVE_SEAM_Y, -0.01]}
+            rotation={[0, 0, -SLEEVE_ROT_Z]}
+          >
+            <torusGeometry args={[0.042, 0.006, 16, 48]} />
+            <meshStandardMaterial color={trimColor} roughness={0.55} />
           </mesh>
-          <mesh castShadow receiveShadow position={[-0.165, 0.16, 0]} rotation={[0, Math.PI / 2, -Math.PI / 6]}>
-            <torusGeometry args={[0.08, 0.006, 16, 48]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          <mesh
+            castShadow
+            receiveShadow
+            position={[-SLEEVE_SEAM_X, SLEEVE_SEAM_Y, -0.01]}
+            rotation={[0, 0, SLEEVE_ROT_Z]}
+          >
+            <torusGeometry args={[0.042, 0.006, 16, 48]} />
+            <meshStandardMaterial color={trimColor} roughness={0.55} />
           </mesh>
         </group>
       )}
@@ -4084,11 +4498,20 @@ export default function CustomizerLayout() {
   );
   const [state, setState] = useState({
     primary: "#2196F3",
+    primaryColorSide: "Both",
+    primaryFront: "#2196F3",
+    primaryBack: "#2196F3",
     secondary: "#1A1A2E",
     designColor: "#1A1A2E",
     pattern: "None",
     fabricPatternFront: "None",
     fabricPatternBack: "None",
+    fabricPatternCustomizeFront: false,
+    fabricPatternColorFront: "#d73099",
+    fabricPatternBgFront: "#FFFFFF",
+    fabricPatternCustomizeBack: false,
+    fabricPatternColorBack: "#d73099",
+    fabricPatternBgBack: "#FFFFFF",
     frontText: "VALKYRIE",
     frontFont: "Varsity",
     frontTextColor: "#FFFFFF",
@@ -4122,6 +4545,30 @@ export default function CustomizerLayout() {
 
   const updateState = (key: string, value: any) =>
     setState((s) => ({ ...s, [key]: value }));
+
+  const [loadedPatterns, setLoadedPatterns] = useState<
+    Record<string, HTMLImageElement>
+  >({});
+
+  useEffect(() => {
+    const activePatterns = [
+      state.fabricPatternFront,
+      state.fabricPatternBack,
+    ].filter((p) => p && p !== "None");
+
+    activePatterns.forEach((patternPath) => {
+      if (loadedPatterns[patternPath]) return;
+
+      const img = new Image();
+      img.src = patternPath;
+      img.onload = () => {
+        setLoadedPatterns((prev) => ({
+          ...prev,
+          [patternPath]: img,
+        }));
+      };
+    });
+  }, [state.fabricPatternFront, state.fabricPatternBack, loadedPatterns]);
 
   const setLogoPositionPreset = (pos: string) => {
     let x = 0.065,
@@ -4405,43 +4852,105 @@ export default function CustomizerLayout() {
               {/* ── COLORS TAB ── */}
               {activeTab === "colors" && (
                 <div className="space-y-6">
-                  <div>
-                    <label className="text-sm font-bold text-zinc-900 mb-3 block">
-                      Primary Color
-                    </label>
-                    <div className="flex gap-2 flex-wrap mb-3">
-                      {[
-                        "#E63946",
-                        "#2196F3",
-                        "#111111",
-                        "#FFFFFF",
-                        "#457B9D",
-                        "#2A9D8F",
-                        "#F4A261",
-                        "#6C63FF",
-                        "#FF6B6B",
-                        "#43AA8B",
-                      ].map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => updateState("primary", c)}
-                          className={`w-9 h-9 rounded-full border-2 transition-transform ${state.primary === c ? "border-zinc-900 scale-110 ring-2 ring-offset-1 ring-zinc-400" : "border-black/10 hover:scale-105"}`}
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1">
-                      <input
-                        type="color"
-                        value={state.primary}
-                        onChange={(e) => updateState("primary", e.target.value)}
-                        className="w-9 h-9 rounded cursor-pointer border border-zinc-200"
-                      />
-                      <span className="text-xs text-zinc-500 font-mono">
-                        {state.primary.toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
+                  {(() => {
+                    const side = state.primaryColorSide || "Both";
+                    const activeColor =
+                      side === "Back"
+                        ? state.primaryBack || state.primary
+                        : side === "Front"
+                          ? state.primaryFront || state.primary
+                          : state.primary;
+
+                    const handleColorChange = (c: string) => {
+                      if (side === "Both") {
+                        setState((s) => ({
+                          ...s,
+                          primary: c,
+                          primaryFront: c,
+                          primaryBack: c,
+                        }));
+                      } else if (side === "Front") {
+                        setState((s) => ({
+                          ...s,
+                          primaryFront: c,
+                          primary: c,
+                        }));
+                      } else {
+                        setState((s) => ({
+                          ...s,
+                          primaryBack: c,
+                        }));
+                      }
+                    };
+
+                    return (
+                      <div>
+                        <label className="text-sm font-bold text-zinc-900 mb-3 block">
+                          Primary Color
+                        </label>
+
+                        {/* Side Selector */}
+                        <div className="flex gap-1.5 p-1 bg-zinc-100 rounded border mb-4">
+                          {[
+                            { id: "Both", label: "Both" },
+                            { id: "Front", label: "Front" },
+                            { id: "Back", label: "Back" },
+                          ].map((sOption) => (
+                            <button
+                              key={sOption.id}
+                              onClick={() =>
+                                updateState("primaryColorSide", sOption.id)
+                              }
+                              className={`flex-1 py-1.5 text-xs font-bold rounded cursor-pointer transition-all text-center ${
+                                side === sOption.id
+                                  ? "bg-white text-zinc-900 shadow-sm"
+                                  : "text-zinc-500 hover:text-zinc-800"
+                              }`}
+                            >
+                              {sOption.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex gap-2 flex-wrap mb-3">
+                          {[
+                            "#E63946",
+                            "#2196F3",
+                            "#111111",
+                            "#FFFFFF",
+                            "#457B9D",
+                            "#2A9D8F",
+                            "#F4A261",
+                            "#6C63FF",
+                            "#FF6B6B",
+                            "#43AA8B",
+                          ].map((c) => (
+                            <button
+                              key={c}
+                              onClick={() => handleColorChange(c)}
+                              className={`w-9 h-9 rounded-full border-2 transition-transform ${
+                                activeColor === c
+                                  ? "border-zinc-900 scale-110 ring-2 ring-offset-1 ring-zinc-400"
+                                  : "border-black/10 hover:scale-105"
+                              }`}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          <input
+                            type="color"
+                            value={activeColor}
+                            onChange={(e) => handleColorChange(e.target.value)}
+                            className="w-9 h-9 rounded cursor-pointer border border-zinc-200"
+                          />
+                          <span className="text-xs text-zinc-500 font-mono">
+                            {activeColor.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -4474,30 +4983,32 @@ export default function CustomizerLayout() {
 
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     {[
-                      { id: "None", label: "Solid Color" },
-                      { id: "BlueGrungeJersey", label: "Grunge Panel" },
-                      { id: "GrungeTriangleJersey", label: "Grunge Triangle" },
-                      { id: "Street Shard", label: "Street Shard" },
-                      { id: "JerseyHexDot", label: "Hex Sublimation" },
-                      { id: "GreenChevronJersey", label: "Green Chevron" },
-                      { id: "RedCarbonJersey", label: "Carbon Fiber" },
-                      { id: "GoldDiamondJersey", label: "Gold Diamond" },
-                      { id: "PurpleHexTechJersey", label: "Hex-Tech" },
-                      { id: "OrangeCamoWaveJersey", label: "Camo Wave" },
-                      { id: "RedShardEnergy", label: "Shard Energy" },
-                      { id: "NeonCyberGrid", label: "Cyber Grid" },
-                      { id: "GreenToxicSmoke", label: "Toxic Smoke" },
-                      { id: "PurpleWaveMotion", label: "Wave Motion" },
-                      { id: "FlameStripeJersey", label: "Flame Stripe" },
-                      { id: "Lightning", label: "Lightning" },
-                      { id: "Stripes", label: "Stripes" },
-                      { id: "Abstract", label: "Abstract Wave" },
-                      { id: "Geometric", label: "Hex Grid" },
-                      { id: "Camouflage", label: "Camouflage" },
-                      { id: "Minimal", label: "Minimalist" },
-                      { id: "Diagonal", label: "Diagonal" },
-                      { id: "Gradient", label: "Soft Gradient" },
-                      { id: "Diamond", label: "Diamond Facet" },
+                      { id: "None", label: "Solid Color", url: "" },
+                      {
+                        id: "/assets/images/patterns/pattern_1.png",
+                        label: "Pattern 1",
+                        url: "/assets/images/patterns/pattern_1.png",
+                      },
+                      {
+                        id: "/assets/images/patterns/pattern_2.png",
+                        label: "Pattern 2",
+                        url: "/assets/images/patterns/pattern_2.png",
+                      },
+                      {
+                        id: "/assets/images/patterns/pattern_3.png",
+                        label: "Pattern 3",
+                        url: "/assets/images/patterns/pattern_3.png",
+                      },
+                      {
+                        id: "/assets/images/patterns/pattern_4.png",
+                        label: "Pattern 4",
+                        url: "/assets/images/patterns/pattern_4.png",
+                      },
+                      {
+                        id: "/assets/images/patterns/pattern_5.png",
+                        label: "Pattern 5",
+                        url: "/assets/images/patterns/pattern_5.png",
+                      },
                     ].map((p) => {
                       const isSelected =
                         activePatternSide === "Front"
@@ -4521,15 +5032,24 @@ export default function CustomizerLayout() {
                               : "border-zinc-200 hover:border-zinc-300"
                           }`}
                         >
-                          <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-zinc-100 border border-zinc-200/50 flex items-center justify-center">
-                            <MiniPatternSVG
-                              pattern={p.id}
-                              primary={state.primary}
-                            />
+                          <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-zinc-100 border border-zinc-200/50 flex items-center justify-center relative">
+                            {p.id === "None" ? (
+                              <div className="w-full h-full flex items-center justify-center bg-zinc-200 text-zinc-500 font-bold text-xs">
+                                Solid
+                              </div>
+                            ) : (
+                              <img
+                                src={p.url}
+                                alt={p.label}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
                           </div>
                           <span
-                            className={`text-[11px] font-medium text-center ${
-                              isSelected ? "text-red-700" : "text-[#002337]"
+                            className={`text-[11px] font-medium text-center w-full ${
+                              isSelected
+                                ? "text-red-700 font-bold"
+                                : "text-[#002337]"
                             }`}
                           >
                             {p.label}
@@ -4538,6 +5058,183 @@ export default function CustomizerLayout() {
                       );
                     })}
                   </div>
+
+                  {/* Pattern Color Customizer UI */}
+                  {(() => {
+                    const selectedPattern =
+                      activePatternSide === "Front"
+                        ? state.fabricPatternFront
+                        : state.fabricPatternBack;
+
+                    if (!selectedPattern || selectedPattern === "None")
+                      return null;
+
+                    const customizeActive =
+                      activePatternSide === "Front"
+                        ? state.fabricPatternCustomizeFront
+                        : state.fabricPatternCustomizeBack;
+
+                    const customizeKey =
+                      activePatternSide === "Front"
+                        ? "fabricPatternCustomizeFront"
+                        : "fabricPatternCustomizeBack";
+
+                    const colorVal =
+                      activePatternSide === "Front"
+                        ? state.fabricPatternColorFront
+                        : state.fabricPatternColorBack;
+
+                    const colorKey =
+                      activePatternSide === "Front"
+                        ? "fabricPatternColorFront"
+                        : "fabricPatternColorBack";
+
+                    const bgVal =
+                      activePatternSide === "Front"
+                        ? state.fabricPatternBgFront
+                        : state.fabricPatternBgBack;
+
+                    const bgKey =
+                      activePatternSide === "Front"
+                        ? "fabricPatternBgFront"
+                        : "fabricPatternBgBack";
+
+                    return (
+                      <div className="mt-6 p-4 rounded-xl border border-zinc-100 bg-zinc-50/50 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-xs font-bold text-zinc-800">
+                              Customize Pattern Colors
+                            </h4>
+                            <p className="text-[10px] text-zinc-500">
+                              Change pattern colors or make background
+                              transparent
+                            </p>
+                          </div>
+                          <Toggle
+                            value={customizeActive}
+                            onChange={(v) => {
+                              updateState(customizeKey, v);
+                              if (v) {
+                                const defaults =
+                                  PATTERN_DEFAULT_COLORS[selectedPattern];
+                                if (defaults) {
+                                  if (!colorVal)
+                                    updateState(colorKey, defaults.design);
+                                  if (!bgVal) updateState(bgKey, defaults.bg);
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+
+                        {customizeActive && (
+                          <div className="space-y-4 pt-2 border-t border-zinc-100">
+                            {/* Design Color */}
+                            <div className="space-y-2">
+                              <label className="text-[11px] font-bold text-zinc-600 block">
+                                Pattern Design Color
+                              </label>
+                              <div className="flex gap-2 flex-wrap mb-2">
+                                {[
+                                  "#E63946",
+                                  "#2196F3",
+                                  "#111111",
+                                  "#FFFFFF",
+                                  "#457B9D",
+                                  "#2A9D8F",
+                                  "#F4A261",
+                                  "#6C63FF",
+                                ].map((c) => (
+                                  <button
+                                    key={c}
+                                    onClick={() => updateState(colorKey, c)}
+                                    className={`w-7 h-7 rounded-full border-2 transition-transform ${
+                                      colorVal === c
+                                        ? "border-zinc-900 scale-110"
+                                        : "border-black/10 hover:scale-105"
+                                    }`}
+                                    style={{ backgroundColor: c }}
+                                  />
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="color"
+                                  value={colorVal}
+                                  onChange={(e) =>
+                                    updateState(colorKey, e.target.value)
+                                  }
+                                  className="w-8 h-8 rounded cursor-pointer border border-zinc-200"
+                                />
+                                <span className="text-xs text-zinc-500 font-mono">
+                                  {colorVal.toUpperCase()}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Background Color */}
+                            <div className="space-y-2">
+                              <label className="text-[11px] font-bold text-zinc-600 block">
+                                Pattern Background Color
+                              </label>
+                              <div className="flex gap-2 flex-wrap mb-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateState(bgKey, "transparent")
+                                  }
+                                  className={`h-7 px-3 rounded-full border-2 text-[10px] font-bold transition-all ${
+                                    bgVal === "transparent"
+                                      ? "border-zinc-900 bg-zinc-900 text-white"
+                                      : "border-zinc-200 hover:border-zinc-300 bg-white text-zinc-700"
+                                  }`}
+                                >
+                                  Transparent
+                                </button>
+                                {[
+                                  "#FFFFFF",
+                                  "#E63946",
+                                  "#2196F3",
+                                  "#111111",
+                                  "#457B9D",
+                                  "#2A9D8F",
+                                  "#F4A261",
+                                  "#6C63FF",
+                                ].map((c) => (
+                                  <button
+                                    key={c}
+                                    onClick={() => updateState(bgKey, c)}
+                                    className={`w-7 h-7 rounded-full border-2 transition-transform ${
+                                      bgVal === c
+                                        ? "border-zinc-900 scale-110"
+                                        : "border-black/10 hover:scale-105"
+                                    }`}
+                                    style={{ backgroundColor: c }}
+                                  />
+                                ))}
+                              </div>
+                              {bgVal !== "transparent" && (
+                                <div className="flex items-center gap-3">
+                                  <input
+                                    type="color"
+                                    value={bgVal}
+                                    onChange={(e) =>
+                                      updateState(bgKey, e.target.value)
+                                    }
+                                    className="w-8 h-8 rounded cursor-pointer border border-zinc-200"
+                                  />
+                                  <span className="text-xs text-zinc-500 font-mono">
+                                    {bgVal.toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -5129,15 +5826,17 @@ export default function CustomizerLayout() {
                       Collar Type
                     </label>
                     <div className="grid grid-cols-2 gap-2">
-                      {["None","V-Neck", "Round", "Polo", "Henley"].map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => updateState("collarType", c)}
-                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${state.collarType === c ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
-                        >
-                          {c}
-                        </button>
-                      ))}
+                      {["None", "V-Neck", "Round", "Polo", "Henley"].map(
+                        (c) => (
+                          <button
+                            key={c}
+                            onClick={() => updateState("collarType", c)}
+                            className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${state.collarType === c ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
+                          >
+                            {c}
+                          </button>
+                        ),
+                      )}
                     </div>
                   </div>
                   <div>
@@ -5301,7 +6000,11 @@ export default function CustomizerLayout() {
           <pointLight position={[3, 1, -2]} intensity={0.5} />
           <Center>
             <Jersey3D
-              colors={{ ...state, designPattern: currentPattern }}
+              colors={{
+                ...state,
+                designPattern: currentPattern,
+                loadedPatterns,
+              }}
               collar={state.collar}
             />
           </Center>
