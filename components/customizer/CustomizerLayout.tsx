@@ -3890,45 +3890,13 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
   const roughness = colors.fabric === "Premium" ? 0.3 : 0.72;
 
   const shirtMat = useMemo(() => {
-    const mat = new THREE.MeshStandardMaterial({
+    return new THREE.MeshStandardMaterial({
+      color: colors.primaryFront || colors.primary,
       roughness,
       metalness: 0.06,
       envMapIntensity: 1.2,
     });
-
-    const frontColor = new THREE.Color(colors.primaryFront || colors.primary);
-    const backColor = new THREE.Color(colors.primaryBack || colors.primary);
-
-    mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uPrimaryFront = { value: frontColor };
-      shader.uniforms.uPrimaryBack = { value: backColor };
-
-      shader.vertexShader = `
-        varying vec3 vLocalPosition;
-        ${shader.vertexShader}
-      `.replace(
-        `#include <begin_vertex>`,
-        `#include <begin_vertex>
-        vLocalPosition = position;`
-      );
-
-      shader.fragmentShader = `
-        varying vec3 vLocalPosition;
-        uniform vec3 uPrimaryFront;
-        uniform vec3 uPrimaryBack;
-        ${shader.fragmentShader}
-      `.replace(
-        `#include <color_fragment>`,
-        `#include <color_fragment>
-        // Track the physical side seam which tilts slightly back at the shoulders
-        float splitZ = -0.02 * vLocalPosition.y - 0.01;
-        float blend = smoothstep(-0.002, 0.002, vLocalPosition.z - splitZ);
-        diffuseColor.rgb = mix(uPrimaryBack, uPrimaryFront, blend);`
-      );
-    };
-
-    return mat;
-  }, [roughness, colors.primaryFront, colors.primaryBack, colors.primary]);
+  }, [roughness, colors.primaryFront, colors.primary]);
 
   let scaleX = 2.2;
   let scaleZ = 2.2;
@@ -3978,7 +3946,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
           <Decal
             position={[0, 0.0, 0.155]}
             rotation={[0, 0, 0]}
-            scale={[0.85, 1.1, 0.6]}
+            scale={[0.54, 0.7, 0.32]}
           >
             <meshStandardMaterial
               map={patternFront}
@@ -3989,28 +3957,6 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffsetFactor={-3}
               roughness={roughness}
               envMapIntensity={1.0}
-              onBeforeCompile={(shader) => {
-                shader.vertexShader = `
-                  varying vec3 vLocalPosition;
-                  ${shader.vertexShader}
-                `.replace(
-                  `#include <begin_vertex>`,
-                  `#include <begin_vertex>
-                  vLocalPosition = position;`
-                );
-
-                shader.fragmentShader = `
-                  varying vec3 vLocalPosition;
-                  ${shader.fragmentShader}
-                `.replace(
-                  `#include <color_fragment>`,
-                  `#include <color_fragment>
-                  // Track the physical side seam which tilts slightly back at the shoulders
-                  float splitZ = -0.02 * vLocalPosition.y - 0.01;
-                  float blend = smoothstep(-0.002, 0.002, vLocalPosition.z - splitZ);
-                  diffuseColor.a *= blend;`
-                );
-              }}
             />
           </Decal>
         )}
@@ -4018,7 +3964,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
           <Decal
             position={[0, 0.0, -0.155]}
             rotation={[0, Math.PI, 0]}
-            scale={[0.85, 1.1, 0.6]}
+            scale={[0.54, 0.7, 0.32]}
           >
             <meshStandardMaterial
               map={patternBack}
@@ -4029,28 +3975,6 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffsetFactor={-3}
               roughness={roughness}
               envMapIntensity={1.0}
-              onBeforeCompile={(shader) => {
-                shader.vertexShader = `
-                  varying vec3 vLocalPosition;
-                  ${shader.vertexShader}
-                `.replace(
-                  `#include <begin_vertex>`,
-                  `#include <begin_vertex>
-                  vLocalPosition = position;`
-                );
-
-                shader.fragmentShader = `
-                  varying vec3 vLocalPosition;
-                  ${shader.fragmentShader}
-                `.replace(
-                  `#include <color_fragment>`,
-                  `#include <color_fragment>
-                  // Track the physical side seam which tilts slightly back at the shoulders
-                  float splitZ = -0.02 * vLocalPosition.y - 0.01;
-                  float blend = smoothstep(0.002, -0.002, vLocalPosition.z - splitZ);
-                  diffuseColor.a *= blend;`
-                );
-              }}
             />
           </Decal>
         )}
