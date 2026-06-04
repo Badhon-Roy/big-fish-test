@@ -29,6 +29,7 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
+
 // ─── Realistic GLTF Jersey Model using Decals ─────────────────────────────────
 import { useGLTF, Decal } from "@react-three/drei";
 
@@ -4837,6 +4838,7 @@ function Toggle({
   );
 }
 
+
 // ─── Sidebar Tabs ───────────────────────────────────────────────────────────
 const TABS = [
   { id: "designs", icon: LayoutTemplate, label: "Designs" },
@@ -5102,7 +5104,7 @@ export default function CustomizerLayout() {
             V
           </div>
         </Link>
-        {TABS.map((tab) => (
+        {TABS?.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
