@@ -3893,8 +3893,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
     return new THREE.MeshStandardMaterial({
       color: colors.primaryFront || colors.primary,
       roughness,
-      metalness: 0.06,
-      envMapIntensity: 1.2,
+      metalness: 0.04,
+      envMapIntensity: 0.25,
     });
   }, [roughness, colors.primaryFront, colors.primary]);
 
@@ -3956,7 +3956,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-3}
               roughness={roughness}
-              envMapIntensity={1.0}
+              envMapIntensity={0.2}
             />
           </Decal>
         )}
@@ -3974,7 +3974,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-3}
               roughness={roughness}
-              envMapIntensity={1.0}
+              envMapIntensity={0.2}
             />
           </Decal>
         )}
@@ -3994,7 +3994,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-4}
               roughness={roughness}
-              envMapIntensity={1.0}
+              envMapIntensity={0.2}
             />
           </Decal>
         )}
@@ -4012,7 +4012,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-4}
               roughness={roughness}
-              envMapIntensity={1.0}
+              envMapIntensity={0.2}
             />
           </Decal>
         )}
@@ -4030,7 +4030,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-8}
               roughness={roughness}
-              envMapIntensity={1.0}
+              envMapIntensity={0.2}
             />
           </Decal>
         )}
@@ -4050,7 +4050,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-7}
               roughness={roughness}
-              envMapIntensity={1.3}
+              envMapIntensity={0.2}
             />
           </Decal>
         )}
@@ -5984,19 +5984,19 @@ export default function CustomizerLayout() {
           gl={{
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: 1.1,
+            toneMappingExposure: 0.9,
           }}
         >
           {/* Transparent background so parent div gradient shows through */}
           <color attach="background" args={["transparent" as any]} />
-          <ambientLight intensity={1.1} />
-          <Environment preset="apartment" />
-          {/* Front key */}
-          <directionalLight position={[1, 4, 5]} intensity={1.4} castShadow />
-          {/* Back fill — critical for back side visibility */}
-          <directionalLight position={[-1, 3, -5]} intensity={1.1} />
-          {/* Accent rim using primary color tint */}
-          <pointLight position={[-3, 1, 2]} intensity={0.8} />
+          <ambientLight intensity={1.2} />
+          <Environment preset="city" />
+          {/* Front key — balanced to prevent colour wash-out */}
+          <directionalLight position={[1, 4, 5]} intensity={1.0} castShadow />
+          {/* Back fill — matched to front intensity */}
+          <directionalLight position={[-1, 3, -5]} intensity={1.0} />
+          {/* Side accent lights — equal on both sides */}
+          <pointLight position={[-3, 1, 2]} intensity={0.5} />
           <pointLight position={[3, 1, -2]} intensity={0.5} />
           <Center>
             <Jersey3D
