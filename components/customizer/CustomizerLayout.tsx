@@ -83,13 +83,9 @@ function useStyleDecals(colors: any) {
       ctx.closePath();
     };
 
-    const drawRealisticButton = (
-      cx: number,
-      cy: number,
-      r: number,
-    ) => {
+    const drawRealisticButton = (cx: number, cy: number, r: number) => {
       ctx.save();
-      
+
       // 1. Drop shadow (subtle dark glow under the button)
       ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
       ctx.shadowBlur = 4;
@@ -97,16 +93,23 @@ function useStyleDecals(colors: any) {
       ctx.shadowOffsetY = 2;
 
       // 2. Outer button body (slight gradient for rounded 3D effect)
-      const btnGrad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
+      const btnGrad = ctx.createRadialGradient(
+        cx - r * 0.3,
+        cy - r * 0.3,
+        r * 0.1,
+        cx,
+        cy,
+        r,
+      );
       btnGrad.addColorStop(0, "#ffffff"); // Highlight
       btnGrad.addColorStop(0.7, "#eaeaea"); // Base cream/white
       btnGrad.addColorStop(1, "#c0c0c0"); // Outer shaded edge
-      
+
       ctx.fillStyle = btnGrad;
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
-      
+
       // Reset shadow so it doesn't apply to inner details
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;
@@ -139,7 +142,7 @@ function useStyleDecals(colors: any) {
       ];
 
       ctx.fillStyle = "#333333"; // Dark holes
-      holes.forEach(h => {
+      holes.forEach((h) => {
         ctx.beginPath();
         ctx.arc(h.x, h.y, holeR, 0, Math.PI * 2);
         ctx.fill();
@@ -148,13 +151,13 @@ function useStyleDecals(colors: any) {
       // 6. Cross stitch threads (connecting the holes)
       ctx.strokeStyle = "#888888"; // Thread color
       ctx.lineWidth = 1.2;
-      
+
       // Diagonal 1
       ctx.beginPath();
       ctx.moveTo(cx - holeOffset, cy - holeOffset);
       ctx.lineTo(cx + holeOffset, cy + holeOffset);
       ctx.stroke();
-      
+
       // Diagonal 2
       ctx.beginPath();
       ctx.moveTo(cx + holeOffset, cy - holeOffset);
@@ -408,9 +411,9 @@ function useStyleDecals(colors: any) {
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(S * 0.492, S * 0.28);
-        ctx.lineTo(S * 0.492, S * 0.70);
+        ctx.lineTo(S * 0.492, S * 0.7);
         ctx.moveTo(S * 0.508, S * 0.28);
-        ctx.lineTo(S * 0.508, S * 0.70);
+        ctx.lineTo(S * 0.508, S * 0.7);
         ctx.stroke();
 
         // 3. Draw dark gunmetal grey slider and pull tab
@@ -421,13 +424,13 @@ function useStyleDecals(colors: any) {
         ctx.lineWidth = 3.5;
         ctx.beginPath();
         ctx.moveTo(S * 0.5, sliderY);
-        ctx.lineTo(S * 0.5, S * 0.70);
+        ctx.lineTo(S * 0.5, S * 0.7);
         ctx.stroke();
 
         // Draw horizontal silver teeth segments
         ctx.strokeStyle = "#d8d8d8";
         ctx.lineWidth = 2;
-        for (let y = sliderY + S * 0.01; y <= S * 0.70; y += 5) {
+        for (let y = sliderY + S * 0.01; y <= S * 0.7; y += 5) {
           ctx.beginPath();
           ctx.moveTo(S * 0.493, y);
           ctx.lineTo(S * 0.5, y);
@@ -444,7 +447,7 @@ function useStyleDecals(colors: any) {
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(S * 0.5, S * 0.28);
-        ctx.lineTo(S * 0.5, S * 0.70);
+        ctx.lineTo(S * 0.5, S * 0.7);
         ctx.stroke();
 
         // Loop / cap at the top
@@ -487,7 +490,7 @@ function useStyleDecals(colors: any) {
         ctx.stroke();
       } else {
         // 2 realistic buttons
-        [0.48, 0.60].forEach((yf) => {
+        [0.48, 0.6].forEach((yf) => {
           drawRealisticButton(S * 0.5, S * yf, S * 0.02);
         });
       }
@@ -4031,6 +4034,129 @@ function MiniPatternSVG({
 // Preload the model to prevent popping
 useGLTF.preload("/models/shirt_baked.glb");
 
+// Procedural texture generators for fabrics
+function createMeshNormalMap() {
+  if (typeof window === "undefined") return null;
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  // Fill with flat normal map color (128, 128, 255)
+  ctx.fillStyle = "rgb(128, 128, 255)";
+  ctx.fillRect(0, 0, size, size);
+
+  const imgData = ctx.getImageData(0, 0, size, size);
+  const data = imgData.data;
+
+  // Staggered honeycomb pores
+  const tileSize = 32; // size of one tile
+  const halfTile = tileSize / 2;
+  const radius = 6; // radius of the pore
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      let minDist = Infinity;
+      let dxMin = 0;
+      let dyMin = 0;
+
+      const cx1 = Math.floor(x / tileSize) * tileSize;
+      const cy1 = Math.floor(y / tileSize) * tileSize;
+
+      const centers = [
+        [cx1, cy1],
+        [cx1 + tileSize, cy1],
+        [cx1, cy1 + tileSize],
+        [cx1 + tileSize, cy1 + tileSize],
+        [cx1 + halfTile, cy1 + halfTile],
+        [cx1 - halfTile, cy1 + halfTile],
+        [cx1 + halfTile, cy1 - halfTile],
+        [cx1 + tileSize + halfTile, cy1 + halfTile],
+        [cx1 + halfTile, cy1 + tileSize + halfTile],
+      ];
+
+      for (const [cx, cy] of centers) {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDist) {
+          minDist = dist;
+          dxMin = dx;
+          dyMin = dy;
+        }
+      }
+
+      if (minDist < radius) {
+        const nx = dxMin / radius;
+        const ny = dyMin / radius;
+        const nzSquare = 1 - nx * nx - ny * ny;
+        const nz = nzSquare > 0 ? Math.sqrt(nzSquare) : 0;
+
+        const rVal = Math.round((nx * 0.5 + 0.5) * 255);
+        const gVal = Math.round((-ny * 0.5 + 0.5) * 255);
+        const bVal = Math.round((nz * 0.8 + 0.2) * 255);
+
+        const idx = (y * size + x) * 4;
+        data[idx] = rVal;
+        data[idx + 1] = gVal;
+        data[idx + 2] = bVal;
+      }
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(30, 30); // Dense micro-mesh honeycomb
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function createFlexNormalMap() {
+  if (typeof window === "undefined") return null;
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "rgb(128, 128, 255)";
+  ctx.fillRect(0, 0, size, size);
+
+  const imgData = ctx.getImageData(0, 0, size, size);
+  const data = imgData.data;
+
+  // Very subtle micro-rib texture
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const nx = Math.sin(x * 1.5) * 0.04;
+      const ny = Math.sin(y * 1.5) * 0.04;
+      const rVal = Math.round((nx * 0.5 + 0.5) * 255);
+      const gVal = Math.round((ny * 0.5 + 0.5) * 255);
+      const bVal = 255;
+
+      const idx = (y * size + x) * 4;
+      data[idx] = rVal;
+      data[idx + 1] = gVal;
+      data[idx + 2] = bVal;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(80, 80); // Dense micro-texture
+  texture.needsUpdate = true;
+  return texture;
+}
+
 function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
   const { nodes } = useGLTF("/models/shirt_baked.glb") as any;
   const { front, back, patternFront, patternBack } = useJerseyDecals(colors);
@@ -4133,16 +4259,42 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
     }
   }, [logoTexture, logoAspect, colors.logoPosition, colors.logoSize]);
 
-  const roughness = colors.fabric === "Premium" ? 0.3 : 0.72;
+  // Pre-generate normal map textures procedurally
+  const meshNormalMap = useMemo(() => {
+    return createMeshNormalMap();
+  }, []);
+
+  const flexNormalMap = useMemo(() => {
+    return createFlexNormalMap();
+  }, []);
+
+  const fabricConfig = useMemo(() => {
+    if (colors.fabric === "Flex") {
+      return {
+        roughness: 0.4,
+        normalMap: flexNormalMap,
+        normalScale: new THREE.Vector2(0.15, 0.15),
+      };
+    } else {
+      // Default to Mesh (our standard)
+      return {
+        roughness: 0.8,
+        normalMap: meshNormalMap,
+        normalScale: new THREE.Vector2(0.4, 0.4),
+      };
+    }
+  }, [colors.fabric, meshNormalMap, flexNormalMap]);
 
   const shirtMat = useMemo(() => {
     return new THREE.MeshStandardMaterial({
       color: colors.primaryFront || colors.primary,
-      roughness,
+      roughness: fabricConfig.roughness,
       metalness: 0.04,
+      normalMap: fabricConfig.normalMap || undefined,
+      normalScale: fabricConfig.normalScale,
       envMapIntensity: 0.25,
     });
-  }, [roughness, colors.primaryFront, colors.primary]);
+  }, [fabricConfig, colors.primaryFront, colors.primary]);
 
   let scaleX = 2.2;
   let scaleZ = 2.2;
@@ -4177,6 +4329,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
   const sleeveWristY = SLEEVE_SEAM_Y + sleeveLen * SLEEVE_AY;
 
   const trimColor = colors.designColor || colors.secondary || "#ffffff";
+  const roughness = fabricConfig.roughness;
 
   return (
     <group scale={[scaleX, 2.2, scaleZ]} position={[0, -0.1, 0]}>
@@ -4202,6 +4355,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-3}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               envMapIntensity={0.2}
             />
           </Decal>
@@ -4220,6 +4375,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-3}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               envMapIntensity={0.2}
             />
           </Decal>
@@ -4240,6 +4397,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-4}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               envMapIntensity={0.2}
             />
           </Decal>
@@ -4258,6 +4417,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-4}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               envMapIntensity={0.2}
             />
           </Decal>
@@ -4276,6 +4437,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-8}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               envMapIntensity={0.2}
             />
           </Decal>
@@ -4296,6 +4459,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
               polygonOffset
               polygonOffsetFactor={-7}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               envMapIntensity={0.2}
             />
           </Decal>
@@ -4356,6 +4521,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
             <meshStandardMaterial
               color={colors.primaryFront || colors.primary}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               metalness={0.03}
               envMapIntensity={1.1}
             />
@@ -4395,6 +4562,8 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
             <meshStandardMaterial
               color={colors.primaryFront || colors.primary}
               roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
               metalness={0.03}
               envMapIntensity={1.1}
             />
@@ -4770,11 +4939,11 @@ export default function CustomizerLayout() {
     numberColor: "#111111",
     numberPosition: "Both",
     sleeve: "Short",
-    collarType: "Polo",
+    collarType: "None",
     cutFit: "None",
-    fabric: "Polyester",
-    collar: true,
-    zipper: true,
+    fabric: "Mesh",
+    collar: false,
+    zipper: false,
     designSide: "Both",
     logo: null as string | null,
     logoPosition: "Left Chest",
@@ -4984,35 +5153,37 @@ export default function CustomizerLayout() {
                     />
                   </div>
                   {/* Closure selection */}
-                  {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && (
-                    <div className="py-3 border-b border-zinc-100 space-y-2">
-                      <span className="text-sm font-semibold text-zinc-800 block">
-                        Closure Type
-                      </span>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => updateState("zipper", false)}
-                          className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
-                            !state.zipper
-                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                              : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                          }`}
-                        >
-                          Button Placket
-                        </button>
-                        <button
-                          onClick={() => updateState("zipper", true)}
-                          className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
-                            state.zipper
-                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                              : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                          }`}
-                        >
-                          Zipper (+$5)
-                        </button>
+                  {state.collar &&
+                    (state.collarType === "Polo" ||
+                      state.collarType === "Henley") && (
+                      <div className="py-3 border-b border-zinc-100 space-y-2">
+                        <span className="text-sm font-semibold text-zinc-800 block">
+                          Closure Type
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => updateState("zipper", false)}
+                            className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
+                              !state.zipper
+                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                                : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                            }`}
+                          >
+                            Button Placket
+                          </button>
+                          <button
+                            onClick={() => updateState("zipper", true)}
+                            className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
+                              state.zipper
+                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                                : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                            }`}
+                          >
+                            Zipper (+$5)
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Grid of designs */}
                   <div className="grid grid-cols-4 gap-3 pt-1">
@@ -6112,101 +6283,103 @@ export default function CustomizerLayout() {
                       )}
                     </div>
                   </div>
-                  {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && (
-                    <div>
-                      <label className="text-sm font-bold text-zinc-900 mb-2 block">
-                        Closure Type
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => updateState("zipper", false)}
-                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
-                            !state.zipper
-                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                              : "border-[#002337] text-[#002337] hover:border-zinc-300"
-                          }`}
-                        >
-                          Button Placket
-                        </button>
-                        <button
-                          onClick={() => updateState("zipper", true)}
-                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
-                            state.zipper
-                              ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                              : "border-[#002337] text-[#002337] hover:border-zinc-300"
-                          }`}
-                        >
-                          Zipper (+$5)
-                        </button>
+                  {state.collar &&
+                    (state.collarType === "Polo" ||
+                      state.collarType === "Henley") && (
+                      <div>
+                        <label className="text-sm font-bold text-zinc-900 mb-2 block">
+                          Closure Type
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => updateState("zipper", false)}
+                            className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
+                              !state.zipper
+                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                                : "border-[#002337] text-[#002337] hover:border-zinc-300"
+                            }`}
+                          >
+                            Button Placket
+                          </button>
+                          <button
+                            onClick={() => updateState("zipper", true)}
+                            className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
+                              state.zipper
+                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                                : "border-[#002337] text-[#002337] hover:border-zinc-300"
+                            }`}
+                          >
+                            Zipper (+$5)
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-sm font-bold text-zinc-900 mb-2 block">
-                      Cut & Fit
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {["None", "Slim Fit", "Regular", "Relaxed"].map((f) => (
-                        <button
-                          key={f}
-                          onClick={() => updateState("cutFit", f)}
-                          className={`p-2.5 rounded-full cursor-pointer border text-xs font-bold transition-all active:scale-90 duration-300 ${state.cutFit === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
-                        >
-                          {f}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                    )}
                 </div>
               )}
 
               {/* ── FABRIC TAB ── */}
               {activeTab === "fabric" && (
-                <div className="space-y-3">
-                  {[
-                    {
-                      name: "Polyester",
-                      desc: "Lightweight & durable",
-                      extra: "",
-                    },
-                    { name: "Mesh", desc: "Max breathability", extra: "" },
-                    { name: "Dry Fit", desc: "Moisture-wicking", extra: "" },
-                    {
-                      name: "Premium",
-                      desc: "Pro-grade fabric",
-                      extra: "+$10",
-                    },
-                    {
-                      name: "Recycled",
-                      desc: "Eco-friendly choice",
-                      extra: "",
-                    },
-                  ].map((f) => (
-                    <button
-                      key={f.name}
-                      onClick={() => updateState("fabric", f.name)}
-                      className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-all ${state.fabric === f.name ? "border-red-500 bg-red-50" : "border-zinc-200 hover:border-zinc-300"}`}
-                    >
-                      <div>
-                        <div
-                          className={`font-bold text-sm ${state.fabric === f.name ? "text-red-700" : "text-zinc-800"}`}
-                        >
-                          {f.name}
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    {[
+                      {
+                        name: "Mesh",
+                        desc: "Standard high-breathability sports mesh fabric",
+                        extra: "",
+                      },
+                      {
+                        name: "Flex",
+                        desc: "Premium stretch fabric with extra flexibility",
+                        extra: "",
+                      },
+                    ].map((f) => (
+                      <button
+                        key={f.name}
+                        onClick={() => updateState("fabric", f.name)}
+                        className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-all ${
+                          state.fabric === f.name
+                            ? "border-red-500 bg-red-50"
+                            : "border-zinc-200 hover:border-zinc-300"
+                        }`}
+                      >
+                        <div>
+                          <div
+                            className={`font-bold text-sm ${
+                              state.fabric === f.name
+                                ? "text-red-700"
+                                : "text-zinc-800"
+                            }`}
+                          >
+                            {f.name}
+                          </div>
+                          <div className="text-xs text-zinc-500 mt-0.5">
+                            {f.desc}
+                          </div>
                         </div>
-                        <div className="text-xs text-zinc-500 mt-0.5">
-                          {f.desc}
-                        </div>
-                      </div>
-                      {f.extra && (
-                        <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                          {f.extra}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                        {f.extra && (
+                          <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                            {f.extra}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Fabric Technology Visualizer Card */}
+                  <div className="mt-4 border-t pt-4">
+                    <div className="text-xs font-medium mb-4 text-zinc-500 uppercase tracking-wider">
+                      Fabric Technology Visualizer
+                    </div>
+                    <div className="overflow-hidden border border-zinc-200 shadow-sm bg-white">
+                      <img
+                        src="/assets/mesh_flex_showcase.png"
+                        alt="Mesh vs Flex Antigravity Showcases"
+                        className="w-full h-auto object-cover"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
-
             </motion.div>
           </AnimatePresence>
         </div>
@@ -6238,7 +6411,10 @@ export default function CustomizerLayout() {
               "Custom"}{" "}
             Design
             {state.collar ? ` • ${state.collarType} Collar` : ""}
-            {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") ? ` (${state.zipper ? "Zipper" : "Buttons"})` : ""}
+            {state.collar &&
+            (state.collarType === "Polo" || state.collarType === "Henley")
+              ? ` (${state.zipper ? "Zipper" : "Buttons"})`
+              : ""}
           </span>
         </div>
 
@@ -6282,7 +6458,6 @@ export default function CustomizerLayout() {
         </Canvas>
 
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-full shadow-lg border border-black/5">
-        
           <button
             onClick={() => setCurrentView("front")}
             className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${currentView === "front" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"}`}
@@ -6301,7 +6476,7 @@ export default function CustomizerLayout() {
           >
             Sleeves
           </button>
-            <button
+          <button
             onClick={() => setCurrentView("360")}
             className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${currentView === "360" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"}`}
           >
@@ -6350,14 +6525,16 @@ export default function CustomizerLayout() {
                 <span className="font-bold text-zinc-900">Included</span>
               </div>
             )}
-            {state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && (
-              <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Closure</span>
-                <span className="font-bold text-zinc-900">
-                  {state.zipper ? "Zipper (+$5)" : "Button Placket"}
-                </span>
-              </div>
-            )}
+            {state.collar &&
+              (state.collarType === "Polo" ||
+                state.collarType === "Henley") && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-500">Closure</span>
+                  <span className="font-bold text-zinc-900">
+                    {state.zipper ? "Zipper (+$5)" : "Button Placket"}
+                  </span>
+                </div>
+              )}
 
             <div className="border-t border-zinc-100 pt-4">
               <label className="text-xs font-bold text-zinc-500 mb-2 block uppercase tracking-wider">
@@ -6387,7 +6564,14 @@ export default function CustomizerLayout() {
           <div className="flex justify-between items-center mb-4">
             <span className="font-bold text-zinc-600">Total</span>
             <span className="text-3xl font-extrabold text-zinc-900">
-              ${calculatePrice() + (state.collar && (state.collarType === "Polo" || state.collarType === "Henley") && state.zipper ? 5 * qty : 0)}
+              $
+              {calculatePrice() +
+                (state.collar &&
+                (state.collarType === "Polo" ||
+                  state.collarType === "Henley") &&
+                state.zipper
+                  ? 5 * qty
+                  : 0)}
             </span>
           </div>
           <button className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] text-sm">
