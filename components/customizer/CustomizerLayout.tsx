@@ -4431,7 +4431,6 @@ const TABS = [
   { id: "logos", icon: ImageIcon, label: "Logos" },
   { id: "style", icon: Scissors, label: "Style" },
   { id: "fabric", icon: Box, label: "Fabric" },
-  { id: "ai", icon: Sparkles, label: "AI Magic" },
 ];
 
 // ─── View Handler ───────────────────────────────────────────────────────────
@@ -4479,7 +4478,7 @@ export default function CustomizerLayout() {
   const [activeTab, setActiveTab] = useState("designs");
   const [qty, setQty] = useState(1);
   const [selectedDesign, setSelectedDesign] = useState("throw");
-  const [currentView, setCurrentView] = useState("360");
+  const [currentView, setCurrentView] = useState("front");
   const [uploadedLogos, setUploadedLogos] = useState<string[]>([]);
 
   useEffect(() => {
@@ -4928,7 +4927,7 @@ export default function CustomizerLayout() {
                             <button
                               key={c}
                               onClick={() => handleColorChange(c)}
-                              className={`w-9 h-9 rounded-full border-2 transition-transform ${
+                              className={`w-9 h-9 rounded border-2 transition-transform ${
                                 activeColor === c
                                   ? "border-zinc-900 scale-110 ring-2 ring-offset-1 ring-zinc-400"
                                   : "border-black/10 hover:scale-105"
@@ -5905,44 +5904,6 @@ export default function CustomizerLayout() {
                 </div>
               )}
 
-              {/* ── AI TAB ── */}
-              {activeTab === "ai" && (
-                <div className="space-y-4">
-                  <div className="bg-linear-to-br from-purple-600 to-indigo-600 p-5 rounded-2xl text-white shadow-xl shadow-indigo-500/30">
-                    <Wand2 className="w-7 h-7 mb-2" />
-                    <h3 className="font-bold text-lg mb-1">AI Generator</h3>
-                    <p className="text-xs text-white/80 mb-4">
-                      Describe your team's vibe and let AI design the perfect
-                      kit.
-                    </p>
-                    <textarea
-                      placeholder="e.g. A futuristic cyber punk design with neon green accents..."
-                      className="w-full bg-black/20 rounded-xl p-3 text-sm placeholder:text-white/50 border-none outline-none resize-none h-24"
-                    />
-                    <button className="w-full mt-3 bg-white text-indigo-600 font-bold py-2.5 rounded-xl shadow-sm hover:scale-[1.02] transition-transform text-sm">
-                      ✨ Generate Design
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                      Quick Prompts
-                    </p>
-                    {[
-                      "Fire team energy",
-                      "Ocean blue wave",
-                      "Midnight galaxy",
-                      "Urban street style",
-                    ].map((p) => (
-                      <button
-                        key={p}
-                        className="w-full text-left px-4 py-2.5 rounded-xl bg-zinc-50 hover:bg-indigo-50 border border-zinc-200 hover:border-indigo-300 text-sm font-medium text-zinc-700 transition-all"
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -6018,12 +5979,7 @@ export default function CustomizerLayout() {
         </Canvas>
 
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-full shadow-lg border border-black/5">
-          <button
-            onClick={() => setCurrentView("360")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${currentView === "360" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"}`}
-          >
-            360° View
-          </button>
+        
           <button
             onClick={() => setCurrentView("front")}
             className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${currentView === "front" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"}`}
@@ -6041,6 +5997,12 @@ export default function CustomizerLayout() {
             className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${currentView === "sleeves" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"}`}
           >
             Sleeves
+          </button>
+            <button
+            onClick={() => setCurrentView("360")}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${currentView === "360" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"}`}
+          >
+            360° View
           </button>
         </div>
       </div>
