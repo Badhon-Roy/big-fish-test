@@ -29,7 +29,6 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-
 // ─── Realistic GLTF Jersey Model using Decals ─────────────────────────────────
 import { useGLTF, Decal } from "@react-three/drei";
 
@@ -552,8 +551,133 @@ function useJerseyDecals(state: any) {
       if (fontStyle === "Block") return `900 ${sz}px "Courier New", monospace`;
       if (fontStyle === "Varsity")
         return `900 ${sz}px "Arial Black", sans-serif`;
+      if (fontStyle === "Serif Athletic")
+        return `900 ${sz}px "Alfa Slab One", serif`;
+      if (fontStyle === "Cyberpunk")
+        return `900 ${sz}px "Orbitron", sans-serif`;
+      if (fontStyle === "Grunge") return `400 ${sz}px "Rubik Glitch", display`;
+      if (fontStyle === "Neon Glow") return `400 ${sz}px "Monoton", sans-serif`;
+      if (fontStyle === "Gothic")
+        return `400 ${sz}px "UnifrakturMaguntia", serif`;
       // Default and Outline use Impact
       return `900 ${sz}px Impact, sans-serif`;
+    };
+
+    const drawTextWithSpacing = (
+      ctx: CanvasRenderingContext2D,
+      text: string,
+      x: number,
+      y: number,
+      fontStyle: string,
+      textSize: number,
+      color: string,
+      isOutline: boolean,
+      outlineColor: string,
+      letterSpacingVal: number,
+      lineSpacingVal: number,
+      curveRadiusVal: number,
+    ) => {
+      ctx.save();
+      ctx.translate(x, y);
+
+      const lines = text.split("\n");
+      const lineSpacingHeight = textSize * (lineSpacingVal || 1.15);
+      const totalHeight = (lines.length - 1) * lineSpacingHeight;
+      const verticalOffset = -totalHeight / 2;
+
+      lines.forEach((line, lineIndex) => {
+        const curY = verticalOffset + lineIndex * lineSpacingHeight;
+
+        ctx.font = getFontString(textSize, fontStyle, 100);
+        ctx.textBaseline = "middle";
+
+        if (fontStyle === "Neon Glow") {
+          ctx.shadowColor = color;
+          ctx.shadowBlur = Math.max(10, textSize * 0.15);
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        const chars = Array.from(line);
+        const charWidths = chars.map((c) => ctx.measureText(c).width);
+        const totalWidth =
+          charWidths.reduce((a, b) => a + b, 0) +
+          (chars.length - 1) * letterSpacingVal;
+
+        if (!curveRadiusVal || curveRadiusVal === 0) {
+          if (!letterSpacingVal || letterSpacingVal === 0) {
+            ctx.textAlign = "center";
+            ctx.strokeStyle = isOutline ? color : outlineColor;
+            ctx.lineWidth = isOutline
+              ? Math.max(2, textSize * 0.04)
+              : Math.max(4, textSize * 0.08);
+
+            if (isOutline) {
+              ctx.strokeText(line, 0, curY);
+            } else {
+              ctx.fillStyle = color;
+              ctx.fillText(line, 0, curY);
+            }
+          } else {
+            // Draw character by character for letter spacing support
+            let curX = -totalWidth / 2;
+
+            ctx.textAlign = "left";
+            ctx.strokeStyle = isOutline ? color : outlineColor;
+            ctx.lineWidth = isOutline
+              ? Math.max(2, textSize * 0.04)
+              : Math.max(4, textSize * 0.08);
+
+            chars.forEach((char, charIdx) => {
+              const charW = charWidths[charIdx];
+              if (isOutline) {
+                ctx.strokeText(char, curX, curY);
+              } else {
+                ctx.fillStyle = color;
+                ctx.fillText(char, curX, curY);
+              }
+              curX += charW + letterSpacingVal;
+            });
+          }
+        } else {
+          // Curved rendering along an arc!
+          // curveRadiusVal represents the angle in degrees, e.g. -120 to 120
+          const totalAngle = (curveRadiusVal * Math.PI) / 180;
+          const R = totalWidth / totalAngle;
+
+          let currentS = 0;
+
+          ctx.textAlign = "center";
+          ctx.strokeStyle = isOutline ? color : outlineColor;
+          ctx.lineWidth = isOutline
+            ? Math.max(2, textSize * 0.04)
+            : Math.max(4, textSize * 0.08);
+
+          chars.forEach((char, charIdx) => {
+            const charW = charWidths[charIdx];
+            const charCenterS = currentS + charW / 2;
+            const angle = (charCenterS - totalWidth / 2) / R;
+
+            const cx = R * Math.sin(angle);
+            const cy = curY + R * (1 - Math.cos(angle));
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+
+            if (isOutline) {
+              ctx.strokeText(char, 0, 0);
+            } else {
+              ctx.fillStyle = color;
+              ctx.fillText(char, 0, 0);
+            }
+            ctx.restore();
+
+            currentS += charW + letterSpacingVal;
+          });
+        }
+      });
+      ctx.restore();
     };
 
     // ── Pattern drawing — mirrors every SVG pattern to Canvas 2D ──────────────
@@ -2946,78 +3070,140 @@ function useJerseyDecals(state: any) {
 
     // ── Text / number canvases (smaller decals, on top) ───────────────────────
     const front = makeCanvas((ctx) => {
-      if (state.frontText) {
-        const isOutline = state.frontFont === "Outline";
-        ctx.font = getFontString(state.frontTextSize, state.frontFont, 110);
+      if (state.textLayers) {
+        const frontLayers = state.textLayers.filter(
+          (l: any) => l.side === "Front",
+        );
+        frontLayers.forEach((layer: any) => {
+          ctx.save();
+          ctx.translate(layer.x, layer.y);
+          ctx.rotate((layer.rotation * Math.PI) / 180);
+          ctx.scale(layer.scale, layer.scale);
 
-        ctx.strokeStyle = isOutline
-          ? state.frontTextColor || textColor
-          : state.primary;
-        ctx.lineWidth = isOutline ? 4 : 8;
+          const isOutline = layer.font === "Outline";
+          const strokeColor = state.primaryFront || state.primary;
 
-        // Max width to prevent horizontal canvas clipping
-        const maxWidth = size * 0.9;
-        ctx.strokeText(state.frontText, size * 0.5, size * 0.28, maxWidth);
+          drawTextWithSpacing(
+            ctx,
+            layer.text,
+            0,
+            0,
+            layer.font,
+            layer.textSize || 80,
+            layer.color,
+            isOutline,
+            strokeColor,
+            layer.letterSpacing || 0,
+            layer.lineSpacing || 1.15,
+            layer.curveRadius || 0,
+          );
+          ctx.restore();
+        });
+      } else {
+        if (state.frontText) {
+          const isOutline = state.frontFont === "Outline";
+          ctx.font = getFontString(state.frontTextSize, state.frontFont, 110);
 
-        if (!isOutline) {
-          ctx.fillStyle = state.frontTextColor || textColor;
-          ctx.fillText(state.frontText, size * 0.5, size * 0.28, maxWidth);
+          ctx.strokeStyle = isOutline
+            ? state.frontTextColor || textColor
+            : state.primary;
+          ctx.lineWidth = isOutline ? 4 : 8;
+
+          // Max width to prevent horizontal canvas clipping
+          const maxWidth = size * 0.9;
+          ctx.strokeText(state.frontText, size * 0.5, size * 0.28, maxWidth);
+
+          if (!isOutline) {
+            ctx.fillStyle = state.frontTextColor || textColor;
+            ctx.fillText(state.frontText, size * 0.5, size * 0.28, maxWidth);
+          }
         }
-      }
-      if (
-        state.number &&
-        (state.numberPosition === "Both" || state.numberPosition === "Front")
-      ) {
-        const isOutline = state.numberFont === "Outline";
-        ctx.font = getFontString(320, state.numberFont, 320);
+        if (
+          state.number &&
+          (state.numberPosition === "Both" || state.numberPosition === "Front")
+        ) {
+          const isOutline = state.numberFont === "Outline";
+          ctx.font = getFontString(320, state.numberFont, 320);
 
-        ctx.strokeStyle = isOutline
-          ? state.numberColor || textColor
-          : state.primary;
-        ctx.lineWidth = isOutline ? 8 : 16;
-        ctx.strokeText(state.number, size * 0.5, size * 0.62, size * 0.9);
+          ctx.strokeStyle = isOutline
+            ? state.numberColor || textColor
+            : state.primary;
+          ctx.lineWidth = isOutline ? 8 : 16;
+          ctx.strokeText(state.number, size * 0.5, size * 0.62, size * 0.9);
 
-        if (!isOutline) {
-          ctx.fillStyle = state.numberColor || textColor;
-          ctx.fillText(state.number, size * 0.5, size * 0.62, size * 0.9);
+          if (!isOutline) {
+            ctx.fillStyle = state.numberColor || textColor;
+            ctx.fillText(state.number, size * 0.5, size * 0.62, size * 0.9);
+          }
         }
       }
     });
 
     const back = makeCanvas((ctx) => {
-      if (state.backText) {
-        const isOutline = state.backFont === "Outline";
-        ctx.font = getFontString(state.backTextSize, state.backFont, 80);
+      if (state.textLayers) {
+        const backLayers = state.textLayers.filter(
+          (l: any) => l.side === "Back",
+        );
+        backLayers.forEach((layer: any) => {
+          ctx.save();
+          ctx.translate(layer.x, layer.y);
+          ctx.rotate((layer.rotation * Math.PI) / 180);
+          ctx.scale(layer.scale, layer.scale);
 
-        ctx.strokeStyle = isOutline
-          ? state.backTextColor || textColor
-          : state.primary;
-        ctx.lineWidth = isOutline ? 4 : 6;
+          const isOutline = layer.font === "Outline";
+          const strokeColor = state.primaryBack || state.primary;
 
-        const maxWidth = size * 0.9;
-        ctx.strokeText(state.backText, size * 0.5, size * 0.2, maxWidth);
+          drawTextWithSpacing(
+            ctx,
+            layer.text,
+            0,
+            0,
+            layer.font,
+            layer.textSize || 80,
+            layer.color,
+            isOutline,
+            strokeColor,
+            layer.letterSpacing || 0,
+            layer.lineSpacing || 1.15,
+            layer.curveRadius || 0,
+          );
+          ctx.restore();
+        });
+      } else {
+        if (state.backText) {
+          const isOutline = state.backFont === "Outline";
+          ctx.font = getFontString(state.backTextSize, state.backFont, 80);
 
-        if (!isOutline) {
-          ctx.fillStyle = state.backTextColor || textColor;
-          ctx.fillText(state.backText, size * 0.5, size * 0.2, maxWidth);
+          ctx.strokeStyle = isOutline
+            ? state.backTextColor || textColor
+            : state.primary;
+          ctx.lineWidth = isOutline ? 4 : 6;
+
+          const maxWidth = size * 0.9;
+          ctx.strokeText(state.backText, size * 0.5, size * 0.2, maxWidth);
+
+          if (!isOutline) {
+            ctx.fillStyle = state.backTextColor || textColor;
+            ctx.fillText(state.backText, size * 0.5, size * 0.2, maxWidth);
+          }
         }
-      }
-      if (
-        state.number &&
-        (state.numberPosition === "Both" || state.numberPosition === "Back")
-      ) {
-        const isOutline = state.numberFont === "Outline";
-        ctx.font = getFontString(380, state.numberFont, 380);
+        if (
+          state.number &&
+          (state.numberPosition === "Both" || state.numberPosition === "Back")
+        ) {
+          const isOutline = state.numberFont === "Outline";
+          ctx.font = getFontString(380, state.numberFont, 380);
 
-        ctx.strokeStyle = isOutline
-          ? state.numberColor || textColor
-          : state.primary;
-        ctx.lineWidth = isOutline ? 8 : 16;
-        ctx.strokeText(state.number, size * 0.5, size * 0.6, size * 0.9);
+          ctx.strokeStyle = isOutline
+            ? state.numberColor || textColor
+            : state.primary;
+          ctx.lineWidth = isOutline ? 8 : 16;
+          ctx.strokeText(state.number, size * 0.5, size * 0.6, size * 0.9);
 
-        if (!isOutline) {
-          ctx.fillStyle = state.numberColor || textColor;
-          ctx.fillText(state.number, size * 0.5, size * 0.6, size * 0.9);
+          if (!isOutline) {
+            ctx.fillStyle = state.numberColor || textColor;
+            ctx.fillText(state.number, size * 0.5, size * 0.6, size * 0.9);
+          }
         }
       }
     });
@@ -4347,6 +4533,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
             position={[0, 0.0, 0.155]}
             rotation={[0, 0, 0]}
             scale={[0.54, 0.7, 0.32]}
+            renderOrder={1}
           >
             <meshStandardMaterial
               map={patternFront}
@@ -4367,6 +4554,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
             position={[0, 0.0, -0.155]}
             rotation={[0, Math.PI, 0]}
             scale={[0.54, 0.7, 0.32]}
+            renderOrder={1}
           >
             <meshStandardMaterial
               map={patternBack}
@@ -4386,9 +4574,10 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
         {/* ── Text / number decals (on top of pattern) ── */}
         {front && (
           <Decal
-            position={[0, 0.04, 0.15]}
+            position={[0, 0.0, 0.155]}
             rotation={[0, 0, 0]}
-            scale={[0.26, 0.26, 0.25]}
+            scale={[0.54, 0.7, 0.32]}
+            renderOrder={10}
           >
             <meshStandardMaterial
               map={front}
@@ -4406,9 +4595,10 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
         )}
         {back && (
           <Decal
-            position={[0, 0.04, -0.15]}
+            position={[0, 0.0, -0.155]}
             rotation={[0, Math.PI, 0]}
-            scale={[0.28, 0.28, 0.25]}
+            scale={[0.54, 0.7, 0.32]}
+            renderOrder={10}
           >
             <meshStandardMaterial
               map={back}
@@ -4429,6 +4619,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
             position={logoParams.position}
             rotation={logoParams.rotation}
             scale={logoParams.scale}
+            renderOrder={20}
           >
             <meshStandardMaterial
               map={logoTexture}
@@ -4451,6 +4642,7 @@ function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
             position={[0.0, 0.19, 0.118]}
             rotation={[0.15, 0, 0]}
             scale={[0.22, 0.22, 0.12]}
+            renderOrder={30}
           >
             <meshStandardMaterial
               map={collarDecal}
@@ -4838,7 +5030,6 @@ function Toggle({
   );
 }
 
-
 // ─── Sidebar Tabs ───────────────────────────────────────────────────────────
 const TABS = [
   { id: "designs", icon: LayoutTemplate, label: "Designs" },
@@ -4890,6 +5081,44 @@ function ViewHandler({ currentView }: { currentView: string }) {
   );
 }
 
+interface TextLayer {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+  font: string;
+  color: string;
+  textSize: number;
+  side: "Front" | "Back";
+  letterSpacing?: number;
+  lineSpacing?: number;
+  curveRadius?: number;
+}
+
+const getFontFamily = (font: string) => {
+  if (font === "Script") return '"Brush Script MT", cursive';
+  if (font === "Block") return '"Courier New", monospace';
+  if (font === "Varsity") return '"Arial Black", sans-serif';
+  if (font === "Serif Athletic") return '"Alfa Slab One", serif';
+  if (font === "Cyberpunk") return '"Orbitron", sans-serif';
+  if (font === "Grunge") return '"Rubik Glitch", display';
+  if (font === "Neon Glow") return '"Monoton", sans-serif';
+  if (font === "Gothic") return '"UnifrakturMaguntia", serif';
+  return "Impact, sans-serif";
+};
+
+const getFontWeight = (font: string) => {
+  if (font === "Grunge" || font === "Neon Glow" || font === "Gothic")
+    return "400";
+  return "900";
+};
+
+const getFontStyle = (font: string) => {
+  return font === "Italic" ? "italic" : "normal";
+};
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 export default function CustomizerLayout() {
   const [activeTab, setActiveTab] = useState("designs");
@@ -4897,6 +5126,409 @@ export default function CustomizerLayout() {
   const [selectedDesign, setSelectedDesign] = useState("throw");
   const [currentView, setCurrentView] = useState("front");
   const [uploadedLogos, setUploadedLogos] = useState<string[]>([]);
+
+  const editorWidth = 280;
+  const canvasSize = 1024;
+  const editorScale = editorWidth / canvasSize; // 0.2734
+
+  const renderTextLayer = (
+    layer: TextLayer,
+    isHidden = false,
+    children?: React.ReactNode,
+  ) => {
+    const isOutline = layer.font === "Outline";
+    const letterSpacing = layer.letterSpacing || 0;
+    const lineSpacing = layer.lineSpacing || 1.15;
+    const curveVal = layer.curveRadius || 0;
+    const fontSize = layer.textSize * layer.scale * editorScale;
+
+    // Standard styling for both straight & curved text containers
+    const baseStyle: React.CSSProperties = {
+      position: "relative",
+      padding: "6px 10px",
+      fontFamily: getFontFamily(layer.font),
+      fontWeight: getFontWeight(layer.font),
+      fontStyle: getFontStyle(layer.font),
+      userSelect: "none",
+      visibility: isHidden ? "hidden" : "visible",
+    };
+
+    if (curveVal === 0) {
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            fontSize: `${fontSize}px`,
+            whiteSpace: "pre-line",
+            textAlign: "center",
+            letterSpacing: `${letterSpacing * editorScale}px`,
+            lineHeight: lineSpacing,
+            WebkitTextStroke: isOutline ? `1px ${layer.color}` : "none",
+            color: isOutline ? "transparent" : layer.color,
+          }}
+        >
+          {layer.text}
+          {children}
+        </div>
+      );
+    }
+
+    // Curved text rendering
+    const lines = layer.text.split("\n");
+    const lineSpacingHeight = fontSize * lineSpacing;
+    const totalHeight = (lines.length - 1) * lineSpacingHeight;
+    const verticalOffset = -totalHeight / 2;
+
+    // Estimate character widths for each line to find the max width
+    const lineTotalWidths = lines.map((line) => {
+      const chars = Array.from(line);
+      const charWidths = chars.map((c) => {
+        if (c === "I" || c === "i" || c === "l" || c === "1" || c === " ")
+          return fontSize * 0.25;
+        if (c === "M" || c === "W" || c === "m" || c === "w")
+          return fontSize * 0.8;
+        return fontSize * 0.55;
+      });
+      return (
+        charWidths.reduce((a, b) => a + b, 0) +
+        (chars.length - 1) * letterSpacing * editorScale
+      );
+    });
+
+    const maxLineWidth = Math.max(...lineTotalWidths);
+
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          position: "relative",
+          width: `${maxLineWidth}px`,
+          height: `${totalHeight + fontSize}px`,
+        }}
+      >
+        {lines.map((line, lineIndex) => {
+          const curY = verticalOffset + lineIndex * lineSpacingHeight;
+          const chars = Array.from(line);
+
+          // Estimate character widths for the 2D layout.
+          const charWidths = chars.map((c) => {
+            if (c === "I" || c === "i" || c === "l" || c === "1" || c === " ")
+              return fontSize * 0.25;
+            if (c === "M" || c === "W" || c === "m" || c === "w")
+              return fontSize * 0.8;
+            return fontSize * 0.55;
+          });
+
+          const lineTotalWidth =
+            charWidths.reduce((a, b) => a + b, 0) +
+            (chars.length - 1) * letterSpacing * editorScale;
+
+          const totalAngle = (curveVal * Math.PI) / 180;
+          const R = lineTotalWidth / totalAngle;
+
+          let currentS = 0;
+
+          return (
+            <div
+              key={lineIndex}
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: `${fontSize}px`,
+                top: `calc(50% + ${curY}px)`,
+                left: 0,
+              }}
+            >
+              {chars.map((char, charIdx) => {
+                const charW = charWidths[charIdx];
+                const charCenterS = currentS + charW / 2;
+                const angle = (charCenterS - lineTotalWidth / 2) / R;
+
+                const cx = R * Math.sin(angle);
+                const cy = R * (1 - Math.cos(angle));
+
+                currentS += charW + letterSpacing * editorScale;
+
+                return (
+                  <span
+                    key={charIdx}
+                    style={{
+                      position: "absolute",
+                      left: `calc(50% + ${cx}px)`,
+                      top: `calc(50% + ${cy}px)`,
+                      transform: `translate(-50%, -50%) rotate(${angle}rad)`,
+                      fontSize: `${fontSize}px`,
+                      fontFamily: getFontFamily(layer.font),
+                      fontWeight: getFontWeight(layer.font),
+                      fontStyle: getFontStyle(layer.font),
+                      whiteSpace: "nowrap",
+                      WebkitTextStroke: isOutline
+                        ? `1px ${layer.color}`
+                        : "none",
+                      color: isOutline ? "transparent" : layer.color,
+                    }}
+                  >
+                    {char}
+                  </span>
+                );
+              })}
+            </div>
+          );
+        })}
+        {children}
+      </div>
+    );
+  };
+
+  const [textLayers, setTextLayers] = useState<TextLayer[]>([
+    {
+      id: "front-text",
+      text: "VALKYRIE",
+      x: 512,
+      y: 370,
+      scale: 1.0,
+      rotation: 0,
+      font: "Varsity",
+      color: "#FFFFFF",
+      textSize: 80,
+      side: "Front",
+      letterSpacing: 0,
+      lineSpacing: 1.15,
+      curveRadius: 0,
+    },
+    {
+      id: "front-number",
+      text: "10",
+      x: 512,
+      y: 500,
+      scale: 1.0,
+      rotation: 0,
+      font: "Bold",
+      color: "#111111",
+      textSize: 120,
+      side: "Front",
+      letterSpacing: 0,
+      lineSpacing: 1.15,
+      curveRadius: 0,
+    },
+    {
+      id: "back-text",
+      text: "PLAYER",
+      x: 512,
+      y: 330,
+      scale: 1.0,
+      rotation: 0,
+      font: "Varsity",
+      color: "#FFFFFF",
+      textSize: 80,
+      side: "Back",
+      letterSpacing: 0,
+      lineSpacing: 1.15,
+      curveRadius: 0,
+    },
+    {
+      id: "back-number",
+      text: "10",
+      x: 512,
+      y: 494,
+      scale: 1.0,
+      rotation: 0,
+      font: "Bold",
+      color: "#111111",
+      textSize: 150,
+      side: "Back",
+      letterSpacing: 0,
+      lineSpacing: 1.15,
+      curveRadius: 0,
+    },
+  ]);
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(
+    "front-text",
+  );
+
+  const handleDragStart = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    setSelectedLayerId(id);
+
+    const layer = textLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startX = layer.x;
+    const startY = layer.y;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = (moveEvent.clientX - startMouseX) / editorScale;
+      const deltaY = (moveEvent.clientY - startMouseY) / editorScale;
+
+      setTextLayers((prev) =>
+        prev.map((l) =>
+          l.id === id
+            ? {
+                ...l,
+                x: startX + deltaX,
+                y: startY + deltaY,
+              }
+            : l,
+        ),
+      );
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleRotateStart = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const layer = textLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const target = (e.currentTarget as HTMLElement).parentElement
+      ?.parentElement;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startAngle = Math.atan2(startMouseY - centerY, startMouseX - centerX);
+    const startRotation = layer.rotation;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const currentAngle = Math.atan2(
+        moveEvent.clientY - centerY,
+        moveEvent.clientX - centerX,
+      );
+      const angleDiff = currentAngle - startAngle;
+      let newRotation = startRotation + angleDiff * (180 / Math.PI);
+
+      newRotation = ((newRotation % 360) + 360) % 360;
+
+      setTextLayers((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, rotation: newRotation } : l)),
+      );
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleScaleStart = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const layer = textLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const target = (e.currentTarget as HTMLElement).parentElement
+      ?.parentElement;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startDist = Math.sqrt(
+      Math.pow(startMouseX - centerX, 2) + Math.pow(startMouseY - centerY, 2),
+    );
+    const startScale = layer.scale;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const curDist = Math.sqrt(
+        Math.pow(moveEvent.clientX - centerX, 2) +
+          Math.pow(moveEvent.clientY - centerY, 2),
+      );
+      const newScale = Math.max(
+        0.2,
+        Math.min(5.0, startScale * (curDist / startDist)),
+      );
+
+      setTextLayers((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, scale: newScale } : l)),
+      );
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleCopy = (id: string) => {
+    const layer = textLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const newLayer: TextLayer = {
+      ...layer,
+      id: `${layer.id}-copy-${Date.now()}`,
+      x: Math.min(1024, layer.x + 40),
+      y: Math.min(1024, layer.y + 40),
+    };
+
+    setTextLayers((prev) => [...prev, newLayer]);
+    setSelectedLayerId(newLayer.id);
+  };
+
+  const handleDelete = (id: string) => {
+    setTextLayers((prev) => prev.filter((l) => l.id !== id));
+    if (selectedLayerId === id) {
+      setSelectedLayerId(null);
+    }
+  };
+
+  const activeSide =
+    currentView === "back" || currentView === "back-center" ? "Back" : "Front";
+
+  const handleAddCustomText = () => {
+    const newId = `custom-text-${Date.now()}`;
+    const newLayer: TextLayer = {
+      id: newId,
+      text: "CUSTOM TEXT",
+      x: 512,
+      y: 500,
+      scale: 1.0,
+      rotation: 0,
+      font: "Varsity",
+      color: "#E63946",
+      textSize: 100,
+      side: activeSide,
+      letterSpacing: 0,
+      lineSpacing: 1.15,
+      curveRadius: 0,
+    };
+    setTextLayers((prev) => [...prev, newLayer]);
+    setSelectedLayerId(newId);
+  };
+
+  useEffect(() => {
+    const sideLayers = textLayers.filter((l) => l.side === activeSide);
+    if (sideLayers.length > 0) {
+      const currentSelected = textLayers.find((l) => l.id === selectedLayerId);
+      if (!currentSelected || currentSelected.side !== activeSide) {
+        setSelectedLayerId(sideLayers[0].id);
+      }
+    } else {
+      setSelectedLayerId(null);
+    }
+  }, [currentView, activeSide]);
 
   useEffect(() => {
     const saved = localStorage.getItem("jersey_uploaded_logos");
@@ -4907,6 +5539,31 @@ export default function CustomizerLayout() {
         console.error(e);
       }
     }
+  }, []);
+
+  // Web Font Loader to load premium fonts asynchronously
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Orbitron:wght@900&family=Rubik+Glitch&family=Monoton&family=UnifrakturMaguntia&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+
+    document.fonts.ready.then(() => {
+      console.log("Premium custom fonts loaded successfully!");
+      setFontsLoaded(true);
+      // Force canvas texture update by copying textLayers state
+      setTextLayers((prev) => [...prev]);
+    });
+
+    return () => {
+      try {
+        document.head.removeChild(link);
+      } catch (e) {
+        console.error(e);
+      }
+    };
   }, []);
 
   const [activePatternSide, setActivePatternSide] = useState<"Front" | "Back">(
@@ -5684,273 +6341,623 @@ export default function CustomizerLayout() {
               {/* ── TEXT TAB ── */}
               {activeTab === "text" && (
                 <div className="space-y-6">
-                  {/* ── Front Side Section ── */}
-                  <div className="space-y-4">
-                    <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider border-b border-zinc-100 pb-2">
+                  {/* Front/Back View Segmented Switcher */}
+                  <div className="flex bg-zinc-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView("front")}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        activeSide === "Front"
+                          ? "bg-white text-zinc-900 shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-900"
+                      }`}
+                    >
                       Front Side
-                    </h3>
-                    <div>
-                      <input
-                        type="text"
-                        value={state.frontText}
-                        onChange={(e) =>
-                          updateState("frontText", e.target.value)
-                        }
-                        className="w-full border border-zinc-200 rounded-xl p-3 text-zinc-900 font-medium focus:outline-none focus:border-red-500 text-sm"
-                        placeholder="Front Text..."
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
-                        Font Style
-                      </label>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {[
-                          "Bold",
-                          "Italic",
-                          "Script",
-                          "Block",
-                          "Outline",
-                          "Varsity",
-                        ].map((f) => (
-                          <button
-                            key={f}
-                            onClick={() => updateState("frontFont", f)}
-                            className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all active:scale-90 duration-300 ${state.frontFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
-                          >
-                            {f}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
-                        Text Color
-                      </label>
-                      <div className="flex gap-1.5 flex-wrap items-center">
-                        {[
-                          "#FFFFFF",
-                          "#111111",
-                          "#E63946",
-                          "#2196F3",
-                          "#FFD700",
-                          "#2A9D8F",
-                        ].map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => updateState("frontTextColor", c)}
-                            className={`w-7 h-7 rounded-full border-2 transition-transform ${state.frontTextColor === c ? "border-zinc-900 scale-110" : "border-black/10 hover:scale-105"}`}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                        <div className="w-1px h-4 bg-zinc-300 mx-1"></div>
-                        <input
-                          type="color"
-                          value={state.frontTextColor}
-                          onChange={(e) =>
-                            updateState("frontTextColor", e.target.value)
-                          }
-                          className="w-7 h-7 p-0 border-0 rounded cursor-pointer overflow-hidden"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 flex justify-between">
-                        <span>Text Size</span>
-                        <span className="text-zinc-500">
-                          {state.frontTextSize}
-                        </span>
-                      </label>
-                      <input
-                        type="range"
-                        min="40"
-                        max="250"
-                        value={state.frontTextSize}
-                        onChange={(e) =>
-                          updateState("frontTextSize", parseInt(e.target.value))
-                        }
-                        className="w-full accent-red-600"
-                      />
-                    </div>
-                  </div>
-
-                  {/* ── Back Side Section ── */}
-                  <div className="space-y-4">
-                    <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider border-b border-zinc-100 pb-2">
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView("back")}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        activeSide === "Back"
+                          ? "bg-white text-zinc-900 shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-900"
+                      }`}
+                    >
                       Back Side
-                    </h3>
-                    <div>
-                      <input
-                        type="text"
-                        value={state.backText}
-                        onChange={(e) =>
-                          updateState("backText", e.target.value)
-                        }
-                        className="w-full border border-zinc-200 rounded-xl p-3 text-zinc-900 font-medium focus:outline-none focus:border-red-500 text-sm"
-                        placeholder="Back Text..."
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
-                        Font Style
+                    </button>
+                  </div>
+
+                  {/* Visual 2D Editor Canvas representation */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                        Visual Text Editor ({activeSide} View)
                       </label>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {[
-                          "Bold",
-                          "Italic",
-                          "Script",
-                          "Block",
-                          "Outline",
-                          "Varsity",
-                        ].map((f) => (
-                          <button
-                            key={f}
-                            onClick={() => updateState("backFont", f)}
-                            className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all active:scale-90 duration-300 ${state.backFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
+                      <button
+                        onClick={handleAddCustomText}
+                        className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Type className="w-3.5 h-3.5" /> Add Text
+                      </button>
+                    </div>
+
+                    {/* Bounding Box Customizer Canvas area (280x280) */}
+                    <div
+                      className="relative w-[280px] h-[280px] rounded border border-zinc-200 shadow-inner mx-auto select-none"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #1f2937 0%, #111827 100%)",
+                      }}
+                    >
+                      {/* 1. Backdrop (inside overflow-hidden) */}
+                      <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                        {/* Jersey Silhouette Backdrop helper */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                          <svg
+                            viewBox="0 0 100 100"
+                            className="w-48 h-48 fill-white"
                           >
-                            {f}
-                          </button>
-                        ))}
+                            <path d="M 30,15 L 70,15 L 85,25 L 80,45 L 70,40 L 70,85 L 30,85 L 30,40 L 20,45 L 15,25 Z" />
+                          </svg>
+                        </div>
+                        {/* Canvas area grid lines */}
+                        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:20px_20px]" />
                       </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
-                        Text Color
-                      </label>
-                      <div className="flex gap-1.5 flex-wrap items-center">
-                        {[
-                          "#FFFFFF",
-                          "#111111",
-                          "#E63946",
-                          "#2196F3",
-                          "#FFD700",
-                          "#2A9D8F",
-                        ].map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => updateState("backTextColor", c)}
-                            className={`w-7 h-7 rounded-full border-2 transition-transform ${state.backTextColor === c ? "border-zinc-900 scale-110" : "border-black/10 hover:scale-105"}`}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                        <div className="w-1px h-4 bg-zinc-300 mx-1"></div>
-                        <input
-                          type="color"
-                          value={state.backTextColor}
-                          onChange={(e) =>
-                            updateState("backTextColor", e.target.value)
-                          }
-                          className="w-7 h-7 p-0 border-0 rounded cursor-pointer overflow-hidden"
-                        />
+
+                      {/* Active side text label */}
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold text-zinc-500 tracking-widest uppercase pointer-events-none">
+                        {activeSide} Texture Map (1024x1024)
                       </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 flex justify-between">
-                        <span>Text Size</span>
-                        <span className="text-zinc-500">
-                          {state.backTextSize}
-                        </span>
-                      </label>
-                      <input
-                        type="range"
-                        min="40"
-                        max="250"
-                        value={state.backTextSize}
-                        onChange={(e) =>
-                          updateState("backTextSize", parseInt(e.target.value))
-                        }
-                        className="w-full accent-red-600"
-                      />
+
+                      {/* 2. Text Content Container (Clipped at bounds) */}
+                      <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                        {textLayers
+                          .filter((layer) => layer.side === activeSide)
+                          .map((layer) => {
+                            const isSelected = selectedLayerId === layer.id;
+                            return (
+                              <div
+                                key={layer.id}
+                                style={{
+                                  position: "absolute",
+                                  left: layer.x * editorScale,
+                                  top: layer.y * editorScale,
+                                  transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                                  cursor: "move",
+                                  zIndex: isSelected ? 40 : 10,
+                                }}
+                                onMouseDown={(e) =>
+                                  handleDragStart(e, layer.id)
+                                }
+                              >
+                                {renderTextLayer(layer, false)}
+                              </div>
+                            );
+                          })}
+                      </div>
+
+                      {/* 3. Bounding Box & Handles Overlay (Visible outside bounds) */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        {textLayers
+                          .filter(
+                            (layer) =>
+                              layer.side === activeSide &&
+                              selectedLayerId === layer.id,
+                          )
+                          .map((layer) => {
+                            return (
+                              <div
+                                key={`handles-${layer.id}`}
+                                style={{
+                                  position: "absolute",
+                                  left: layer.x * editorScale,
+                                  top: layer.y * editorScale,
+                                  transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                                  pointerEvents: "none",
+                                  zIndex: 50,
+                                }}
+                              >
+                                {renderTextLayer(
+                                  layer,
+                                  true,
+                                  <>
+                                    {/* Bounding Box Border */}
+                                    <div
+                                      className="absolute inset-0 border border-dashed border-red-500"
+                                      style={{ visibility: "visible" }}
+                                    />
+
+                                    {/* Interactive Handles */}
+                                    <div style={{ visibility: "visible" }}>
+                                      {/* Top-Left: Duplicate */}
+                                      <button
+                                        className="absolute -top-3.5 -left-3.5 w-6 h-6 bg-white border border-zinc-200 hover:bg-zinc-50 shadow-md rounded-full flex items-center justify-center cursor-pointer active:scale-90 transition-transform pointer-events-auto"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          handleCopy(layer.id);
+                                        }}
+                                        title="Duplicate"
+                                      >
+                                        <svg
+                                          className="w-3.5 h-3.5 text-zinc-600"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.5}
+                                            d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                          />
+                                        </svg>
+                                      </button>
+
+                                      {/* Top-Right: Rotate */}
+                                      <div
+                                        className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-white border border-zinc-200 hover:bg-zinc-50 shadow-md rounded-full flex items-center justify-center cursor-alias active:scale-90 transition-transform pointer-events-auto"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          handleRotateStart(e, layer.id);
+                                        }}
+                                        title="Rotate"
+                                      >
+                                        <svg
+                                          className="w-3.5 h-3.5 text-zinc-600"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.5}
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"
+                                          />
+                                        </svg>
+                                      </div>
+
+                                      {/* Bottom-Left: Delete */}
+                                      <button
+                                        className="absolute -bottom-3.5 -left-3.5 w-6 h-6 bg-red-500 hover:bg-red-600 shadow-md rounded-full flex items-center justify-center cursor-pointer active:scale-90 transition-transform pointer-events-auto"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          handleDelete(layer.id);
+                                        }}
+                                        title="Delete"
+                                      >
+                                        <svg
+                                          className="w-3.5 h-3.5 text-white"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.5}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                          />
+                                        </svg>
+                                      </button>
+
+                                      {/* Bottom-Right: Scale */}
+                                      <div
+                                        className="absolute -bottom-3.5 -right-3.5 w-6 h-6 bg-blue-500 hover:bg-blue-600 shadow-md rounded-full flex items-center justify-center cursor-se-resize active:scale-90 transition-transform pointer-events-auto"
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          handleScaleStart(e, layer.id);
+                                        }}
+                                        title="Scale"
+                                      >
+                                        <svg
+                                          className="w-3.5 h-3.5 text-white"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.5}
+                                            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+                                          />
+                                        </svg>
+                                      </div>
+                                    </div>
+                                  </>,
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
                     </div>
                   </div>
 
-                  {/* ── Player Number Section ── */}
-                  <div className="space-y-4 pt-4 border-t border-zinc-100">
-                    <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider border-b border-zinc-100 pb-2">
-                      Player Number
-                    </h3>
-                    <div>
-                      <input
-                        type="number"
-                        min="0"
-                        max="99"
-                        value={state.number}
-                        onChange={(e) => updateState("number", e.target.value)}
-                        className="w-full border border-zinc-200 rounded-xl p-3 text-zinc-900 font-bold text-2xl text-center focus:outline-none focus:border-red-500"
-                        placeholder="10"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
-                        Number Font
-                      </label>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {[
-                          "Bold",
-                          "Block",
-                          "Varsity",
-                          "Outline",
-                          "College",
-                          "Athletic",
-                        ].map((f) => (
-                          <button
-                            key={f}
-                            onClick={() => updateState("numberFont", f)}
-                            className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all duration-300 active:scale-90 ${state.numberFont === f ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
-                          >
-                            {f}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
-                        Number Color
-                      </label>
-                      <div className="flex gap-1.5 flex-wrap items-center">
-                        {[
-                          "#FFFFFF",
-                          "#111111",
-                          "#E63946",
-                          "#FFD700",
-                          "#2196F3",
-                          "#2A9D8F",
-                        ].map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => updateState("numberColor", c)}
-                            className={`w-7 h-7 rounded-full border-2 transition-transform ${state.numberColor === c ? "border-zinc-900 scale-110" : "border-black/10 hover:scale-105"}`}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                        <div className="w-[1px] h-4 bg-zinc-300 mx-1"></div>
-                        <input
-                          type="color"
-                          value={state.numberColor}
-                          onChange={(e) =>
-                            updateState("numberColor", e.target.value)
-                          }
-                          className="w-7 h-7 p-0 border-0 rounded cursor-pointer overflow-hidden"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
-                        Number Position
-                      </label>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {["Front", "Back", "Both"].map((p) => (
-                          <button
-                            key={p}
-                            onClick={() => updateState("numberPosition", p)}
-                            className={`p-1.5 rounded cursor-pointer active:scale-90 duration-300 border text-[10px] font-bold transition-all ${state.numberPosition === p ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
-                          >
-                            {p}
-                          </button>
-                        ))}
-                      </div>
+                  {/* Layers List Selection */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                      Text Layers List ({activeSide} Side)
+                    </label>
+                    <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
+                      {textLayers.filter((l) => l.side === activeSide)
+                        .length === 0 ? (
+                        <div className="text-xs text-zinc-400 italic text-center py-2 bg-zinc-50 rounded-xl border border-zinc-100">
+                          No text layers on this side. Add one above!
+                        </div>
+                      ) : (
+                        textLayers
+                          .filter((l) => l.side === activeSide)
+                          .map((layer) => {
+                            const isSelected = selectedLayerId === layer.id;
+                            return (
+                              <div
+                                key={layer.id}
+                                onClick={() => setSelectedLayerId(layer.id)}
+                                className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "border-red-500 bg-red-50/30"
+                                    : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Type
+                                    className={`w-4 h-4 ${isSelected ? "text-red-500" : "text-zinc-400"}`}
+                                  />
+                                  <span
+                                    className={`text-xs font-bold truncate max-w-[150px] ${isSelected ? "text-red-700" : "text-zinc-700"}`}
+                                  >
+                                    {layer.text || "(Empty Text)"}
+                                  </span>
+                                </div>
+                                <div
+                                  className="flex items-center gap-1.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    onClick={() => handleCopy(layer.id)}
+                                    className="p-1 hover:bg-zinc-100 rounded-md text-zinc-400 hover:text-zinc-600"
+                                    title="Duplicate"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(layer.id)}
+                                    className="p-1 hover:bg-red-50 rounded-md text-zinc-400 hover:text-red-500"
+                                    title="Delete"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                      )}
                     </div>
                   </div>
+
+                  {/* Properties Panel of the Selected Layer */}
+                  {(() => {
+                    const selectedLayer = textLayers.find(
+                      (l) => l.id === selectedLayerId,
+                    );
+                    if (!selectedLayer) return null;
+
+                    return (
+                      <div className="space-y-4 pt-4 border-t border-zinc-100">
+                        <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                          Layer Settings (
+                          {selectedLayer.id.startsWith("front-") ||
+                          selectedLayer.id.startsWith("back-")
+                            ? "System Layer"
+                            : "Custom Layer"}
+                          )
+                        </h4>
+
+                        <div>
+                          <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
+                            Text Content
+                          </label>
+                          <textarea
+                            value={selectedLayer.text}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTextLayers((prev) =>
+                                prev.map((l) =>
+                                  l.id === selectedLayer.id
+                                    ? { ...l, text: val }
+                                    : l,
+                                ),
+                              );
+                              if (selectedLayer.id === "front-text")
+                                updateState("frontText", val);
+                              if (selectedLayer.id === "back-text")
+                                updateState("backText", val);
+                              if (
+                                selectedLayer.id === "front-number" ||
+                                selectedLayer.id === "back-number"
+                              ) {
+                                updateState("number", val);
+                              }
+                            }}
+                            className="w-full border border-zinc-200 rounded-xl p-3 text-zinc-900 font-medium focus:outline-none focus:border-red-500 text-sm resize-y min-h-[72px]"
+                            placeholder="Enter text..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
+                            Font Style
+                          </label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {[
+                              "Bold",
+                              "Italic",
+                              "Script",
+                              "Block",
+                              "Outline",
+                              "Varsity",
+                              "Serif Athletic",
+                              "Cyberpunk",
+                              "Grunge",
+                              "Neon Glow",
+                              "Gothic",
+                            ].map((f) => (
+                              <button
+                                key={f}
+                                onClick={() => {
+                                  setTextLayers((prev) =>
+                                    prev.map((l) =>
+                                      l.id === selectedLayer.id
+                                        ? { ...l, font: f }
+                                        : l,
+                                    ),
+                                  );
+                                  if (selectedLayer.id === "front-text")
+                                    updateState("frontFont", f);
+                                  if (selectedLayer.id === "back-text")
+                                    updateState("backFont", f);
+                                  if (
+                                    selectedLayer.id === "front-number" ||
+                                    selectedLayer.id === "back-number"
+                                  ) {
+                                    updateState("numberFont", f);
+                                  }
+                                }}
+                                className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all active:scale-90 duration-300 ${
+                                  selectedLayer.font === f
+                                    ? "border-red-500 bg-red-50 text-red-700"
+                                    : "border-[#002337] text-[#002337] hover:border-zinc-300"
+                                }`}
+                              >
+                                {f}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-zinc-800 mb-1.5 block">
+                            Text Color
+                          </label>
+                          <div className="flex gap-1.5 flex-wrap items-center">
+                            {[
+                              "#FFFFFF",
+                              "#111111",
+                              "#E63946",
+                              "#2196F3",
+                              "#FFD700",
+                              "#2A9D8F",
+                            ].map((c) => (
+                              <button
+                                key={c}
+                                onClick={() => {
+                                  setTextLayers((prev) =>
+                                    prev.map((l) =>
+                                      l.id === selectedLayer.id
+                                        ? { ...l, color: c }
+                                        : l,
+                                    ),
+                                  );
+                                  if (selectedLayer.id === "front-text")
+                                    updateState("frontTextColor", c);
+                                  if (selectedLayer.id === "back-text")
+                                    updateState("backTextColor", c);
+                                  if (
+                                    selectedLayer.id === "front-number" ||
+                                    selectedLayer.id === "back-number"
+                                  ) {
+                                    updateState("numberColor", c);
+                                  }
+                                }}
+                                className={`w-7 h-7 rounded-full border-2 transition-transform ${
+                                  selectedLayer.color === c
+                                    ? "border-zinc-900 scale-110"
+                                    : "border-black/10 hover:scale-105"
+                                }`}
+                                style={{ backgroundColor: c }}
+                              />
+                            ))}
+                            <div className="w-[1px] h-4 bg-zinc-300 mx-1"></div>
+                            <input
+                              type="color"
+                              value={selectedLayer.color}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setTextLayers((prev) =>
+                                  prev.map((l) =>
+                                    l.id === selectedLayer.id
+                                      ? { ...l, color: val }
+                                      : l,
+                                  ),
+                                );
+                                if (selectedLayer.id === "front-text")
+                                  updateState("frontTextColor", val);
+                                if (selectedLayer.id === "back-text")
+                                  updateState("backTextColor", val);
+                                if (
+                                  selectedLayer.id === "front-number" ||
+                                  selectedLayer.id === "back-number"
+                                ) {
+                                  updateState("numberColor", val);
+                                }
+                              }}
+                              className="w-7 h-7 p-0 border-0 rounded cursor-pointer overflow-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Base Font Size */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-zinc-800 block">
+                            Base Font Size
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="range"
+                              min="15"
+                              max="300"
+                              value={selectedLayer.textSize}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setTextLayers((prev) =>
+                                  prev.map((l) =>
+                                    l.id === selectedLayer.id
+                                      ? { ...l, textSize: val }
+                                      : l,
+                                  ),
+                                );
+                                if (selectedLayer.id === "front-text")
+                                  updateState("frontTextSize", val);
+                                if (selectedLayer.id === "back-text")
+                                  updateState("backTextSize", val);
+                              }}
+                              className="flex-1 accent-red-600 h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="min-w-[56px] h-10 px-3 border border-zinc-200 bg-white shadow-sm rounded-xl flex items-center justify-center text-xs font-bold text-zinc-700">
+                              {selectedLayer.textSize}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Letter spacing */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-zinc-800 block">
+                            Letter spacing
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="range"
+                              min="0"
+                              max="500"
+                              value={selectedLayer.letterSpacing || 0}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setTextLayers((prev) =>
+                                  prev.map((l) =>
+                                    l.id === selectedLayer.id
+                                      ? { ...l, letterSpacing: val }
+                                      : l,
+                                  ),
+                                );
+                              }}
+                              className="flex-1 accent-red-600 h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="min-w-[56px] h-10 px-3 border border-zinc-200 bg-white shadow-sm rounded-xl flex items-center justify-center text-xs font-bold text-zinc-700">
+                              {selectedLayer.letterSpacing || 0}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Line spacing */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-zinc-800 block">
+                            Line spacing
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="range"
+                              min="0.5"
+                              max="3.0"
+                              step="0.05"
+                              value={selectedLayer.lineSpacing || 1.15}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                setTextLayers((prev) =>
+                                  prev.map((l) =>
+                                    l.id === selectedLayer.id
+                                      ? { ...l, lineSpacing: val }
+                                      : l,
+                                  ),
+                                );
+                              }}
+                              className="flex-1 accent-red-600 h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="min-w-[56px] h-10 px-3 border border-zinc-200 bg-white shadow-sm rounded-xl flex items-center justify-center text-xs font-bold text-zinc-700">
+                              {(selectedLayer.lineSpacing || 1.15).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Text Curve */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-zinc-800 block">
+                            Text Curve
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="range"
+                              min="-120"
+                              max="120"
+                              value={selectedLayer.curveRadius || 0}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setTextLayers((prev) =>
+                                  prev.map((l) =>
+                                    l.id === selectedLayer.id
+                                      ? { ...l, curveRadius: val }
+                                      : l,
+                                  ),
+                                );
+                              }}
+                              className="flex-1 accent-red-600 h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="min-w-[56px] h-10 px-3 border border-zinc-200 bg-white shadow-sm rounded-xl flex items-center justify-center text-xs font-bold text-zinc-700">
+                              {selectedLayer.curveRadius || 0}°
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -6446,6 +7453,7 @@ export default function CustomizerLayout() {
                 ...state,
                 designPattern: currentPattern,
                 loadedPatterns,
+                textLayers,
               }}
               collar={state.collar}
             />
