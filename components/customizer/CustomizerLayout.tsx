@@ -1,6 +1,6 @@
 "use client";
 
-import { JSX, useMemo, useState, useRef, useEffect } from "react";
+import React, { JSX, useMemo, useState, useRef, useEffect } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
 import {
@@ -534,8 +534,21 @@ function useJerseyDecals(state: any) {
       ctx.fillStyle = textColor;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+
+      // Explicitly disable context border path stroke defaults
+      ctx.strokeStyle = "transparent";
+      ctx.lineWidth = 0;
+
       drawFn(ctx);
-      return new THREE.CanvasTexture(cv);
+
+      const texture = new THREE.CanvasTexture(cv);
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.generateMipmaps = false;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.needsUpdate = true;
+      return texture;
     };
 
     const getFontString = (
@@ -3137,6 +3150,66 @@ function useJerseyDecals(state: any) {
           }
         }
       }
+
+      // Draw logo layers on top
+      if (state.logoLayers && state.loadedLogoImages) {
+        const frontLogos = state.logoLayers.filter(
+          (l: any) => l.side === "Front",
+        );
+        frontLogos.forEach((layer: any) => {
+          const img = state.loadedLogoImages[layer.src];
+          if (!img) return;
+          ctx.save();
+
+          // Disable any active stroke/border properties
+          ctx.strokeStyle = "transparent";
+          ctx.lineWidth = 0;
+          ctx.shadowBlur = 0;
+
+          // Apply anti-aliasing configurations
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+
+          const opacity =
+            typeof layer.opacity === "number" ? layer.opacity : 1.0;
+          ctx.globalAlpha = opacity;
+          ctx.translate(layer.x, layer.y);
+          ctx.rotate((layer.rotation * Math.PI) / 180);
+          ctx.scale(layer.scale, layer.scale);
+          const sz = layer.baseSize || 200;
+          if (layer.eraserPaths && layer.eraserPaths.length > 0) {
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = sz;
+            tempCanvas.height = sz;
+            const tempCtx = tempCanvas.getContext("2d");
+            if (tempCtx) {
+              tempCtx.drawImage(img, 0, 0, sz, sz);
+              tempCtx.globalCompositeOperation = "destination-out";
+              tempCtx.lineCap = "round";
+              tempCtx.lineJoin = "round";
+              tempCtx.strokeStyle = "rgba(0,0,0,1)";
+              layer.eraserPaths.forEach((path: any) => {
+                tempCtx.lineWidth = path.size;
+                tempCtx.beginPath();
+                path.points.forEach((pt: any, idx: number) => {
+                  if (idx === 0) {
+                    tempCtx.moveTo(pt.x, pt.y);
+                  } else {
+                    tempCtx.lineTo(pt.x, pt.y);
+                  }
+                });
+                tempCtx.stroke();
+              });
+              ctx.drawImage(tempCanvas, -sz / 2, -sz / 2, sz, sz);
+            } else {
+              ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+            }
+          } else {
+            ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+          }
+          ctx.restore();
+        });
+      }
     });
 
     const back = makeCanvas((ctx) => {
@@ -3206,6 +3279,66 @@ function useJerseyDecals(state: any) {
           }
         }
       }
+
+      // Draw logo layers on top
+      if (state.logoLayers && state.loadedLogoImages) {
+        const backLogos = state.logoLayers.filter(
+          (l: any) => l.side === "Back",
+        );
+        backLogos.forEach((layer: any) => {
+          const img = state.loadedLogoImages[layer.src];
+          if (!img) return;
+          ctx.save();
+
+          // Disable any active stroke/border properties
+          ctx.strokeStyle = "transparent";
+          ctx.lineWidth = 0;
+          ctx.shadowBlur = 0;
+
+          // Apply anti-aliasing configurations
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+
+          const opacity =
+            typeof layer.opacity === "number" ? layer.opacity : 1.0;
+          ctx.globalAlpha = opacity;
+          ctx.translate(layer.x, layer.y);
+          ctx.rotate((layer.rotation * Math.PI) / 180);
+          ctx.scale(layer.scale, layer.scale);
+          const sz = layer.baseSize || 200;
+          if (layer.eraserPaths && layer.eraserPaths.length > 0) {
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = sz;
+            tempCanvas.height = sz;
+            const tempCtx = tempCanvas.getContext("2d");
+            if (tempCtx) {
+              tempCtx.drawImage(img, 0, 0, sz, sz);
+              tempCtx.globalCompositeOperation = "destination-out";
+              tempCtx.lineCap = "round";
+              tempCtx.lineJoin = "round";
+              tempCtx.strokeStyle = "rgba(0,0,0,1)";
+              layer.eraserPaths.forEach((path: any) => {
+                tempCtx.lineWidth = path.size;
+                tempCtx.beginPath();
+                path.points.forEach((pt: any, idx: number) => {
+                  if (idx === 0) {
+                    tempCtx.moveTo(pt.x, pt.y);
+                  } else {
+                    tempCtx.lineTo(pt.x, pt.y);
+                  }
+                });
+                tempCtx.stroke();
+              });
+              ctx.drawImage(tempCanvas, -sz / 2, -sz / 2, sz, sz);
+            } else {
+              ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+            }
+          } else {
+            ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+          }
+          ctx.restore();
+        });
+      }
     });
 
     if (front) front.anisotropy = 16;
@@ -3213,6 +3346,84 @@ function useJerseyDecals(state: any) {
 
     return { front, back, patternFront, patternBack };
   }, [state]);
+}
+
+const ERASER_CURSOR = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 20H7L3 16c-1-1-1-3 0-4L12 3c1-1 3-1 4 0l5 5c1 1 1 3 0 4l-5 5z' fill='%23fca5a5'/><path d='M12 3l4 4'/></svg>") 3 17, auto`;
+
+function LogoCanvasPreview({
+  layer,
+  editorScale,
+  preloadedImage,
+}: {
+  layer: LogoLayer;
+  editorScale: number;
+  preloadedImage?: HTMLImageElement;
+}) {
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const size = (layer.baseSize || 200) * layer.scale * editorScale;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const draw = (img: HTMLImageElement) => {
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+
+      // Draw the logo image
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Apply eraser strokes
+      if (layer.eraserPaths && layer.eraserPaths.length > 0) {
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "rgba(0,0,0,1)";
+
+        layer.eraserPaths.forEach((path) => {
+          ctx.lineWidth = path.size * layer.scale * editorScale;
+          ctx.beginPath();
+          path.points.forEach((pt, index) => {
+            const x = (pt.x / layer.baseSize) * size;
+            const y = (pt.y / layer.baseSize) * size;
+            if (index === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    };
+
+    if (preloadedImage) {
+      draw(preloadedImage);
+    } else {
+      const img = new Image();
+      img.src = layer.src;
+      img.crossOrigin = "anonymous";
+      img.onload = () => draw(img);
+    }
+  }, [layer, editorScale, preloadedImage]);
+
+  const size = (layer.baseSize || 200) * layer.scale * editorScale;
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        display: "block",
+        pointerEvents: "none",
+      }}
+    />
+  );
 }
 
 // ─── Mini Pattern Preview SVG Component ─────────────────────────────────────
@@ -5097,6 +5308,22 @@ interface TextLayer {
   curveRadius?: number;
 }
 
+interface LogoLayer {
+  id: string;
+  src: string; // data URL or preset URL
+  x: number; // coordinate X on canvas (0-1024)
+  y: number; // coordinate Y on canvas (0-1024)
+  scale: number; // scale factor
+  rotation: number; // rotation in degrees
+  side: "Front" | "Back";
+  baseSize: number; // base size (default 200px)
+  opacity?: number; // opacity between 0.0 and 1.0 (default 1.0)
+  eraserPaths?: Array<{
+    points: Array<{ x: number; y: number }>;
+    size: number;
+  }>;
+}
+
 const getFontFamily = (font: string) => {
   if (font === "Script") return '"Brush Script MT", cursive';
   if (font === "Block") return '"Courier New", monospace';
@@ -5280,6 +5507,43 @@ export default function CustomizerLayout() {
     );
   };
 
+  const renderLogoLayer = (
+    layer: LogoLayer,
+    isHidden = false,
+    children?: React.ReactNode,
+  ) => {
+    const size = (layer.baseSize || 200) * layer.scale * editorScale;
+    return (
+      <div
+        style={{
+          position: "relative",
+          width: `${size}px`,
+          height: `${size}px`,
+          visibility: isHidden ? "hidden" : "visible",
+          userSelect: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {!isHidden && (
+          <div
+            style={{
+              opacity: typeof layer.opacity === "number" ? layer.opacity : 1.0,
+            }}
+          >
+            <LogoCanvasPreview
+              layer={layer}
+              editorScale={editorScale}
+              preloadedImage={loadedLogoImages[layer.src]}
+            />
+          </div>
+        )}
+        {children}
+      </div>
+    );
+  };
+
   const [textLayers, setTextLayers] = useState<TextLayer[]>([
     {
       id: "front-text",
@@ -5345,6 +5609,35 @@ export default function CustomizerLayout() {
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(
     "front-text",
   );
+
+  const [logoLayers, setLogoLayers] = useState<LogoLayer[]>([]);
+  const [selectedLogoId, setSelectedLogoId] = useState<string | null>(null);
+  const [loadedLogoImages, setLoadedLogoImages] = useState<
+    Record<string, HTMLImageElement>
+  >({});
+  const [isEraserMode, setIsEraserMode] = useState<boolean>(false);
+  const [eraserBrushSize, setEraserBrushSize] = useState<number>(20);
+
+  useEffect(() => {
+    logoLayers.forEach((layer) => {
+      if (loadedLogoImages[layer.src]) return;
+      const img = new Image();
+      img.src = layer.src;
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        setLoadedLogoImages((prev) => ({
+          ...prev,
+          [layer.src]: img,
+        }));
+      };
+    });
+  }, [logoLayers, loadedLogoImages]);
+
+  useEffect(() => {
+    if (!selectedLogoId) {
+      setIsEraserMode(false);
+    }
+  }, [selectedLogoId]);
 
   const handleDragStart = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -5517,6 +5810,281 @@ export default function CustomizerLayout() {
     setTextLayers((prev) => [...prev, newLayer]);
     setSelectedLayerId(newId);
   };
+
+  const handleEraserStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const selectedLayer = logoLayers.find((l) => l.id === selectedLogoId);
+    if (!selectedLayer) return;
+
+    const container = (e.currentTarget as HTMLElement).getBoundingClientRect();
+
+    const getCoords = (evt: MouseEvent | TouchEvent) => {
+      if ("touches" in evt && evt.touches.length > 0) {
+        return {
+          clientX: evt.touches[0].clientX,
+          clientY: evt.touches[0].clientY,
+        };
+      }
+      const me = evt as MouseEvent;
+      return { clientX: me.clientX, clientY: me.clientY };
+    };
+
+    const initCoords = "touches" in e ? e.touches[0] : e;
+    const startMouseX = initCoords.clientX;
+    const startMouseY = initCoords.clientY;
+
+    const getLocalPoint = (clientX: number, clientY: number) => {
+      const logoCenterX = container.left + selectedLayer.x * editorScale;
+      const logoCenterY = container.top + selectedLayer.y * editorScale;
+
+      const dx = (clientX - logoCenterX) / editorScale;
+      const dy = (clientY - logoCenterY) / editorScale;
+
+      const rad = (-selectedLayer.rotation * Math.PI) / 180;
+      const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+      const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+      const lx = localX / selectedLayer.scale + selectedLayer.baseSize / 2;
+      const ly = localY / selectedLayer.scale + selectedLayer.baseSize / 2;
+
+      return { x: lx, y: ly };
+    };
+
+    const initialPoint = getLocalPoint(startMouseX, startMouseY);
+    const localBrushSize = eraserBrushSize / selectedLayer.scale;
+
+    const newStroke = {
+      points: [initialPoint],
+      size: localBrushSize,
+    };
+
+    const updatedPaths = [...(selectedLayer.eraserPaths || []), newStroke];
+    setLogoLayers((prev) =>
+      prev.map((l) =>
+        l.id === selectedLayer.id ? { ...l, eraserPaths: updatedPaths } : l,
+      ),
+    );
+
+    const handleMove = (moveEvt: MouseEvent | TouchEvent) => {
+      const { clientX, clientY } = getCoords(moveEvt);
+      const pt = getLocalPoint(clientX, clientY);
+
+      setLogoLayers((prev) =>
+        prev.map((l) => {
+          if (l.id !== selectedLayer.id) return l;
+          const paths = l.eraserPaths || [];
+          if (paths.length === 0) return l;
+          const lastPath = paths[paths.length - 1];
+          const updatedLastPath = {
+            ...lastPath,
+            points: [...lastPath.points, pt],
+          };
+          return {
+            ...l,
+            eraserPaths: [...paths.slice(0, -1), updatedLastPath],
+          };
+        }),
+      );
+    };
+
+    const handleEnd = () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleEnd);
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleEnd);
+    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+  };
+
+  const handleLogoDragStart = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    setSelectedLogoId(id);
+    setSelectedLayerId(null); // Deselect text layers
+
+    const layer = logoLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startX = layer.x;
+    const startY = layer.y;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = (moveEvent.clientX - startMouseX) / editorScale;
+      const deltaY = (moveEvent.clientY - startMouseY) / editorScale;
+
+      setLogoLayers((prev) =>
+        prev.map((l) =>
+          l.id === id
+            ? {
+                ...l,
+                x: startX + deltaX,
+                y: startY + deltaY,
+              }
+            : l,
+        ),
+      );
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleLogoRotateStart = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const layer = logoLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const target = (e.currentTarget as HTMLElement).parentElement
+      ?.parentElement;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startAngle = Math.atan2(startMouseY - centerY, startMouseX - centerX);
+    const startRotation = layer.rotation;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const currentAngle = Math.atan2(
+        moveEvent.clientY - centerY,
+        moveEvent.clientX - centerX,
+      );
+      const angleDiff = currentAngle - startAngle;
+      let newRotation = startRotation + angleDiff * (180 / Math.PI);
+      newRotation = ((newRotation % 360) + 360) % 360;
+
+      setLogoLayers((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, rotation: newRotation } : l)),
+      );
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleLogoScaleStart = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const layer = logoLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const target = (e.currentTarget as HTMLElement).parentElement
+      ?.parentElement;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startDist = Math.sqrt(
+      Math.pow(startMouseX - centerX, 2) + Math.pow(startMouseY - centerY, 2),
+    );
+    const startScale = layer.scale;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const curDist = Math.sqrt(
+        Math.pow(moveEvent.clientX - centerX, 2) +
+          Math.pow(moveEvent.clientY - centerY, 2),
+      );
+      const newScale = Math.max(0.01, startScale * (curDist / startDist));
+
+      setLogoLayers((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, scale: newScale } : l)),
+      );
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleLogoCopy = (id: string) => {
+    const layer = logoLayers.find((l) => l.id === id);
+    if (!layer) return;
+
+    const newLayer: LogoLayer = {
+      ...layer,
+      id: `${layer.id}-copy-${Date.now()}`,
+      x: Math.min(1024, layer.x + 40),
+      y: Math.min(1024, layer.y + 40),
+    };
+
+    setLogoLayers((prev) => [...prev, newLayer]);
+    setSelectedLogoId(newLayer.id);
+    setSelectedLayerId(null);
+  };
+
+  const handleLogoDelete = (id: string) => {
+    setLogoLayers((prev) => prev.filter((l) => l.id !== id));
+    if (selectedLogoId === id) {
+      setSelectedLogoId(null);
+    }
+  };
+
+  const handleAddLogoLayer = (src: string) => {
+    const newId = `custom-logo-${Date.now()}`;
+    const newLayer: LogoLayer = {
+      id: newId,
+      src,
+      x: 512,
+      y: 500,
+      scale: 0.8,
+      rotation: 0,
+      side: activeSide,
+      baseSize: 200,
+      opacity: 1.0,
+    };
+    setLogoLayers((prev) => [...prev, newLayer]);
+    setSelectedLogoId(newId);
+    setSelectedLayerId(null);
+  };
+
+  useEffect(() => {
+    const sideLogos = logoLayers.filter((l) => l.side === activeSide);
+    if (sideLogos.length > 0) {
+      const currentSelected = logoLayers.find((l) => l.id === selectedLogoId);
+      if (!currentSelected || currentSelected.side !== activeSide) {
+        setSelectedLogoId(sideLogos[0].id);
+      }
+    } else {
+      setSelectedLogoId(null);
+    }
+  }, [currentView, activeSide]);
+
+  useEffect(() => {
+    if (activeTab === "text") {
+      setSelectedLogoId(null);
+    } else if (activeTab === "logos") {
+      setSelectedLayerId(null);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const sideLayers = textLayers.filter((l) => l.side === activeSide);
@@ -5720,7 +6288,7 @@ export default function CustomizerLayout() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
-      updateState("logo", dataUrl);
+      handleAddLogoLayer(dataUrl);
       setUploadedLogos((prev) => {
         const next = [
           dataUrl,
@@ -6862,8 +7430,8 @@ export default function CustomizerLayout() {
                               }}
                               className="flex-1 accent-red-600 h-1.5 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
                             />
-                            <div className="min-w-[56px] h-10 px-3 border border-zinc-200 bg-white shadow-sm rounded-xl flex items-center justify-center text-xs font-bold text-zinc-700">
-                              {selectedLayer.textSize}
+                            <div className="min-w-[56px] h-10 px-3 border border-zinc-200 bg-white rounded-lg flex items-center justify-center text-xs font-bold text-zinc-700">
+                              {selectedLayer?.textSize}
                             </div>
                           </div>
                         </div>
@@ -6972,56 +7540,354 @@ export default function CustomizerLayout() {
                     className="hidden"
                   />
 
-                  {/* Upload Container */}
-                  {!state.logo ? (
-                    <div
-                      onClick={() =>
-                        document.getElementById("logo-upload-input")?.click()
-                      }
-                      className="border-2 border-dashed border-zinc-200 rounded-xl p-8 flex flex-col items-center justify-center text-zinc-500 hover:bg-zinc-50 hover:border-red-400 cursor-pointer transition-all"
+                  {/* Front/Back View Segmented Switcher */}
+                  <div className="flex bg-zinc-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView("front")}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        activeSide === "Front"
+                          ? "bg-white text-zinc-900 shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-900"
+                      }`}
                     >
-                      <ImageIcon className="w-8 h-8 mb-2" />
-                      <span className="text-sm font-bold">Upload Logo</span>
-                      <span className="text-xs mt-1">PNG, SVG up to 5MB</span>
-                    </div>
-                  ) : (
-                    <div className="border border-zinc-200 bg-zinc-50 rounded-xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-lg border border-zinc-200/80 overflow-hidden flex items-center justify-center p-1">
-                          <img
-                            src={state.logo}
-                            alt="Logo preview"
-                            className="w-full h-full object-contain"
-                          />
+                      Front Side
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView("back")}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        activeSide === "Back"
+                          ? "bg-white text-zinc-900 shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-900"
+                      }`}
+                    >
+                      Back Side
+                    </button>
+                  </div>
+
+                  {/* Visual Logo Editor */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider block">
+                      Visual Logo Editor ({activeSide} View)
+                    </label>
+
+                    {/* Bounding Box Customizer Canvas area (280x280) */}
+                    <div
+                      className="relative w-[280px] h-[280px] rounded border border-zinc-200 shadow-inner mx-auto select-none"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #1f2937 0%, #111827 100%)",
+                        cursor:
+                          isEraserMode && selectedLogoId
+                            ? ERASER_CURSOR
+                            : "default",
+                      }}
+                      onMouseDown={(e) => {
+                        if (isEraserMode && selectedLogoId) {
+                          handleEraserStart(e);
+                          return;
+                        }
+                        if (e.target === e.currentTarget) {
+                          setSelectedLogoId(null);
+                        }
+                      }}
+                      onTouchStart={(e) => {
+                        if (isEraserMode && selectedLogoId) {
+                          handleEraserStart(e);
+                        }
+                      }}
+                    >
+                      {/* Silhouette helper */}
+                      <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                          <svg
+                            viewBox="0 0 100 100"
+                            className="w-48 h-48 fill-white"
+                          >
+                            <path d="M 30,15 L 70,15 L 85,25 L 80,45 L 70,40 L 70,85 L 30,85 L 30,40 L 20,45 L 15,25 Z" />
+                          </svg>
                         </div>
-                        <div>
-                          <span className="text-xs font-bold text-zinc-800 block">
-                            Custom Logo
+                        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:20px_20px]" />
+                      </div>
+
+                      {/* Active side text label */}
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold text-zinc-500 tracking-widest uppercase pointer-events-none">
+                        {activeSide} Texture Map (1024x1024)
+                      </div>
+
+                      {/* Logo Content Container */}
+                      <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                        {logoLayers
+                          .filter((layer) => layer.side === activeSide)
+                          .map((layer) => {
+                            const isSelected = selectedLogoId === layer.id;
+                            return (
+                              <div
+                                key={layer.id}
+                                style={{
+                                  position: "absolute",
+                                  left: layer.x * editorScale,
+                                  top: layer.y * editorScale,
+                                  transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                                  cursor: isEraserMode ? ERASER_CURSOR : "move",
+                                  zIndex: isSelected ? 40 : 10,
+                                }}
+                                onMouseDown={(e) => {
+                                  if (isEraserMode) {
+                                    // Bubble up to visual customizer div
+                                    return;
+                                  }
+                                  handleLogoDragStart(e, layer.id);
+                                }}
+                              >
+                                {renderLogoLayer(layer, false)}
+                              </div>
+                            );
+                          })}
+                      </div>
+
+                      {/* Bounding Box & Handles Overlay */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        {!isEraserMode &&
+                          logoLayers
+                            .filter(
+                              (layer) =>
+                                layer.side === activeSide &&
+                                selectedLogoId === layer.id,
+                            )
+                            .map((layer) => {
+                              return (
+                                <div
+                                  key={`handles-logo-${layer.id}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: layer.x * editorScale,
+                                    top: layer.y * editorScale,
+                                    transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
+                                    pointerEvents: "none",
+                                    zIndex: 50,
+                                  }}
+                                >
+                                  {renderLogoLayer(
+                                    layer,
+                                    true,
+                                    <>
+                                      {/* Bounding Box Border */}
+                                      <div
+                                        className="absolute inset-0 border border-dashed border-red-500"
+                                        style={{ visibility: "visible" }}
+                                      />
+
+                                      {/* Interactive Handles */}
+                                      <div style={{ visibility: "visible" }}>
+                                        {/* Top-Left: Duplicate */}
+                                        <button
+                                          className="absolute -top-3.5 -left-3.5 w-6 h-6 bg-white border border-zinc-200 hover:bg-zinc-50 shadow-md rounded-full flex items-center justify-center cursor-pointer active:scale-90 transition-transform pointer-events-auto"
+                                          onMouseDown={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            handleLogoCopy(layer.id);
+                                          }}
+                                          title="Duplicate"
+                                        >
+                                          <svg
+                                            className="w-3.5 h-3.5 text-zinc-600"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2.5}
+                                              d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                            />
+                                          </svg>
+                                        </button>
+
+                                        {/* Top-Right: Rotate */}
+                                        <div
+                                          className="absolute -top-3.5 -right-3.5 w-6 h-6 bg-white border border-zinc-200 hover:bg-zinc-50 shadow-md rounded-full flex items-center justify-center cursor-alias active:scale-90 transition-transform pointer-events-auto"
+                                          onMouseDown={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            handleLogoRotateStart(e, layer.id);
+                                          }}
+                                          title="Rotate"
+                                        >
+                                          <svg
+                                            className="w-3.5 h-3.5 text-zinc-600"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2.5}
+                                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"
+                                            />
+                                          </svg>
+                                        </div>
+
+                                        {/* Bottom-Left: Delete */}
+                                        <button
+                                          className="absolute -bottom-3.5 -left-3.5 w-6 h-6 bg-red-500 hover:bg-red-600 shadow-md rounded-full flex items-center justify-center cursor-pointer active:scale-90 transition-transform pointer-events-auto"
+                                          onMouseDown={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            handleLogoDelete(layer.id);
+                                          }}
+                                          title="Delete"
+                                        >
+                                          <svg
+                                            className="w-3.5 h-3.5 text-white"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2.5}
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            />
+                                          </svg>
+                                        </button>
+
+                                        {/* Bottom-Right: Scale */}
+                                        <div
+                                          className="absolute -bottom-3.5 -right-3.5 w-6 h-6 bg-blue-500 hover:bg-blue-600 shadow-md rounded-full flex items-center justify-center cursor-se-resize active:scale-90 transition-transform pointer-events-auto"
+                                          onMouseDown={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            handleLogoScaleStart(e, layer.id);
+                                          }}
+                                          title="Scale"
+                                        >
+                                          <svg
+                                            className="w-3.5 h-3.5 text-white"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2.5}
+                                              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+                                            />
+                                          </svg>
+                                        </div>
+                                      </div>
+                                    </>,
+                                  )}
+                                </div>
+                              );
+                            })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Background Eraser - Conditional on selected logo */}
+                  {(() => {
+                    const selectedLayer = logoLayers.find(
+                      (l) => l.id === selectedLogoId,
+                    );
+                    if (!selectedLayer) return null;
+                    return (
+                      <div className="space-y-2.5 p-3 bg-zinc-50 rounded-xl border border-zinc-200/60 shadow-sm mb-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                            Background Eraser
                           </span>
                           <button
-                            onClick={() =>
-                              document
-                                .getElementById("logo-upload-input")
-                                ?.click()
+                            onClick={() => setIsEraserMode((prev) => !prev)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                              isEraserMode
+                                ? "bg-red-500 hover:bg-red-600 text-white"
+                                : "bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300"
+                            }`}
+                            title={
+                              isEraserMode
+                                ? "Click to lock artwork"
+                                : "Click to erase background"
                             }
-                            className="text-[10px] text-zinc-500 hover:text-red-500 font-bold underline mr-2"
                           >
-                            Replace
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              {isEraserMode ? (
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2.5}
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                />
+                              ) : (
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                />
+                              )}
+                            </svg>
+                            <span>
+                              {isEraserMode ? "Lock Drawing" : "Erase Pixels"}
+                            </span>
                           </button>
                         </div>
+
+                        {isEraserMode && (
+                          <div className="space-y-1.5 animate-fadeIn">
+                            <div className="flex justify-between text-[11px] font-bold text-zinc-600">
+                              <span>Eraser Brush Size</span>
+                              <span>{eraserBrushSize}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="2"
+                              max="100"
+                              value={eraserBrushSize}
+                              onChange={(e) =>
+                                setEraserBrushSize(parseInt(e.target.value))
+                              }
+                              className="w-full accent-red-500 cursor-pointer h-1.5 bg-zinc-200 rounded-lg appearance-none"
+                            />
+                            <p className="text-[10px] text-zinc-400 italic">
+                              Drag mouse/finger over image edges in the Visual
+                              Editor to clean up background pixels.
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <button
-                        onClick={() => updateState("logo", null)}
-                        className="p-2 text-zinc-400 hover:text-red-500 hover:bg-white rounded-lg border border-zinc-100 hover:border-zinc-200 shadow-sm transition-all"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
+                    );
+                  })()}
+
+                  {/* Upload Container */}
+                  <div
+                    onClick={() =>
+                      document.getElementById("logo-upload-input")?.click()
+                    }
+                    className="border-2 border-dashed border-zinc-200 rounded-xl p-6 flex flex-col items-center justify-center text-zinc-500 hover:bg-zinc-50 hover:border-red-400 cursor-pointer transition-all"
+                  >
+                    <ImageIcon className="w-6 h-6 mb-1.5" />
+                    <span className="text-xs font-bold">
+                      Upload Custom Logo
+                    </span>
+                    <span className="text-[10px] mt-0.5">
+                      PNG, SVG up to 5MB
+                    </span>
+                  </div>
 
                   {/* Presets Grid */}
                   <div>
-                    <label className="text-sm font-bold text-zinc-900 mb-2 block">
+                    <label className="text-xs font-bold text-zinc-900 mb-2 block">
                       Preset Badges
                     </label>
                     <div className="grid grid-cols-3 gap-2">
@@ -7048,7 +7914,7 @@ export default function CustomizerLayout() {
                         },
                         {
                           name: "Iron Crown",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwLDkwIEw5MCw2NSBMOTAsMjAgTDUwLDEwIEwxMCwyMCBMMTAsNjUgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsNjUgTDMyLDQwIEw0NSw1NSBMNTAsMzAgTDU1LDU1IEw2OCw0MCBMNzUsNjUgWiIgZmlsbD0iI2E4NTVmNyIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iODAiIHI9IjYiIGZpbGw9IiNhODU1ZjciLz48L3N2Zz4=",
+                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwLDkwIEw5MCw2NSBMOTAsMjAgTDUwLDEwIEwxMCwyMCBMMTAsNjUgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsNjUgTDMyLDQwIEw4NSw1NSBMNTAsMzAgTDU1LDU1IEw2OCw0MCBMNzUsNjUgWiIgZmlsbD0iI2E4NTVmNyIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iODAiIHI9IjYiIGZpbGw9IiNhODU1ZjciLz48L3N2Zz4=",
                         },
                         {
                           name: "Green Cobra",
@@ -7056,7 +7922,7 @@ export default function CustomizerLayout() {
                         },
                         {
                           name: "Cyber Star",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y0M2Y1ZSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtZGFzaGFycmF5PSI4IDYiLz48cG9seWdvbiBwb2ludHM9IjUwLDE1IDYxLDM4IDg2LDQwIDY3LDU3IDczLDgyIDUwLDY4IDI3LDgyIDMzLDU3IDI0LDQwIDM5LDM4IiBmaWxsPSIjZjQzZjVlIi8+PC9zdmc+",
+                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y0M2Y1ZSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtZGFzaGFycmF5PSI4IDYiLz48cG9seWdvbiBwb2ludHM9IjUwLDE1IDYxLDM4IDg2LDQwIDY3LDU3IDczLDgyIDUwLDY4IDI3LDgyIDMzLDU3IDI0LDQwIDM5LDM4IiBmaWxsPSIjZjQzZjVlIi8+PC9zdmc+",
                         },
                         {
                           name: "Ocean Anchor",
@@ -7065,26 +7931,17 @@ export default function CustomizerLayout() {
                       ].map((preset) => (
                         <button
                           key={preset.name}
-                          onClick={() =>
-                            updateState(
-                              "logo",
-                              state.logo === preset.url ? null : preset.url,
-                            )
-                          }
-                          className={`p-2 rounded-lg border flex flex-col items-center justify-center gap-1.5 transition-all bg-white ${
-                            state.logo === preset.url
-                              ? "border-red-500 bg-red-50/20 shadow-sm"
-                              : "border-zinc-200 hover:border-zinc-300"
-                          }`}
+                          onClick={() => handleAddLogoLayer(preset.url)}
+                          className="p-1.5 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-sm"
                         >
-                          <div className="w-8 h-8 flex items-center justify-center">
+                          <div className="w-6 h-6 flex items-center justify-center">
                             <img
                               src={preset.url}
                               alt={preset.name}
                               className="w-full h-full object-contain"
                             />
                           </div>
-                          <span className="text-[9px] font-bold text-zinc-500">
+                          <span className="text-[8px] font-bold text-zinc-500">
                             {preset.name}
                           </span>
                         </button>
@@ -7094,9 +7951,9 @@ export default function CustomizerLayout() {
 
                   {/* My Uploads Gallery */}
                   {uploadedLogos.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-zinc-100">
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="text-sm font-bold text-zinc-900">
+                    <div className="mt-2 pt-2 border-t border-zinc-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold text-zinc-900">
                           My Uploaded Badges
                         </label>
                         <button
@@ -7104,61 +7961,24 @@ export default function CustomizerLayout() {
                             setUploadedLogos([]);
                             localStorage.removeItem("jersey_uploaded_logos");
                           }}
-                          className="text-[10px] text-zinc-400 hover:text-red-500 font-bold transition-colors"
+                          className="text-[9px] text-zinc-400 hover:text-red-500 font-bold transition-colors"
                         >
                           Clear All
                         </button>
                       </div>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-2">
                         {uploadedLogos.map((url, index) => {
-                          const isSelected = state.logo === url;
                           return (
                             <div
                               key={index}
-                              onClick={() =>
-                                updateState(
-                                  "logo",
-                                  state.logo === url ? null : url,
-                                )
-                              }
-                              className={`relative aspect-square rounded-xl border flex items-center justify-center p-2 transition-all bg-white cursor-pointer group hover:shadow-md ${
-                                isSelected
-                                  ? "border-red-500 bg-red-50/10 shadow-sm"
-                                  : "border-zinc-200 hover:border-zinc-300"
-                              }`}
+                              onClick={() => handleAddLogoLayer(url)}
+                              className="relative aspect-square rounded-xl border flex items-center justify-center p-1.5 transition-all bg-white cursor-pointer border-zinc-200 hover:border-zinc-300 hover:shadow-md group"
                             >
                               <img
                                 src={url}
                                 alt={`Uploaded badge ${index + 1}`}
                                 className="w-full h-full object-contain"
                               />
-
-                              {/* Top Left Selection Marker */}
-                              <div
-                                className={`absolute top-1.5 left-1.5 w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
-                                  isSelected
-                                    ? "bg-red-500 border-red-500 text-white"
-                                    : "bg-white border-zinc-300 opacity-60 group-hover:opacity-100"
-                                }`}
-                              >
-                                {isSelected && (
-                                  <svg
-                                    className="w-2.5 h-2.5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={3.5}
-                                      d="M5 13l4 4L19 7"
-                                    />
-                                  </svg>
-                                )}
-                              </div>
-
-                              {/* Top Right Options/Delete Button */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -7172,14 +7992,11 @@ export default function CustomizerLayout() {
                                     );
                                     return next;
                                   });
-                                  if (isSelected) {
-                                    updateState("logo", null);
-                                  }
                                 }}
-                                className="absolute top-1.5 right-1.5 w-5 h-5 bg-white hover:bg-red-50 text-zinc-400 hover:text-red-500 rounded-full border border-zinc-200 shadow-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                                className="absolute top-1 right-1 w-4 h-4 bg-white hover:bg-red-50 text-zinc-400 hover:text-red-500 rounded-full border border-zinc-200 shadow-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                               >
                                 <svg
-                                  className="w-3 h-3"
+                                  className="w-2.5 h-2.5"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                   stroke="currentColor"
@@ -7199,56 +8016,248 @@ export default function CustomizerLayout() {
                     </div>
                   )}
 
-                  {/* Logo Position */}
-                  <div>
-                    <label className="text-sm font-bold text-zinc-900 mb-2 block">
-                      Logo Position
+                  {/* Logo Layers List */}
+                  <div className="space-y-2 mt-2 pt-2 border-t border-zinc-100">
+                    <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                      Logo Layers List ({activeSide} Side)
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        "Left Chest",
-                        "Center",
-                        "Right Chest",
-                        "Back Top",
-                        "Back Center",
-                        "Sleeve",
-                      ].map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => setLogoPositionPreset(p)}
-                          className={`p-2 rounded cursor-pointer border text-[10px] font-medium transition-all duration-300 active:scale-90 leading-tight text-center ${
-                            state.logoPosition === p
-                              ? "border-red-500 bg-red-50 text-red-600 font-extrabold shadow-sm"
-                              : "border-[#002337] text-[#002337] hover:border-zinc-300"
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-1 max-h-36 overflow-y-auto pr-1">
+                      {logoLayers.filter((l) => l.side === activeSide)
+                        .length === 0 ? (
+                        <div className="text-xs text-zinc-400 italic text-center py-2 bg-zinc-50 rounded-xl border border-zinc-100">
+                          No logo layers on this side. Add one above!
+                        </div>
+                      ) : (
+                        logoLayers
+                          .filter((l) => l.side === activeSide)
+                          .map((layer) => {
+                            const isSelected = selectedLogoId === layer.id;
+                            return (
+                              <div
+                                key={layer.id}
+                                onClick={() => {
+                                  setSelectedLogoId(layer.id);
+                                  setSelectedLayerId(null);
+                                }}
+                                className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "border-red-500 bg-red-50/30"
+                                    : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 overflow-hidden flex items-center justify-center p-0.5 flex-shrink-0">
+                                    <img
+                                      src={layer.src}
+                                      alt="Layer badge"
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                  <div className="text-xs font-bold text-zinc-700 truncate">
+                                    Logo Layer ({layer.id.split("-").pop()})
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleLogoCopy(layer.id);
+                                    }}
+                                    className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100 transition-colors"
+                                    title="Duplicate"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleLogoDelete(layer.id);
+                                    }}
+                                    className="p-1 text-zinc-400 hover:text-red-500 rounded hover:bg-red-50 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                      )}
                     </div>
                   </div>
 
-                  {/* Logo Size */}
-                  <div>
-                    <label className="text-sm font-bold text-zinc-900 mb-2 block">
-                      Logo Size
-                    </label>
-                    <input
-                      type="range"
-                      min="0.05"
-                      max="0.30"
-                      step="0.01"
-                      value={state.logoSize}
-                      onChange={(e) =>
-                        updateState("logoSize", parseFloat(e.target.value))
-                      }
-                      className="w-full accent-red-600"
-                    />
-                    <div className="flex justify-between text-xs text-zinc-400 mt-1">
-                      <span>Small</span>
-                      <span>Large</span>
-                    </div>
-                  </div>
+                  {/* Selected Logo Properties */}
+                  {(() => {
+                    const selectedLayer = logoLayers.find(
+                      (l) => l.id === selectedLogoId,
+                    );
+                    if (!selectedLayer) return null;
+                    return (
+                      <div className="space-y-4 pt-2 border-t border-zinc-100">
+                        <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                          Selected Logo Settings
+                        </h4>
+
+                        {/* Size slider */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs font-bold text-zinc-800">
+                            <span>Logo Size / Scale</span>
+                            <span className="text-zinc-500">
+                              {selectedLayer.scale.toFixed(2)}x
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0.01"
+                            max="20.0"
+                            step="0.05"
+                            value={selectedLayer.scale}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              setLogoLayers((prev) =>
+                                prev.map((l) =>
+                                  l.id === selectedLayer.id
+                                    ? { ...l, scale: val }
+                                    : l,
+                                ),
+                              );
+                            }}
+                            className="w-full accent-red-600 cursor-pointer"
+                          />
+                        </div>
+
+                        {/* Rotation slider */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs font-bold text-zinc-800">
+                            <span>Logo Rotation</span>
+                            <span className="text-zinc-500">
+                              {Math.round(selectedLayer.rotation)}°
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="360"
+                            value={Math.round(selectedLayer.rotation)}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              setLogoLayers((prev) =>
+                                prev.map((l) =>
+                                  l.id === selectedLayer.id
+                                    ? { ...l, rotation: val }
+                                    : l,
+                                ),
+                              );
+                            }}
+                            className="w-full accent-red-600 cursor-pointer"
+                          />
+                        </div>
+
+                        {/* Opacity slider */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs font-bold text-zinc-800">
+                            <span>Logo Opacity</span>
+                            <span className="text-zinc-500">
+                              {Math.round(
+                                (typeof selectedLayer.opacity === "number"
+                                  ? selectedLayer.opacity
+                                  : 1.0) * 100,
+                              )}
+                              %
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={Math.round(
+                              (typeof selectedLayer.opacity === "number"
+                                ? selectedLayer.opacity
+                                : 1.0) * 100,
+                            )}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) / 100;
+                              setLogoLayers((prev) =>
+                                prev.map((l) =>
+                                  l.id === selectedLayer.id
+                                    ? { ...l, opacity: val }
+                                    : l,
+                                ),
+                              );
+                            }}
+                            className="w-full accent-red-600 cursor-pointer"
+                          />
+                        </div>
+
+                        {/* Presets Placement */}
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-zinc-800 block">
+                            Quick Position Placement
+                          </label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {[
+                              { name: "Left Chest", x: 310, y: 290 },
+                              { name: "Center", x: 512, y: 500 },
+                              { name: "Right Chest", x: 714, y: 290 },
+                              { name: "Back Top", x: 512, y: 200 },
+                              { name: "Back Center", x: 512, y: 500 },
+                              { name: "Sleeve", x: 150, y: 350 },
+                            ].map((p) => (
+                              <button
+                                key={p.name}
+                                onClick={() => {
+                                  const isBack = p.name.startsWith("Back");
+                                  const targetSide = isBack ? "Back" : "Front";
+                                  setLogoLayers((prev) =>
+                                    prev.map((l) =>
+                                      l.id === selectedLayer.id
+                                        ? {
+                                            ...l,
+                                            x: p.x,
+                                            y: p.y,
+                                            side: targetSide,
+                                          }
+                                        : l,
+                                    ),
+                                  );
+                                  setCurrentView(isBack ? "back" : "front");
+                                }}
+                                className="p-1.5 rounded border text-[9px] font-medium transition-all duration-300 active:scale-90 leading-tight text-center border-[#002337] text-[#002337] hover:border-zinc-300 cursor-pointer"
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -7454,6 +8463,8 @@ export default function CustomizerLayout() {
                 designPattern: currentPattern,
                 loadedPatterns,
                 textLayers,
+                logoLayers,
+                loadedLogoImages,
               }}
               collar={state.collar}
             />
