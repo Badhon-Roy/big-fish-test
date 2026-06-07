@@ -25,6 +25,9 @@ import {
   Wand2,
   Hash,
   LayoutTemplate,
+  Copy,
+  Trash2,
+  GripVertical,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -549,6 +552,54 @@ function useJerseyDecals(state: any) {
       texture.magFilter = THREE.LinearFilter;
       texture.needsUpdate = true;
       return texture;
+    };
+
+    const drawLayerOnCtx = (ctx: CanvasRenderingContext2D, layer: any) => {
+      const img = state.loadedLogoImages[layer.src];
+      if (!img) return;
+      ctx.save();
+      ctx.strokeStyle = "transparent";
+      ctx.lineWidth = 0;
+      ctx.shadowBlur = 0;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      const opacity = typeof layer.opacity === "number" ? layer.opacity : 1.0;
+      ctx.globalAlpha = opacity;
+      ctx.translate(layer.x, layer.y);
+      ctx.rotate((layer.rotation * Math.PI) / 180);
+      ctx.scale(layer.scale, layer.scale);
+      const sz = layer.baseSize || 200;
+      if (layer.eraserPaths && layer.eraserPaths.length > 0) {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = sz;
+        tempCanvas.height = sz;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+          tempCtx.drawImage(img, 0, 0, sz, sz);
+          tempCtx.globalCompositeOperation = "destination-out";
+          tempCtx.lineCap = "round";
+          tempCtx.lineJoin = "round";
+          tempCtx.strokeStyle = "rgba(0,0,0,1)";
+          layer.eraserPaths.forEach((path: any) => {
+            tempCtx.lineWidth = path.size;
+            tempCtx.beginPath();
+            path.points.forEach((pt: any, idx: number) => {
+              if (idx === 0) {
+                tempCtx.moveTo(pt.x, pt.y);
+              } else {
+                tempCtx.lineTo(pt.x, pt.y);
+              }
+            });
+            tempCtx.stroke();
+          });
+          ctx.drawImage(tempCanvas, -sz / 2, -sz / 2, sz, sz);
+        } else {
+          ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+        }
+      } else {
+        ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+      }
+      ctx.restore();
     };
 
     const getFontString = (
@@ -3082,19 +3133,46 @@ function useJerseyDecals(state: any) {
     if (patternBack) patternBack.anisotropy = 16;
 
     // ── Text / number canvases (smaller decals, on top) ───────────────────────
-    const front = makeCanvas((ctx) => {
-      if (state.textLayers) {
-        const frontLayers = state.textLayers.filter(
-          (l: any) => l.side === "Front",
-        );
-        frontLayers.forEach((layer: any) => {
+    const drawSideLayers = (ctx: CanvasRenderingContext2D, side: "Front" | "Back") => {
+      const sideTextLayers = (state.textLayers || []).filter((l: any) => l.side === side);
+      const sideLogoLayers = (state.logoLayers || []).filter((l: any) => l.side === side);
+
+      const allSideLayers = [
+        ...sideTextLayers.map((l: any) => ({ ...l, layerType: "text" })),
+        ...sideLogoLayers.map((l: any) => ({ ...l, layerType: "logo" })),
+      ];
+
+      const order = state.layersOrder || [];
+
+      allSideLayers.sort((a, b) => {
+        const indexA = order.indexOf(a.id);
+        const indexB = order.indexOf(b.id);
+
+        const getPriority = (l: any) => {
+          if (l.layerType === "text") return 1;
+          if (l.type === "image") {
+            return l.zOrder === "above-text" ? 2 : 0;
+          }
+          return 3;
+        };
+
+        const valA = indexA !== -1 ? indexA : getPriority(a) * 1000;
+        const valB = indexB !== -1 ? indexB : getPriority(b) * 1000;
+        return valA - valB;
+      });
+
+      allSideLayers.forEach((layer: any) => {
+        if (layer.layerType === "text") {
           ctx.save();
           ctx.translate(layer.x, layer.y);
           ctx.rotate((layer.rotation * Math.PI) / 180);
           ctx.scale(layer.scale, layer.scale);
 
           const isOutline = layer.font === "Outline";
-          const strokeColor = state.primaryFront || state.primary;
+          const strokeColor =
+            side === "Front"
+              ? state.primaryFront || state.primary
+              : state.primaryBack || state.primary;
 
           drawTextWithSpacing(
             ctx,
@@ -3111,234 +3189,18 @@ function useJerseyDecals(state: any) {
             layer.curveRadius || 0,
           );
           ctx.restore();
-        });
-      } else {
-        if (state.frontText) {
-          const isOutline = state.frontFont === "Outline";
-          ctx.font = getFontString(state.frontTextSize, state.frontFont, 110);
-
-          ctx.strokeStyle = isOutline
-            ? state.frontTextColor || textColor
-            : state.primary;
-          ctx.lineWidth = isOutline ? 4 : 8;
-
-          // Max width to prevent horizontal canvas clipping
-          const maxWidth = size * 0.9;
-          ctx.strokeText(state.frontText, size * 0.5, size * 0.28, maxWidth);
-
-          if (!isOutline) {
-            ctx.fillStyle = state.frontTextColor || textColor;
-            ctx.fillText(state.frontText, size * 0.5, size * 0.28, maxWidth);
-          }
+        } else {
+          drawLayerOnCtx(ctx, layer);
         }
-        if (
-          state.number &&
-          (state.numberPosition === "Both" || state.numberPosition === "Front")
-        ) {
-          const isOutline = state.numberFont === "Outline";
-          ctx.font = getFontString(320, state.numberFont, 320);
+      });
+    };
 
-          ctx.strokeStyle = isOutline
-            ? state.numberColor || textColor
-            : state.primary;
-          ctx.lineWidth = isOutline ? 8 : 16;
-          ctx.strokeText(state.number, size * 0.5, size * 0.62, size * 0.9);
-
-          if (!isOutline) {
-            ctx.fillStyle = state.numberColor || textColor;
-            ctx.fillText(state.number, size * 0.5, size * 0.62, size * 0.9);
-          }
-        }
-      }
-
-      // Draw logo layers on top
-      if (state.logoLayers && state.loadedLogoImages) {
-        const frontLogos = state.logoLayers.filter(
-          (l: any) => l.side === "Front",
-        );
-        frontLogos.forEach((layer: any) => {
-          const img = state.loadedLogoImages[layer.src];
-          if (!img) return;
-          ctx.save();
-
-          // Disable any active stroke/border properties
-          ctx.strokeStyle = "transparent";
-          ctx.lineWidth = 0;
-          ctx.shadowBlur = 0;
-
-          // Apply anti-aliasing configurations
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = "high";
-
-          const opacity =
-            typeof layer.opacity === "number" ? layer.opacity : 1.0;
-          ctx.globalAlpha = opacity;
-          ctx.translate(layer.x, layer.y);
-          ctx.rotate((layer.rotation * Math.PI) / 180);
-          ctx.scale(layer.scale, layer.scale);
-          const sz = layer.baseSize || 200;
-          if (layer.eraserPaths && layer.eraserPaths.length > 0) {
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = sz;
-            tempCanvas.height = sz;
-            const tempCtx = tempCanvas.getContext("2d");
-            if (tempCtx) {
-              tempCtx.drawImage(img, 0, 0, sz, sz);
-              tempCtx.globalCompositeOperation = "destination-out";
-              tempCtx.lineCap = "round";
-              tempCtx.lineJoin = "round";
-              tempCtx.strokeStyle = "rgba(0,0,0,1)";
-              layer.eraserPaths.forEach((path: any) => {
-                tempCtx.lineWidth = path.size;
-                tempCtx.beginPath();
-                path.points.forEach((pt: any, idx: number) => {
-                  if (idx === 0) {
-                    tempCtx.moveTo(pt.x, pt.y);
-                  } else {
-                    tempCtx.lineTo(pt.x, pt.y);
-                  }
-                });
-                tempCtx.stroke();
-              });
-              ctx.drawImage(tempCanvas, -sz / 2, -sz / 2, sz, sz);
-            } else {
-              ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
-            }
-          } else {
-            ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
-          }
-          ctx.restore();
-        });
-      }
+    const front = makeCanvas((ctx) => {
+      drawSideLayers(ctx, "Front");
     });
 
     const back = makeCanvas((ctx) => {
-      if (state.textLayers) {
-        const backLayers = state.textLayers.filter(
-          (l: any) => l.side === "Back",
-        );
-        backLayers.forEach((layer: any) => {
-          ctx.save();
-          ctx.translate(layer.x, layer.y);
-          ctx.rotate((layer.rotation * Math.PI) / 180);
-          ctx.scale(layer.scale, layer.scale);
-
-          const isOutline = layer.font === "Outline";
-          const strokeColor = state.primaryBack || state.primary;
-
-          drawTextWithSpacing(
-            ctx,
-            layer.text,
-            0,
-            0,
-            layer.font,
-            layer.textSize || 80,
-            layer.color,
-            isOutline,
-            strokeColor,
-            layer.letterSpacing || 0,
-            layer.lineSpacing || 1.15,
-            layer.curveRadius || 0,
-          );
-          ctx.restore();
-        });
-      } else {
-        if (state.backText) {
-          const isOutline = state.backFont === "Outline";
-          ctx.font = getFontString(state.backTextSize, state.backFont, 80);
-
-          ctx.strokeStyle = isOutline
-            ? state.backTextColor || textColor
-            : state.primary;
-          ctx.lineWidth = isOutline ? 4 : 6;
-
-          const maxWidth = size * 0.9;
-          ctx.strokeText(state.backText, size * 0.5, size * 0.2, maxWidth);
-
-          if (!isOutline) {
-            ctx.fillStyle = state.backTextColor || textColor;
-            ctx.fillText(state.backText, size * 0.5, size * 0.2, maxWidth);
-          }
-        }
-        if (
-          state.number &&
-          (state.numberPosition === "Both" || state.numberPosition === "Back")
-        ) {
-          const isOutline = state.numberFont === "Outline";
-          ctx.font = getFontString(380, state.numberFont, 380);
-
-          ctx.strokeStyle = isOutline
-            ? state.numberColor || textColor
-            : state.primary;
-          ctx.lineWidth = isOutline ? 8 : 16;
-          ctx.strokeText(state.number, size * 0.5, size * 0.6, size * 0.9);
-
-          if (!isOutline) {
-            ctx.fillStyle = state.numberColor || textColor;
-            ctx.fillText(state.number, size * 0.5, size * 0.6, size * 0.9);
-          }
-        }
-      }
-
-      // Draw logo layers on top
-      if (state.logoLayers && state.loadedLogoImages) {
-        const backLogos = state.logoLayers.filter(
-          (l: any) => l.side === "Back",
-        );
-        backLogos.forEach((layer: any) => {
-          const img = state.loadedLogoImages[layer.src];
-          if (!img) return;
-          ctx.save();
-
-          // Disable any active stroke/border properties
-          ctx.strokeStyle = "transparent";
-          ctx.lineWidth = 0;
-          ctx.shadowBlur = 0;
-
-          // Apply anti-aliasing configurations
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = "high";
-
-          const opacity =
-            typeof layer.opacity === "number" ? layer.opacity : 1.0;
-          ctx.globalAlpha = opacity;
-          ctx.translate(layer.x, layer.y);
-          ctx.rotate((layer.rotation * Math.PI) / 180);
-          ctx.scale(layer.scale, layer.scale);
-          const sz = layer.baseSize || 200;
-          if (layer.eraserPaths && layer.eraserPaths.length > 0) {
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = sz;
-            tempCanvas.height = sz;
-            const tempCtx = tempCanvas.getContext("2d");
-            if (tempCtx) {
-              tempCtx.drawImage(img, 0, 0, sz, sz);
-              tempCtx.globalCompositeOperation = "destination-out";
-              tempCtx.lineCap = "round";
-              tempCtx.lineJoin = "round";
-              tempCtx.strokeStyle = "rgba(0,0,0,1)";
-              layer.eraserPaths.forEach((path: any) => {
-                tempCtx.lineWidth = path.size;
-                tempCtx.beginPath();
-                path.points.forEach((pt: any, idx: number) => {
-                  if (idx === 0) {
-                    tempCtx.moveTo(pt.x, pt.y);
-                  } else {
-                    tempCtx.lineTo(pt.x, pt.y);
-                  }
-                });
-                tempCtx.stroke();
-              });
-              ctx.drawImage(tempCanvas, -sz / 2, -sz / 2, sz, sz);
-            } else {
-              ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
-            }
-          } else {
-            ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
-          }
-          ctx.restore();
-        });
-      }
+      drawSideLayers(ctx, "Back");
     });
 
     if (front) front.anisotropy = 16;
@@ -5247,7 +5109,7 @@ const TABS = [
   { id: "colors", icon: Palette, label: "Colors" },
   { id: "patterns", icon: Grid, label: "Patterns" },
   { id: "text", icon: Type, label: "Text" },
-  { id: "logos", icon: ImageIcon, label: "Logos" },
+  { id: "logos", icon: ImageIcon, label: "Uploads" },
   { id: "style", icon: Scissors, label: "Style" },
   { id: "fabric", icon: Box, label: "Fabric" },
 ];
@@ -5322,6 +5184,8 @@ interface LogoLayer {
     points: Array<{ x: number; y: number }>;
     size: number;
   }>;
+  type?: "logo" | "image"; // logo = always on top; image = background wrap
+  zOrder?: "bottom" | "above-text"; // only used when type === "image"
 }
 
 const getFontFamily = (font: string) => {
@@ -5353,6 +5217,8 @@ export default function CustomizerLayout() {
   const [selectedDesign, setSelectedDesign] = useState("throw");
   const [currentView, setCurrentView] = useState("front");
   const [uploadedLogos, setUploadedLogos] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadSubTab, setUploadSubTab] = useState<"logo" | "image">("logo");
 
   const editorWidth = 280;
   const canvasSize = 1024;
@@ -5617,6 +5483,92 @@ export default function CustomizerLayout() {
   >({});
   const [isEraserMode, setIsEraserMode] = useState<boolean>(false);
   const [eraserBrushSize, setEraserBrushSize] = useState<number>(20);
+
+  const [layersOrder, setLayersOrder] = useState<string[]>([]);
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Keep layersOrder in sync with all active layers (Text layers + Logo/Image layers)
+  useEffect(() => {
+    const textIds = textLayers.map((l) => l.id);
+    const logoIds = logoLayers.map((l) => l.id);
+    const allIds = [...textIds, ...logoIds];
+
+    setLayersOrder((prev) => {
+      // Filter out any IDs that no longer exist
+      const existing = prev.filter((id) => allIds.includes(id));
+      // Add any new IDs that are not yet in the order list
+      const newIds = allIds.filter((id) => !existing.includes(id));
+
+      if (existing.length === prev.length && newIds.length === 0) {
+        return prev;
+      }
+
+      // Default priority sorting for new layers
+      const sortedNew = [...newIds].sort((a, b) => {
+        const getPriority = (id: string) => {
+          if (id.includes("text") || id.includes("number")) return 1;
+          const logo = logoLayers.find((l) => l.id === id);
+          if (logo) {
+            if (logo.type === "image") {
+              return logo.zOrder === "above-text" ? 2 : 0;
+            }
+            return 3;
+          }
+          return 3;
+        };
+        return getPriority(a) - getPriority(b);
+      });
+
+      return [...existing, ...sortedNew];
+    });
+  }, [textLayers, logoLayers]);
+
+  const reorderLayers = (fromUIIndex: number, toUIIndex: number) => {
+    const sideTextLayers = textLayers.filter((l) => l.side === activeSide);
+    const sideLogoLayers = logoLayers.filter((l) => l.side === activeSide);
+    const activeSideLayers = [
+      ...sideTextLayers.map((l) => ({ ...l, layerType: "text" })),
+      ...sideLogoLayers.map((l) => ({ ...l, layerType: "logo" })),
+    ];
+
+    const sortedActiveSideLayers = [...activeSideLayers].sort((a, b) => {
+      const idxA = layersOrder.indexOf(a.id);
+      const idxB = layersOrder.indexOf(b.id);
+      const getPriority = (l: any) => {
+        if (l.layerType === "text") return 1;
+        if (l.type === "image") {
+          return l.zOrder === "above-text" ? 2 : 0;
+        }
+        return 3;
+      };
+      const valA = idxA !== -1 ? idxA : getPriority(a) * 1000;
+      const valB = idxB !== -1 ? idxB : getPriority(b) * 1000;
+      // DESCENDING order for UI list (highest draw index = top of list)
+      return valB - valA;
+    });
+
+    const reorderedSideLayers = [...sortedActiveSideLayers];
+    const [movedItem] = reorderedSideLayers.splice(fromUIIndex, 1);
+    reorderedSideLayers.splice(toUIIndex, 0, movedItem);
+
+    // Map new UI order back into layersOrder
+    setLayersOrder((prev) => {
+      const newOrder = [...prev];
+      const sideLayerIds = sortedActiveSideLayers.map((l) => l.id);
+      const newDrawOrderSideIds = [...reorderedSideLayers].reverse().map((l) => l.id);
+
+      const indices = newOrder
+        .map((id, index) => (sideLayerIds.includes(id) ? index : -1))
+        .filter((index) => index !== -1);
+
+      indices.forEach((indexInOrder, idx) => {
+        newOrder[indexInOrder] = newDrawOrderSideIds[idx];
+      });
+
+      return newOrder;
+    });
+  };
 
   useEffect(() => {
     logoLayers.forEach((layer) => {
@@ -6048,18 +6000,20 @@ export default function CustomizerLayout() {
     }
   };
 
-  const handleAddLogoLayer = (src: string) => {
+  const handleAddLogoLayer = (src: string, type: "logo" | "image" = "logo") => {
     const newId = `custom-logo-${Date.now()}`;
     const newLayer: LogoLayer = {
       id: newId,
       src,
       x: 512,
       y: 500,
-      scale: 0.8,
+      scale: type === "image" ? 1.5 : 0.8,
       rotation: 0,
       side: activeSide,
       baseSize: 200,
       opacity: 1.0,
+      type,
+      zOrder: type === "image" ? "bottom" : undefined,
     };
     setLogoLayers((prev) => [...prev, newLayer]);
     setSelectedLogoId(newId);
@@ -6099,10 +6053,18 @@ export default function CustomizerLayout() {
   }, [currentView, activeSide]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("jersey_uploaded_logos");
-    if (saved) {
+    const savedLogos = localStorage.getItem("jersey_uploaded_logos");
+    if (savedLogos) {
       try {
-        setUploadedLogos(JSON.parse(saved));
+        setUploadedLogos(JSON.parse(savedLogos));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    const savedImages = localStorage.getItem("jersey_uploaded_images");
+    if (savedImages) {
+      try {
+        setUploadedImages(JSON.parse(savedImages));
       } catch (e) {
         console.error(e);
       }
@@ -6282,21 +6244,32 @@ export default function CustomizerLayout() {
     }));
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, uploadType: "logo" | "image" = "logo") => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
-      handleAddLogoLayer(dataUrl);
-      setUploadedLogos((prev) => {
-        const next = [
-          dataUrl,
-          ...prev.filter((item) => item !== dataUrl),
-        ].slice(0, 12);
-        localStorage.setItem("jersey_uploaded_logos", JSON.stringify(next));
-        return next;
-      });
+      handleAddLogoLayer(dataUrl, uploadType);
+      if (uploadType === "image") {
+        setUploadedImages((prev) => {
+          const next = [
+            dataUrl,
+            ...prev.filter((item) => item !== dataUrl),
+          ].slice(0, 12);
+          localStorage.setItem("jersey_uploaded_images", JSON.stringify(next));
+          return next;
+        });
+      } else {
+        setUploadedLogos((prev) => {
+          const next = [
+            dataUrl,
+            ...prev.filter((item) => item !== dataUrl),
+          ].slice(0, 12);
+          localStorage.setItem("jersey_uploaded_logos", JSON.stringify(next));
+          return next;
+        });
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -7536,9 +7509,41 @@ export default function CustomizerLayout() {
                     id="logo-upload-input"
                     type="file"
                     accept="image/*"
-                    onChange={handleLogoUpload}
+                    onChange={(e) => handleLogoUpload(e, uploadSubTab)}
                     className="hidden"
                   />
+
+                  {/* Two-Tab Sub-navigation Layout: Logo & Image */}
+                  <div className="flex bg-zinc-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadSubTab("logo");
+                        setSelectedLogoId(null); // Deselect on switch
+                      }}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        uploadSubTab === "logo"
+                          ? "bg-white text-zinc-900 shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-900"
+                      }`}
+                    >
+                      Logo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadSubTab("image");
+                        setSelectedLogoId(null); // Deselect on switch
+                      }}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                        uploadSubTab === "image"
+                          ? "bg-white text-zinc-900 shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-900"
+                      }`}
+                    >
+                      Image (Wrap/BG)
+                    </button>
+                  </div>
 
                   {/* Front/Back View Segmented Switcher */}
                   <div className="flex bg-zinc-100 p-1 rounded-xl">
@@ -7566,10 +7571,10 @@ export default function CustomizerLayout() {
                     </button>
                   </div>
 
-                  {/* Visual Logo Editor */}
+                  {/* Visual Logo/Image Editor */}
                   <div className="space-y-3">
                     <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider block">
-                      Visual Logo Editor ({activeSide} View)
+                      Visual {uploadSubTab === "logo" ? "Logo" : "Image"} Editor ({activeSide} View)
                     </label>
 
                     {/* Bounding Box Customizer Canvas area (280x280) */}
@@ -7616,10 +7621,10 @@ export default function CustomizerLayout() {
                         {activeSide} Texture Map (1024x1024)
                       </div>
 
-                      {/* Logo Content Container */}
+                      {/* Content Container */}
                       <div className="absolute inset-0 rounded-2xl overflow-hidden">
                         {logoLayers
-                          .filter((layer) => layer.side === activeSide)
+                          .filter((layer) => layer.side === activeSide && (uploadSubTab === "logo" ? (layer.type === "logo" || !layer.type) : layer.type === "image"))
                           .map((layer) => {
                             const isSelected = selectedLogoId === layer.id;
                             return (
@@ -7654,7 +7659,8 @@ export default function CustomizerLayout() {
                             .filter(
                               (layer) =>
                                 layer.side === activeSide &&
-                                selectedLogoId === layer.id,
+                                selectedLogoId === layer.id &&
+                                (uploadSubTab === "logo" ? (layer.type === "logo" || !layer.type) : layer.type === "image"),
                             )
                             .map((layer) => {
                               return (
@@ -7790,12 +7796,16 @@ export default function CustomizerLayout() {
                     </div>
                   </div>
 
-                  {/* Background Eraser - Conditional on selected logo */}
+                  {/* Background Eraser - Conditional on selected layer matching sub-tab */}
                   {(() => {
                     const selectedLayer = logoLayers.find(
                       (l) => l.id === selectedLogoId,
                     );
                     if (!selectedLayer) return null;
+                    const isLogoTab = uploadSubTab === "logo";
+                    const layerIsLogo = selectedLayer.type === "logo" || !selectedLayer.type;
+                    if (isLogoTab !== layerIsLogo) return null;
+
                     return (
                       <div className="space-y-2.5 p-3 bg-zinc-50 rounded-xl border border-zinc-200/60 shadow-sm mb-3">
                         <div className="flex items-center justify-between">
@@ -7870,87 +7880,106 @@ export default function CustomizerLayout() {
                   })()}
 
                   {/* Upload Container */}
-                  <div
-                    onClick={() =>
-                      document.getElementById("logo-upload-input")?.click()
-                    }
-                    className="border-2 border-dashed border-zinc-200 rounded-xl p-6 flex flex-col items-center justify-center text-zinc-500 hover:bg-zinc-50 hover:border-red-400 cursor-pointer transition-all"
-                  >
-                    <ImageIcon className="w-6 h-6 mb-1.5" />
-                    <span className="text-xs font-bold">
-                      Upload Custom Logo
-                    </span>
-                    <span className="text-[10px] mt-0.5">
-                      PNG, SVG up to 5MB
-                    </span>
-                  </div>
+                  {uploadSubTab === "logo" ? (
+                    <div
+                      onClick={() =>
+                        document.getElementById("logo-upload-input")?.click()
+                      }
+                      className="border-2 border-dashed border-zinc-200 rounded-xl p-6 flex flex-col items-center justify-center text-zinc-500 hover:bg-zinc-50 hover:border-red-400 cursor-pointer transition-all"
+                    >
+                      <ImageIcon className="w-6 h-6 mb-1.5" />
+                      <span className="text-xs font-bold">
+                        Upload Custom Logo
+                      </span>
+                      <span className="text-[10px] mt-0.5">
+                        PNG, SVG up to 5MB
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() =>
+                        document.getElementById("logo-upload-input")?.click()
+                      }
+                      className="border-2 border-dashed border-zinc-200 rounded-xl p-6 flex flex-col items-center justify-center text-zinc-500 hover:bg-zinc-50 hover:border-red-400 cursor-pointer transition-all"
+                    >
+                      <ImageIcon className="w-6 h-6 mb-1.5" />
+                      <span className="text-xs font-bold">
+                        Upload Background / Wrap Image
+                      </span>
+                      <span className="text-[10px] mt-0.5">
+                        PNG, SVG up to 5MB
+                      </span>
+                    </div>
+                  )}
 
                   {/* Presets Grid */}
-                  <div>
-                    <label className="text-xs font-bold text-zinc-900 mb-2 block">
-                      Preset Badges
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        {
-                          name: "Valkyrie",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gcG9pbnRzPSI1MCwxMCA5MCwzMCA5MCw3MCA1MCw5NSAxMCw3MCAxMCwzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmYzMzY2IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNTAsMjAgTDc1LDQ1IEw2MCw0NSBMNTAsMzAgTDQwLDQ1IEwyNSw0NSBaIiBmaWxsPSIjZmYzMzY2Ii8+PGNpcmNsZSBjeD0iNTAiIGN5PSI2NSIgcj0iMTIiIGZpbGw9IiNmZjMzNjYiLz4vPjwvc3ZnPg==",
-                        },
-                        {
-                          name: "Gold Tiger",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIwLDIwIFE1MCwwIDgwLDIwIEw4MCw1MCBMNTAsOTAgTDIwLDUwIFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2MwMCIgc3Ryb2tlLXdpZHRoPSI2Ii8+PHBhdGggZD0iTTM1LDM1IFE1MCwyMCA2NSwzNSBNMzAsNTAgUTUwLDQwIDcwLDUwIE00NSw2NSBMNTAsNzUgTDU1LDY1IiBzdHJva2U9IiNmZmNjMDAiIHN0cm9rZS13aWR0aD0iNCIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==",
-                        },
-                        {
-                          name: "Blue Shield",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwLDEwIEw4NSwyMCBMODUsNjAgQzg1LDgwIDUwLDk1IDUwLDk1IEM1MCw5NSAxNSw4MCAxNSw2MCBMMTUsMjAgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2Y1MWI1IiBzdHJva2Utd2lkdGg9IjYiLz4gPGNpcmNsZSBjeD0iNTAiIGN5PSI0NSIgcj0iMTUiIGZpbGw9IiMzZjUxYjUiLz48cGF0aCBkPSJNNDAsNjUgTDUwLDU1IEw2MCw2NSIgc3Ryb2tlPSIjM2Y1MWI1IiBzdHJva2Utd2lkdGg9IjUiIGZpbGw9Im5vbmUiLz48L3N2Zz4=",
-                        },
-                        {
-                          name: "Red Phoenix",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gcG9pbnRzPSI1MCw1IDk1LDI4IDk1LDcyIDUwLDk1IDUsNzIgNSwyOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTUzZTNlIiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNTAsMjUgQzY1LDI1IDc1LDM1IDcwLDU1IEM2NSw0NSA1NSw0NSA1MCw1MCBDNDUsNDUgMzUsNDUgMzAsNTUgQzI1LDM1IDM1LDI1IDUwLDI1IFoiIGZpbGw9IiNlNTNlM2UiLz48cG9seWdvbiBwb2ludHM9IjUwLDU1IDYwLDcwIDUwLDY1IDQwLDcwIiBmaWxsPSIjZTUzZTNlIi8+PC9zdmc+",
-                        },
-                        {
-                          name: "Neon Light",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM5ZmYxNCIgc3Ryb2tlLXdpZHRoPSI2Ii8+PHBvbHlnb24gcG9pbnRzPSI1NSwxOCAyOCw1MiA0OCw1MiA0Miw4MiA3Miw0OCA1Miw0OCIgZmlsbD0iIzM5ZmYxNCIvPjwvc3ZnPg==",
-                        },
-                        {
-                          name: "Iron Crown",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwLDkwIEw5MCw2NSBMOTAsMjAgTDUwLDEwIEwxMCwyMCBMMTAsNjUgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsNjUgTDMyLDQwIEw4NSw1NSBMNTAsMzAgTDU1LDU1IEw2OCw0MCBMNzUsNjUgWiIgZmlsbD0iI2E4NTVmNyIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iODAiIHI9IjYiIGZpbGw9IiNhODU1ZjciLz48L3N2Zz4=",
-                        },
-                        {
-                          name: "Green Cobra",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gcG9pbnRzPSI1MCwxMCA4NSwzMCA3NSw4MCA1MCw5NSAyNSw4MCAxNSwzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTBiOTgxIiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNTAsMjIgQzQwLDIyIDMyLDMwIDMyLDQwIEMzMiw1NSA1MCw3NSA1MCw3NSBDNTAsNzUgNjgsNTUgNjgsNDAgQzY4LDMwIDYwLDIyIDUwLDIyIFogTTUwLDMyIEM1MywzMiA1NSwzNCA1NSwzNyBDNTUsNDAgNTAsNDUgNTAsNDUgQzUwLDk1IDQ1LDQwIDQ1LDM3IEM0NSwzNCA0NywzMiA1MCwzMiBaIiBmaWxsPSIjMTBiOTgxIi8+PC9zdmc+",
-                        },
-                        {
-                          name: "Cyber Star",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y0M2Y1ZSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtZGFzaGFycmF5PSI4IDYiLz48cG9seWdvbiBwb2ludHM9IjUwLDE1IDYxLDM4IDg2LDQwIDY3LDU3IDczLDgyIDUwLDY4IDI3LDgyIDMzLDU3IDI0LDQwIDM5LDM4IiBmaWxsPSIjZjQzZjVlIi8+PC9zdmc+",
-                        },
-                        {
-                          name: "Ocean Anchor",
-                          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzBlYTVlOSIgc3Ryb2tlLXdpZHRoPSI2Ii8+PHBhdGggZD0iTTUwLDE4IEw1MCw2OCBNMzIsNDggTDY4LDQ4IE01MCwxOCBBNiw2IDAgMSwxIDUwLDMwIEE2LDYgMCAxLDEgNTAsMTggTTMwLDU1IEEyMCwyMCAwIDAsMCA3MCw1NSBNMzgwLDUyIEwyNiw1NyBNNzAsNTIgTDc0LDU3IiBmaWxsPSJub25lIiBzdHJva2U9IiMwZWE1ZTkiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+",
-                        },
-                      ].map((preset) => (
-                        <button
-                          key={preset.name}
-                          onClick={() => handleAddLogoLayer(preset.url)}
-                          className="p-1.5 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-sm"
-                        >
-                          <div className="w-6 h-6 flex items-center justify-center">
-                            <img
-                              src={preset.url}
-                              alt={preset.name}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <span className="text-[8px] font-bold text-zinc-500">
-                            {preset.name}
-                          </span>
-                        </button>
-                      ))}
+                  {uploadSubTab === "logo" && (
+                    <div>
+                      <label className="text-xs font-bold text-zinc-900 mb-2 block">
+                        Preset Badges
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          {
+                            name: "Valkyrie",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gcG9pbnRzPSI1MCwxMCA5MCwzMCA5MCw3MCA1MCw5NSAxMCw3MCAxMCwzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmYzMzY2IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNTAsMjAgTDc1LDQ1IEw2MCw0NSBMNTAsMzAgTDQwLDQ1IEwyNSw0NSBaIiBmaWxsPSIjZmYzMzY2Ii8+PGNpcmNsZSBjeD0iNTAiIGN5PSI2NSIgcj0iMTIiIGZpbGw9IiNmZjMzNjYiLz4vPjwvc3ZnPg==",
+                          },
+                          {
+                            name: "Gold Tiger",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIwLDIwIFE1MCwwIDgwLDIwIEw4MCw1MCBMNTAsOTAgTDIwLDUwIFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2MwMCIgc3Ryb2tlLXdpZHRoPSI2Ii8+PHBhdGggZD0iTTM1LDM1IFE1MCwyMCA2NSwzNSBNMzAsNTAgUTUwLDQwIDcwLDUwIE00NSw2NSBMNTAsNzUgTDU1LDY1IiBzdHJva2U9IiNmZmNjMDAiIHN0cm9rZS13aWR0aD0iNCIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==",
+                          },
+                          {
+                            name: "Blue Shield",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwLDEwIEw4NSwyMCBMODUsNjAgQzg1LDgwIDUwLDk1IDUwLDk1IEM1MCw5NSAxNSw4MCAxNSw2MCBMMTUsMjAgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2Y1MWI1IiBzdHJva2Utd2lkdGg9IjYiLz4gPGNpcmNsZSBjeD0iNTAiIGN5PSI0NSIgcj0iMTUiIGZpbGw9IiMzZjUxYjUiLz48cGF0aCBkPSJNNDAsNjUgTDUwLDU1IEw2MCw2NSIgc3Ryb2tlPSIjM2Y1MWI1IiBzdHJva2Utd2lkdGg9IjUiIGZpbGw9Im5vbmUiLz48L3N2Zz4=",
+                          },
+                          {
+                            name: "Red Phoenix",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gcG9pbnRzPSI1MCw1IDk1LDI4IDk1LDcyIDUwLDk1IDUsNzIgNSwyOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTUzZTNlIiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNTAsMjUgQzY1LDI1IDc1LDM1IDcwLDU1IEM2NSw0NSA1NSw0NSA1MCw1MCBDNDUsNDUgMzUsNDUgMzAsNTUgQzI1LDM1IDM1LDI1IDUwLDI1IFoiIGZpbGw9IiNlNTNlM2UiLz48cG9seWdvbiBwb2ludHM9IjUwLDU1IDYwLDcwIDUwLDY1IDQwLDcwIiBmaWxsPSIjZTUzZTNlIi8+PC9zdmc+",
+                          },
+                          {
+                            name: "Neon Light",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM5ZmYxNCIgc3Ryb2tlLXdpZHRoPSI2Ii8+PHBvbHlnb24gcG9pbnRzPSI1NSwxOCAyOCw1MiA0OCw1MiA0Miw4MiA3Miw0OCA1Miw0OCIgZmlsbD0iIzM5ZmYxNCIvPjwvc3ZnPg==",
+                          },
+                          {
+                            name: "Iron Crown",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwLDkwIEw5MCw2NSBMOTAsMjAgTDUwLDEwIEwxMCwyMCBMMTAsNjUgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsNjUgTDMyLDQwIEw4NSw1NSBMNTAsMzAgTDU1LDU1IEw2OCw0MCBMNzUsNjUgWiIgZmlsbD0iI2E4NTVmNyIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iODAiIHI9IjYiIGZpbGw9IiNhODU1ZjciLz48L3N2Zz4=",
+                          },
+                          {
+                            name: "Green Cobra",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gcG9pbnRzPSI1MCwxMCA4NSwzMCA3NSw4MCA1MCw5NSAyNSw4MCAxNSwzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTBiOTgxIiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNTAsMjIgQzQwLDIyIDMyLDMwIDMyLDQwIEMzMiw1NSA1MCw3NSA1MCw3NSBDNTAsNzUgNjgsNTUgNjgsNDAgQzY4LDMwIDYwLDIyIDUwLDIyIFogTTUwLDMyIEM1MywzMiA1NSwzNCA1NSwzNyBDNTUsNDAgNTAsNDUgNTAsNDUgQzUwLDk1IDQ1LDQwIDQ1LDM3IEM0NSwzNCA0NywzMiA1MCwzMiBaIiBmaWxsPSIjMTBiOTgxIi8+PC9zdmc+",
+                          },
+                          {
+                            name: "Cyber Star",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y0M2Y1ZSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtZGFzaGFycmF5PSI4IDYiLz48cG9seWdvbiBwb2ludHM9IjUwLDE1IDYxLDM4IDg2LDQwIDY3LDU3IDczLDgyIDUwLDY4IDI3LDgyIDMzLDU3IDI0LDQwIDM5LDM4IiBmaWxsPSIjZjQzZjVlIi8+PC9zdmc+",
+                          },
+                          {
+                            name: "Ocean Anchor",
+                            url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzBlYTVlOSIgc3Ryb2tlLXdpZHRoPSI2Ii8+PHBhdGggZD0iTTUwLDE4IEw1MCw2OCBNMzIsNDggTDY4LDQ4IE01MCwxOCBBNiw2IDAgMSwxIDUwLDMwIEE2LDYgMCAxLDEgNTAsMTggTTMwLDU1IEEyMCwyMCAwIDAsMCA3MCw1NSBNMzgwLDUyIEwyNiw1NyBNNzAsNTIgTDc0LDU3IiBmaWxsPSJub25lIiBzdHJva2U9IiMwZWE1ZTkiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+",
+                          },
+                        ].map((preset) => (
+                          <button
+                            key={preset.name}
+                            onClick={() => handleAddLogoLayer(preset.url, "logo")}
+                            className="p-1.5 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-sm"
+                          >
+                            <div className="w-6 h-6 flex items-center justify-center">
+                              <img
+                                src={preset.url}
+                                alt={preset.name}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            <span className="text-[8px] font-bold text-zinc-500">
+                              {preset.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* My Uploads Gallery */}
-                  {uploadedLogos.length > 0 && (
+                  {uploadSubTab === "logo" && uploadedLogos.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-zinc-100">
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-xs font-bold text-zinc-900">
@@ -7971,7 +8000,7 @@ export default function CustomizerLayout() {
                           return (
                             <div
                               key={index}
-                              onClick={() => handleAddLogoLayer(url)}
+                              onClick={() => handleAddLogoLayer(url, "logo")}
                               className="relative aspect-square rounded-xl border flex items-center justify-center p-1.5 transition-all bg-white cursor-pointer border-zinc-200 hover:border-zinc-300 hover:shadow-md group"
                             >
                               <img
@@ -8016,99 +8045,228 @@ export default function CustomizerLayout() {
                     </div>
                   )}
 
-                  {/* Logo Layers List */}
-                  <div className="space-y-2 mt-2 pt-2 border-t border-zinc-100">
-                    <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                      Logo Layers List ({activeSide} Side)
-                    </label>
-                    <div className="flex flex-col gap-1 max-h-36 overflow-y-auto pr-1">
-                      {logoLayers.filter((l) => l.side === activeSide)
-                        .length === 0 ? (
-                        <div className="text-xs text-zinc-400 italic text-center py-2 bg-zinc-50 rounded-xl border border-zinc-100">
-                          No logo layers on this side. Add one above!
-                        </div>
-                      ) : (
-                        logoLayers
-                          .filter((l) => l.side === activeSide)
-                          .map((layer) => {
-                            const isSelected = selectedLogoId === layer.id;
-                            return (
-                              <div
-                                key={layer.id}
-                                onClick={() => {
-                                  setSelectedLogoId(layer.id);
-                                  setSelectedLayerId(null);
+                  {/* My Uploaded Images Gallery */}
+                  {uploadSubTab === "image" && uploadedImages.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-zinc-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold text-zinc-900">
+                          My Uploaded Images
+                        </label>
+                        <button
+                          onClick={() => {
+                            setUploadedImages([]);
+                            localStorage.removeItem("jersey_uploaded_images");
+                          }}
+                          className="text-[9px] text-zinc-400 hover:text-red-500 font-bold transition-colors"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {uploadedImages.map((url, index) => {
+                          return (
+                            <div
+                              key={index}
+                              onClick={() => handleAddLogoLayer(url, "image")}
+                              className="relative aspect-square rounded-xl border flex items-center justify-center p-1.5 transition-all bg-white cursor-pointer border-zinc-200 hover:border-zinc-300 hover:shadow-md group"
+                            >
+                              <img
+                                src={url}
+                                alt={`Uploaded image ${index + 1}`}
+                                className="w-full h-full object-contain"
+                              />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUploadedImages((prev) => {
+                                    const next = prev.filter(
+                                      (item) => item !== url,
+                                    );
+                                    localStorage.setItem(
+                                      "jersey_uploaded_images",
+                                      JSON.stringify(next),
+                                    );
+                                    return next;
+                                  });
                                 }}
-                                className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
-                                  isSelected
-                                    ? "border-red-500 bg-red-50/30"
-                                    : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
-                                }`}
+                                className="absolute top-1 right-1 w-4 h-4 bg-white hover:bg-red-50 text-zinc-400 hover:text-red-500 rounded-full border border-zinc-200 shadow-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                               >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 overflow-hidden flex items-center justify-center p-0.5 flex-shrink-0">
-                                    <img
-                                      src={layer.src}
-                                      alt="Layer badge"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
-                                  <div className="text-xs font-bold text-zinc-700 truncate">
-                                    Logo Layer ({layer.id.split("-").pop()})
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleLogoCopy(layer.id);
-                                    }}
-                                    className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100 transition-colors"
-                                    title="Duplicate"
-                                  >
-                                    <svg
-                                      className="w-3.5 h-3.5"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-                                      />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleLogoDelete(layer.id);
-                                    }}
-                                    className="p-1 text-zinc-400 hover:text-red-500 rounded hover:bg-red-50 transition-colors"
-                                    title="Delete"
-                                  >
-                                    <svg
-                                      className="w-3.5 h-3.5"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                      />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })
-                      )}
+                                <svg
+                                  className="w-2.5 h-2.5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Unified Active Layers List */}
+                  {(() => {
+                    const sideTextLayers = textLayers.filter((l) => l.side === activeSide);
+                    const sideLogoLayers = logoLayers.filter((l) => l.side === activeSide);
+                    const activeSideLayers = [
+                      ...sideTextLayers.map((l) => ({ ...l, layerType: "text" })),
+                      ...sideLogoLayers.map((l) => ({ ...l, layerType: "logo" })),
+                    ];
+
+                    const sortedActiveSideLayers = [...activeSideLayers].sort((a, b) => {
+                      const idxA = layersOrder.indexOf(a.id);
+                      const idxB = layersOrder.indexOf(b.id);
+                      const getPriority = (l: any) => {
+                        if (l.layerType === "text") return 1;
+                        if (l.type === "image") {
+                          return l.zOrder === "above-text" ? 2 : 0;
+                        }
+                        return 3;
+                      };
+                      const valA = idxA !== -1 ? idxA : getPriority(a) * 1000;
+                      const valB = idxB !== -1 ? idxB : getPriority(b) * 1000;
+                      // DESCENDING order for UI list (highest draw index = top of list)
+                      return valB - valA;
+                    });
+
+                    return (
+                      <div className="space-y-2 mt-2 pt-2 border-t border-zinc-100">
+                        <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider block">
+                          Layers List ({activeSide} Side)
+                        </label>
+                        <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto pr-1">
+                          {sortedActiveSideLayers.length === 0 ? (
+                            <div className="text-xs text-zinc-400 italic text-center py-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                              No layers on this side. Add one above or from the Text tab!
+                            </div>
+                          ) : (
+                            sortedActiveSideLayers.map((layer, index) => {
+                              const isText = layer.layerType === "text";
+                              const isSelected = isText
+                                ? selectedLayerId === layer.id
+                                : selectedLogoId === layer.id;
+                              const displayName = isText
+                                ? `Text ("${(layer as any).text}")`
+                                : (layer as any).type === "image"
+                                  ? `Image (${layer.id.split("-").pop()})`
+                                  : `Logo (${layer.id.split("-").pop()})`;
+
+                              return (
+                                <div
+                                  key={layer.id}
+                                  draggable
+                                  onDragStart={(e) => {
+                                    setDraggedIdx(index);
+                                    e.dataTransfer.effectAllowed = "move";
+                                  }}
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    if (draggedIdx !== index) {
+                                      setDragOverIdx(index);
+                                    }
+                                  }}
+                                  onDragEnd={() => {
+                                    if (
+                                      draggedIdx !== null &&
+                                      dragOverIdx !== null &&
+                                      draggedIdx !== dragOverIdx
+                                    ) {
+                                      reorderLayers(draggedIdx, dragOverIdx);
+                                    }
+                                    setDraggedIdx(null);
+                                    setDragOverIdx(null);
+                                  }}
+                                  onClick={() => {
+                                    if (isText) {
+                                      setSelectedLayerId(layer.id);
+                                      setSelectedLogoId(null);
+                                    } else {
+                                      setSelectedLogoId(layer.id);
+                                      setSelectedLayerId(null);
+                                    }
+                                  }}
+                                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
+                                    isSelected
+                                      ? "border-red-500 bg-red-50/30 font-semibold"
+                                      : dragOverIdx === index
+                                        ? "border-dashed border-red-400 bg-zinc-50 scale-[0.98]"
+                                        : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
+                                  } ${draggedIdx === index ? "opacity-45" : ""}`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    {/* Drag Handle */}
+                                    <div className="text-zinc-400 hover:text-zinc-600 cursor-grab active:cursor-grabbing p-0.5">
+                                      <GripVertical className="w-3.5 h-3.5" />
+                                    </div>
+
+                                    {/* Thumbnail Preview */}
+                                    <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 overflow-hidden flex items-center justify-center p-0.5 flex-shrink-0 shadow-sm">
+                                      {isText ? (
+                                        <span className="text-xs font-bold text-zinc-500">T</span>
+                                      ) : (
+                                        <img
+                                          src={(layer as any).src}
+                                          alt="Layer badge"
+                                          className="w-full h-full object-contain"
+                                        />
+                                      )}
+                                    </div>
+
+                                    {/* Name */}
+                                    <div className="text-xs text-zinc-700 truncate max-w-[130px]">
+                                      {displayName}
+                                    </div>
+                                  </div>
+
+                                  {/* Controls */}
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isText) {
+                                          handleCopy(layer.id);
+                                        } else {
+                                          handleLogoCopy(layer.id);
+                                        }
+                                      }}
+                                      title="Duplicate Layer"
+                                      className="p-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded transition-colors"
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isText) {
+                                          handleDelete(layer.id);
+                                        } else {
+                                          handleLogoDelete(layer.id);
+                                        }
+                                      }}
+                                      title="Delete Layer"
+                                      className="p-1 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Selected Logo Properties */}
                   {(() => {
@@ -8116,16 +8274,74 @@ export default function CustomizerLayout() {
                       (l) => l.id === selectedLogoId,
                     );
                     if (!selectedLayer) return null;
+                    const isLogoTab = uploadSubTab === "logo";
+                    const layerIsLogo = selectedLayer.type === "logo" || !selectedLayer.type;
+                    if (isLogoTab !== layerIsLogo) return null;
+
                     return (
                       <div className="space-y-4 pt-2 border-t border-zinc-100">
                         <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                          Selected Logo Settings
+                          Selected {isLogoTab ? "Logo" : "Image"} Settings
                         </h4>
+
+                        {/* Layer Position control for Image tab */}
+                        {!isLogoTab && (
+                          <div className="space-y-1.5 p-3 bg-zinc-50 rounded-xl border border-zinc-200/60 shadow-sm">
+                            <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider block">
+                              Layer Position (Z-Index)
+                            </span>
+                            <div className="flex bg-zinc-200/60 p-1 rounded-lg">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLogoLayers((prev) =>
+                                    prev.map((l) =>
+                                      l.id === selectedLayer.id
+                                        ? { ...l, zOrder: "bottom" }
+                                        : l
+                                    )
+                                  );
+                                }}
+                                className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
+                                  selectedLayer.zOrder !== "above-text"
+                                    ? "bg-white text-zinc-900 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-900"
+                                }`}
+                              >
+                                Send to Back
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLogoLayers((prev) =>
+                                    prev.map((l) =>
+                                      l.id === selectedLayer.id
+                                        ? { ...l, zOrder: "above-text" }
+                                        : l
+                                    )
+                                  );
+                                }}
+                                className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
+                                  selectedLayer.zOrder === "above-text"
+                                    ? "bg-white text-zinc-900 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-900"
+                                }`}
+                              >
+                                Bring to Front
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-zinc-400 italic">
+                              {selectedLayer.zOrder === "above-text"
+                                ? "Renders on top of jersey text/numbers, but underneath custom logos."
+                                : "Renders behind jersey text/numbers and custom logos."}
+                            </p>
+                          </div>
+                        )}
 
                         {/* Size slider */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs font-bold text-zinc-800">
-                            <span>Logo Size / Scale</span>
+                            <span>{isLogoTab ? "Logo" : "Image"} Size / Scale</span>
                             <span className="text-zinc-500">
                               {selectedLayer.scale.toFixed(2)}x
                             </span>
@@ -8153,7 +8369,7 @@ export default function CustomizerLayout() {
                         {/* Rotation slider */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs font-bold text-zinc-800">
-                            <span>Logo Rotation</span>
+                            <span>{isLogoTab ? "Logo" : "Image"} Rotation</span>
                             <span className="text-zinc-500">
                               {Math.round(selectedLayer.rotation)}°
                             </span>
@@ -8180,7 +8396,7 @@ export default function CustomizerLayout() {
                         {/* Opacity slider */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs font-bold text-zinc-800">
-                            <span>Logo Opacity</span>
+                            <span>{isLogoTab ? "Logo" : "Image"} Opacity</span>
                             <span className="text-zinc-500">
                               {Math.round(
                                 (typeof selectedLayer.opacity === "number"
@@ -8215,7 +8431,6 @@ export default function CustomizerLayout() {
                         </div>
 
                         {/* Presets Placement */}
-
                         <div className="space-y-1.5">
                           <label className="text-xs font-bold text-zinc-800 block">
                             Quick Position Placement
@@ -8465,6 +8680,7 @@ export default function CustomizerLayout() {
                 textLayers,
                 logoLayers,
                 loadedLogoImages,
+                layersOrder,
               }}
               collar={state.collar}
             />
