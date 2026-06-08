@@ -550,6 +550,15 @@ function useJerseyDecals(state: any) {
       texture.generateMipmaps = false;
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
+
+      // The 3D Decal box scale for the torso is [0.54, 0.7, 0.32]. This non-square projection 
+      // naturally squishes the 1024x1024 square canvas horizontally by a factor of 0.54 / 0.7. 
+      // We apply an inverse mathematical multiplier to stretch the texture back out dynamically,
+      // creating a perfect 1:1 mirror of the 2D visual layout without squeezing the logo.
+      const meshDecalAspectRatio = 0.54 / 0.7;
+      texture.repeat.set(meshDecalAspectRatio, 1);
+      texture.offset.set((1 - meshDecalAspectRatio) / 2, 0);
+
       texture.needsUpdate = true;
       return texture;
     };
@@ -568,14 +577,19 @@ function useJerseyDecals(state: any) {
       ctx.translate(layer.x, layer.y);
       ctx.rotate((layer.rotation * Math.PI) / 180);
       ctx.scale(layer.scale, layer.scale);
-      const sz = layer.baseSize || 200;
+      
+      const imgWidth = img.naturalWidth || img.width || 200;
+      const imgHeight = img.naturalHeight || img.height || 200;
+      const drawWidth = imgWidth;
+      const drawHeight = imgHeight;
+
       if (layer.eraserPaths && layer.eraserPaths.length > 0) {
         const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = sz;
-        tempCanvas.height = sz;
+        tempCanvas.width = drawWidth;
+        tempCanvas.height = drawHeight;
         const tempCtx = tempCanvas.getContext("2d");
         if (tempCtx) {
-          tempCtx.drawImage(img, 0, 0, sz, sz);
+          tempCtx.drawImage(img, 0, 0, drawWidth, drawHeight);
           tempCtx.globalCompositeOperation = "destination-out";
           tempCtx.lineCap = "round";
           tempCtx.lineJoin = "round";
@@ -592,12 +606,12 @@ function useJerseyDecals(state: any) {
             });
             tempCtx.stroke();
           });
-          ctx.drawImage(tempCanvas, -sz / 2, -sz / 2, sz, sz);
+          ctx.drawImage(tempCanvas, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
         } else {
-          ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+          ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
         }
       } else {
-        ctx.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+        ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
       }
       ctx.restore();
     };
@@ -3223,21 +3237,26 @@ function LogoCanvasPreview({
 }) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
+  const imgWidth = preloadedImage?.naturalWidth || preloadedImage?.width || 200;
+  const imgHeight = preloadedImage?.naturalHeight || preloadedImage?.height || 200;
+  const drawWidth = imgWidth * layer.scale * editorScale;
+  const drawHeight = imgHeight * layer.scale * editorScale;
+
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const size = (layer.baseSize || 200) * layer.scale * editorScale;
-    canvas.width = size;
-    canvas.height = size;
+
+    canvas.width = drawWidth;
+    canvas.height = drawHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const draw = (img: HTMLImageElement) => {
-      ctx.clearRect(0, 0, size, size);
+      ctx.clearRect(0, 0, drawWidth, drawHeight);
       ctx.save();
 
       // Draw the logo image
-      ctx.drawImage(img, 0, 0, size, size);
+      ctx.drawImage(img, 0, 0, drawWidth, drawHeight);
 
       // Apply eraser strokes
       if (layer.eraserPaths && layer.eraserPaths.length > 0) {
@@ -3250,8 +3269,8 @@ function LogoCanvasPreview({
           ctx.lineWidth = path.size * layer.scale * editorScale;
           ctx.beginPath();
           path.points.forEach((pt, index) => {
-            const x = (pt.x / layer.baseSize) * size;
-            const y = (pt.y / layer.baseSize) * size;
+            const x = pt.x * layer.scale * editorScale;
+            const y = pt.y * layer.scale * editorScale;
             if (index === 0) {
               ctx.moveTo(x, y);
             } else {
@@ -3272,15 +3291,14 @@ function LogoCanvasPreview({
       img.crossOrigin = "anonymous";
       img.onload = () => draw(img);
     }
-  }, [layer, editorScale, preloadedImage]);
+  }, [layer, editorScale, preloadedImage, drawWidth, drawHeight]);
 
-  const size = (layer.baseSize || 200) * layer.scale * editorScale;
   return (
     <canvas
       ref={canvasRef}
       style={{
-        width: `${size}px`,
-        height: `${size}px`,
+        width: `${drawWidth}px`,
+        height: `${drawHeight}px`,
         display: "block",
         pointerEvents: "none",
       }}
@@ -5378,13 +5396,18 @@ export default function CustomizerLayout() {
     isHidden = false,
     children?: React.ReactNode,
   ) => {
-    const size = (layer.baseSize || 200) * layer.scale * editorScale;
+    const img = loadedLogoImages[layer.src];
+    const imgWidth = img ? img.naturalWidth || img.width || 200 : 200;
+    const imgHeight = img ? img.naturalHeight || img.height || 200 : 200;
+    const drawWidth = imgWidth * layer.scale * editorScale;
+    const drawHeight = imgHeight * layer.scale * editorScale;
+
     return (
       <div
         style={{
           position: "relative",
-          width: `${size}px`,
-          height: `${size}px`,
+          width: `${drawWidth}px`,
+          height: `${drawHeight}px`,
           visibility: isHidden ? "hidden" : "visible",
           userSelect: "none",
           display: "flex",
@@ -5396,12 +5419,14 @@ export default function CustomizerLayout() {
           <div
             style={{
               opacity: typeof layer.opacity === "number" ? layer.opacity : 1.0,
+              width: "100%",
+              height: "100%",
             }}
           >
             <LogoCanvasPreview
               layer={layer}
               editorScale={editorScale}
-              preloadedImage={loadedLogoImages[layer.src]}
+              preloadedImage={img}
             />
           </div>
         )}
@@ -5798,8 +5823,12 @@ export default function CustomizerLayout() {
       const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
       const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
 
-      const lx = localX / selectedLayer.scale + selectedLayer.baseSize / 2;
-      const ly = localY / selectedLayer.scale + selectedLayer.baseSize / 2;
+      const img = loadedLogoImages[selectedLayer.src];
+      const imgWidth = img ? img.naturalWidth || img.width || 200 : 200;
+      const imgHeight = img ? img.naturalHeight || img.height || 200 : 200;
+
+      const lx = localX / selectedLayer.scale + imgWidth / 2;
+      const ly = localY / selectedLayer.scale + imgHeight / 2;
 
       return { x: lx, y: ly };
     };
@@ -6001,23 +6030,41 @@ export default function CustomizerLayout() {
   };
 
   const handleAddLogoLayer = (src: string, type: "logo" | "image" = "logo") => {
-    const newId = `custom-logo-${Date.now()}`;
-    const newLayer: LogoLayer = {
-      id: newId,
-      src,
-      x: 512,
-      y: 500,
-      scale: type === "image" ? 1.5 : 0.8,
-      rotation: 0,
-      side: activeSide,
-      baseSize: 200,
-      opacity: 1.0,
-      type,
-      zOrder: type === "image" ? "bottom" : undefined,
+    const img = new Image();
+    img.src = src;
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const imgWidth = img.naturalWidth || img.width || 200;
+      const imgHeight = img.naturalHeight || img.height || 200;
+      const maxDim = Math.max(imgWidth, imgHeight);
+      
+      // Calculate a clean relative percentage scale so it initially fits into a 200px equivalent workspace bounding size
+      const targetSize = type === "image" ? 400 : 200;
+      const initialScale = targetSize / maxDim;
+
+      const newId = `custom-logo-${Date.now()}`;
+      const newLayer: LogoLayer = {
+        id: newId,
+        src,
+        x: 512,
+        y: 500,
+        scale: initialScale,
+        rotation: 0,
+        side: activeSide,
+        baseSize: 200,
+        opacity: 1.0,
+        type,
+        zOrder: type === "image" ? "bottom" : undefined,
+      };
+      
+      setLoadedLogoImages((prev) => ({
+        ...prev,
+        [src]: img,
+      }));
+      setLogoLayers((prev) => [...prev, newLayer]);
+      setSelectedLogoId(newId);
+      setSelectedLayerId(null);
     };
-    setLogoLayers((prev) => [...prev, newLayer]);
-    setSelectedLogoId(newId);
-    setSelectedLayerId(null);
   };
 
   useEffect(() => {
