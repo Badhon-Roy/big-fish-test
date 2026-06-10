@@ -551,8 +551,8 @@ function useJerseyDecals(state: any) {
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
 
-      // The 3D Decal box scale for the torso is [0.54, 0.7, 0.32]. This non-square projection 
-      // naturally squishes the 1024x1024 square canvas horizontally by a factor of 0.54 / 0.7. 
+      // The 3D Decal box scale for the torso is [0.54, 0.7, 0.32]. This non-square projection
+      // naturally squishes the 1024x1024 square canvas horizontally by a factor of 0.54 / 0.7.
       // We apply an inverse mathematical multiplier to stretch the texture back out dynamically,
       // creating a perfect 1:1 mirror of the 2D visual layout without squeezing the logo.
       const meshDecalAspectRatio = 0.54 / 0.7;
@@ -577,7 +577,7 @@ function useJerseyDecals(state: any) {
       ctx.translate(layer.x, layer.y);
       ctx.rotate((layer.rotation * Math.PI) / 180);
       ctx.scale(layer.scale, layer.scale);
-      
+
       const imgWidth = img.naturalWidth || img.width || 200;
       const imgHeight = img.naturalHeight || img.height || 200;
       const drawWidth = imgWidth;
@@ -606,12 +606,30 @@ function useJerseyDecals(state: any) {
             });
             tempCtx.stroke();
           });
-          ctx.drawImage(tempCanvas, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+          ctx.drawImage(
+            tempCanvas,
+            -drawWidth / 2,
+            -drawHeight / 2,
+            drawWidth,
+            drawHeight,
+          );
         } else {
-          ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+          ctx.drawImage(
+            img,
+            -drawWidth / 2,
+            -drawHeight / 2,
+            drawWidth,
+            drawHeight,
+          );
         }
       } else {
-        ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        ctx.drawImage(
+          img,
+          -drawWidth / 2,
+          -drawHeight / 2,
+          drawWidth,
+          drawHeight,
+        );
       }
       ctx.restore();
     };
@@ -3147,9 +3165,16 @@ function useJerseyDecals(state: any) {
     if (patternBack) patternBack.anisotropy = 16;
 
     // ── Text / number canvases (smaller decals, on top) ───────────────────────
-    const drawSideLayers = (ctx: CanvasRenderingContext2D, side: "Front" | "Back") => {
-      const sideTextLayers = (state.textLayers || []).filter((l: any) => l.side === side);
-      const sideLogoLayers = (state.logoLayers || []).filter((l: any) => l.side === side);
+    const drawSideLayers = (
+      ctx: CanvasRenderingContext2D,
+      side: "Front" | "Back",
+    ) => {
+      const sideTextLayers = (state.textLayers || []).filter(
+        (l: any) => l.side === side,
+      );
+      const sideLogoLayers = (state.logoLayers || []).filter(
+        (l: any) => l.side === side,
+      );
 
       const allSideLayers = [
         ...sideTextLayers.map((l: any) => ({ ...l, layerType: "text" })),
@@ -3238,7 +3263,8 @@ function LogoCanvasPreview({
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
   const imgWidth = preloadedImage?.naturalWidth || preloadedImage?.width || 200;
-  const imgHeight = preloadedImage?.naturalHeight || preloadedImage?.height || 200;
+  const imgHeight =
+    preloadedImage?.naturalHeight || preloadedImage?.height || 200;
   const drawWidth = imgWidth * layer.scale * editorScale;
   const drawHeight = imgHeight * layer.scale * editorScale;
 
@@ -5164,7 +5190,7 @@ function ViewHandler({ currentView }: { currentView: string }) {
       enablePan={false}
       minPolarAngle={Math.PI / 6}
       maxPolarAngle={Math.PI * 0.75}
-      minDistance={2.5}
+      minDistance={1}
       maxDistance={7}
       autoRotate={currentView === "360"}
       autoRotateSpeed={5}
@@ -5581,7 +5607,9 @@ export default function CustomizerLayout() {
     setLayersOrder((prev) => {
       const newOrder = [...prev];
       const sideLayerIds = sortedActiveSideLayers.map((l) => l.id);
-      const newDrawOrderSideIds = [...reorderedSideLayers].reverse().map((l) => l.id);
+      const newDrawOrderSideIds = [...reorderedSideLayers]
+        .reverse()
+        .map((l) => l.id);
 
       const indices = newOrder
         .map((id, index) => (sideLayerIds.includes(id) ? index : -1))
@@ -6037,7 +6065,7 @@ export default function CustomizerLayout() {
       const imgWidth = img.naturalWidth || img.width || 200;
       const imgHeight = img.naturalHeight || img.height || 200;
       const maxDim = Math.max(imgWidth, imgHeight);
-      
+
       // Calculate a clean relative percentage scale so it initially fits into a 200px equivalent workspace bounding size
       const targetSize = type === "image" ? 400 : 200;
       const initialScale = targetSize / maxDim;
@@ -6056,7 +6084,7 @@ export default function CustomizerLayout() {
         type,
         zOrder: type === "image" ? "bottom" : undefined,
       };
-      
+
       setLoadedLogoImages((prev) => ({
         ...prev,
         [src]: img,
@@ -6291,7 +6319,10 @@ export default function CustomizerLayout() {
     }));
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, uploadType: "logo" | "image" = "logo") => {
+  const handleLogoUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    uploadType: "logo" | "image" = "logo",
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -7621,7 +7652,8 @@ export default function CustomizerLayout() {
                   {/* Visual Logo/Image Editor */}
                   <div className="space-y-3">
                     <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider block">
-                      Visual {uploadSubTab === "logo" ? "Logo" : "Image"} Editor ({activeSide} View)
+                      Visual {uploadSubTab === "logo" ? "Logo" : "Image"} Editor
+                      ({activeSide} View)
                     </label>
 
                     {/* Bounding Box Customizer Canvas area (280x280) */}
@@ -7671,7 +7703,13 @@ export default function CustomizerLayout() {
                       {/* Content Container */}
                       <div className="absolute inset-0 rounded-2xl overflow-hidden">
                         {logoLayers
-                          .filter((layer) => layer.side === activeSide && (uploadSubTab === "logo" ? (layer.type === "logo" || !layer.type) : layer.type === "image"))
+                          .filter(
+                            (layer) =>
+                              layer.side === activeSide &&
+                              (uploadSubTab === "logo"
+                                ? layer.type === "logo" || !layer.type
+                                : layer.type === "image"),
+                          )
                           .map((layer) => {
                             const isSelected = selectedLogoId === layer.id;
                             return (
@@ -7707,7 +7745,9 @@ export default function CustomizerLayout() {
                               (layer) =>
                                 layer.side === activeSide &&
                                 selectedLogoId === layer.id &&
-                                (uploadSubTab === "logo" ? (layer.type === "logo" || !layer.type) : layer.type === "image"),
+                                (uploadSubTab === "logo"
+                                  ? layer.type === "logo" || !layer.type
+                                  : layer.type === "image"),
                             )
                             .map((layer) => {
                               return (
@@ -7850,7 +7890,8 @@ export default function CustomizerLayout() {
                     );
                     if (!selectedLayer) return null;
                     const isLogoTab = uploadSubTab === "logo";
-                    const layerIsLogo = selectedLayer.type === "logo" || !selectedLayer.type;
+                    const layerIsLogo =
+                      selectedLayer.type === "logo" || !selectedLayer.type;
                     if (isLogoTab !== layerIsLogo) return null;
 
                     return (
@@ -8006,7 +8047,9 @@ export default function CustomizerLayout() {
                         ].map((preset) => (
                           <button
                             key={preset.name}
-                            onClick={() => handleAddLogoLayer(preset.url, "logo")}
+                            onClick={() =>
+                              handleAddLogoLayer(preset.url, "logo")
+                            }
                             className="p-1.5 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-sm"
                           >
                             <div className="w-6 h-6 flex items-center justify-center">
@@ -8161,28 +8204,40 @@ export default function CustomizerLayout() {
 
                   {/* Unified Active Layers List */}
                   {(() => {
-                    const sideTextLayers = textLayers.filter((l) => l.side === activeSide);
-                    const sideLogoLayers = logoLayers.filter((l) => l.side === activeSide);
+                    const sideTextLayers = textLayers.filter(
+                      (l) => l.side === activeSide,
+                    );
+                    const sideLogoLayers = logoLayers.filter(
+                      (l) => l.side === activeSide,
+                    );
                     const activeSideLayers = [
-                      ...sideTextLayers.map((l) => ({ ...l, layerType: "text" })),
-                      ...sideLogoLayers.map((l) => ({ ...l, layerType: "logo" })),
+                      ...sideTextLayers.map((l) => ({
+                        ...l,
+                        layerType: "text",
+                      })),
+                      ...sideLogoLayers.map((l) => ({
+                        ...l,
+                        layerType: "logo",
+                      })),
                     ];
 
-                    const sortedActiveSideLayers = [...activeSideLayers].sort((a, b) => {
-                      const idxA = layersOrder.indexOf(a.id);
-                      const idxB = layersOrder.indexOf(b.id);
-                      const getPriority = (l: any) => {
-                        if (l.layerType === "text") return 1;
-                        if (l.type === "image") {
-                          return l.zOrder === "above-text" ? 2 : 0;
-                        }
-                        return 3;
-                      };
-                      const valA = idxA !== -1 ? idxA : getPriority(a) * 1000;
-                      const valB = idxB !== -1 ? idxB : getPriority(b) * 1000;
-                      // DESCENDING order for UI list (highest draw index = top of list)
-                      return valB - valA;
-                    });
+                    const sortedActiveSideLayers = [...activeSideLayers].sort(
+                      (a, b) => {
+                        const idxA = layersOrder.indexOf(a.id);
+                        const idxB = layersOrder.indexOf(b.id);
+                        const getPriority = (l: any) => {
+                          if (l.layerType === "text") return 1;
+                          if (l.type === "image") {
+                            return l.zOrder === "above-text" ? 2 : 0;
+                          }
+                          return 3;
+                        };
+                        const valA = idxA !== -1 ? idxA : getPriority(a) * 1000;
+                        const valB = idxB !== -1 ? idxB : getPriority(b) * 1000;
+                        // DESCENDING order for UI list (highest draw index = top of list)
+                        return valB - valA;
+                      },
+                    );
 
                     return (
                       <div className="space-y-2 mt-2 pt-2 border-t border-zinc-100">
@@ -8192,7 +8247,8 @@ export default function CustomizerLayout() {
                         <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto pr-1">
                           {sortedActiveSideLayers.length === 0 ? (
                             <div className="text-xs text-zinc-400 italic text-center py-3 bg-zinc-50 rounded-xl border border-zinc-100">
-                              No layers on this side. Add one above or from the Text tab!
+                              No layers on this side. Add one above or from the
+                              Text tab!
                             </div>
                           ) : (
                             sortedActiveSideLayers.map((layer, index) => {
@@ -8257,7 +8313,9 @@ export default function CustomizerLayout() {
                                     {/* Thumbnail Preview */}
                                     <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 overflow-hidden flex items-center justify-center p-0.5 flex-shrink-0 shadow-sm">
                                       {isText ? (
-                                        <span className="text-xs font-bold text-zinc-500">T</span>
+                                        <span className="text-xs font-bold text-zinc-500">
+                                          T
+                                        </span>
                                       ) : (
                                         <img
                                           src={(layer as any).src}
@@ -8322,7 +8380,8 @@ export default function CustomizerLayout() {
                     );
                     if (!selectedLayer) return null;
                     const isLogoTab = uploadSubTab === "logo";
-                    const layerIsLogo = selectedLayer.type === "logo" || !selectedLayer.type;
+                    const layerIsLogo =
+                      selectedLayer.type === "logo" || !selectedLayer.type;
                     if (isLogoTab !== layerIsLogo) return null;
 
                     return (
@@ -8345,8 +8404,8 @@ export default function CustomizerLayout() {
                                     prev.map((l) =>
                                       l.id === selectedLayer.id
                                         ? { ...l, zOrder: "bottom" }
-                                        : l
-                                    )
+                                        : l,
+                                    ),
                                   );
                                 }}
                                 className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
@@ -8364,8 +8423,8 @@ export default function CustomizerLayout() {
                                     prev.map((l) =>
                                       l.id === selectedLayer.id
                                         ? { ...l, zOrder: "above-text" }
-                                        : l
-                                    )
+                                        : l,
+                                    ),
                                   );
                                 }}
                                 className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
@@ -8388,7 +8447,9 @@ export default function CustomizerLayout() {
                         {/* Size slider */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs font-bold text-zinc-800">
-                            <span>{isLogoTab ? "Logo" : "Image"} Size / Scale</span>
+                            <span>
+                              {isLogoTab ? "Logo" : "Image"} Size / Scale
+                            </span>
                             <span className="text-zinc-500">
                               {selectedLayer.scale.toFixed(2)}x
                             </span>
