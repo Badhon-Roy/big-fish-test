@@ -677,6 +677,9 @@ function useJerseyDecals(state: any) {
       shadowBlur?: number,
       shadowOffsetX?: number,
       shadowOffsetY?: number,
+      outlineEnabled?: boolean,
+      customOutlineColor?: string,
+      outlineWidth?: number,
     ) => {
       ctx.save();
       ctx.translate(x, y);
@@ -717,14 +720,20 @@ function useJerseyDecals(state: any) {
         if (!curveRadiusVal || curveRadiusVal === 0) {
           if (!letterSpacingVal || letterSpacingVal === 0) {
             ctx.textAlign = "center";
-            ctx.strokeStyle = isOutline ? color : outlineColor;
-            ctx.lineWidth = isOutline
-              ? Math.max(2, textSize * 0.04)
-              : Math.max(4, textSize * 0.08);
 
-            if (isOutline) {
+            // Draw outline stroke first (underneath fill)
+            if (outlineEnabled) {
+              ctx.strokeStyle = customOutlineColor || "#FFFFFF";
+              ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
               ctx.strokeText(line, 0, curY);
-            } else {
+            } else if (isOutline) {
+              ctx.strokeStyle = color;
+              ctx.lineWidth = Math.max(2, textSize * 0.04);
+              ctx.strokeText(line, 0, curY);
+            }
+
+            // Draw filled text second
+            if (!isOutline) {
               ctx.fillStyle = color;
               ctx.fillText(line, 0, curY);
             }
@@ -733,16 +742,21 @@ function useJerseyDecals(state: any) {
             let curX = -totalWidth / 2;
 
             ctx.textAlign = "left";
-            ctx.strokeStyle = isOutline ? color : outlineColor;
-            ctx.lineWidth = isOutline
-              ? Math.max(2, textSize * 0.04)
-              : Math.max(4, textSize * 0.08);
 
             chars.forEach((char, charIdx) => {
               const charW = charWidths[charIdx];
-              if (isOutline) {
+
+              if (outlineEnabled) {
+                ctx.strokeStyle = customOutlineColor || "#FFFFFF";
+                ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
                 ctx.strokeText(char, curX, curY);
-              } else {
+              } else if (isOutline) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = Math.max(2, textSize * 0.04);
+                ctx.strokeText(char, curX, curY);
+              }
+
+              if (!isOutline) {
                 ctx.fillStyle = color;
                 ctx.fillText(char, curX, curY);
               }
@@ -758,10 +772,6 @@ function useJerseyDecals(state: any) {
           let currentS = 0;
 
           ctx.textAlign = "center";
-          ctx.strokeStyle = isOutline ? color : outlineColor;
-          ctx.lineWidth = isOutline
-            ? Math.max(2, textSize * 0.04)
-            : Math.max(4, textSize * 0.08);
 
           chars.forEach((char, charIdx) => {
             const charW = charWidths[charIdx];
@@ -775,9 +785,17 @@ function useJerseyDecals(state: any) {
             ctx.translate(cx, cy);
             ctx.rotate(angle);
 
-            if (isOutline) {
+            if (outlineEnabled) {
+              ctx.strokeStyle = customOutlineColor || "#FFFFFF";
+              ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
               ctx.strokeText(char, 0, 0);
-            } else {
+            } else if (isOutline) {
+              ctx.strokeStyle = color;
+              ctx.lineWidth = Math.max(2, textSize * 0.04);
+              ctx.strokeText(char, 0, 0);
+            }
+
+            if (!isOutline) {
               ctx.fillStyle = color;
               ctx.fillText(char, 0, 0);
             }
@@ -3245,6 +3263,9 @@ function useJerseyDecals(state: any) {
             layer.shadowBlur,
             layer.shadowOffsetX,
             layer.shadowOffsetY,
+            layer.outlineEnabled,
+            layer.outlineColor,
+            layer.outlineWidth,
           );
           ctx.restore();
         } else {
@@ -5236,6 +5257,9 @@ interface TextLayer {
   shadowBlur?: number;
   shadowOffsetX?: number;
   shadowOffsetY?: number;
+  outlineEnabled?: boolean;
+  outlineColor?: string;
+  outlineWidth?: number;
 }
 
 interface LogoLayer {
@@ -5324,7 +5348,9 @@ export default function CustomizerLayout() {
             textAlign: "center",
             letterSpacing: `${letterSpacing * editorScale}px`,
             lineHeight: lineSpacing,
-            WebkitTextStroke: isOutline ? `1px ${layer.color}` : "none",
+            WebkitTextStroke: layer.outlineEnabled && layer.outlineWidth
+              ? `${layer.outlineWidth * editorScale}px ${layer.outlineColor || "#FFFFFF"}`
+              : (isOutline ? `1px ${layer.color}` : "none"),
             color: isOutline ? "transparent" : layer.color,
             textShadow: layer.shadowEnabled
               ? `${(layer.shadowOffsetX ?? 4) * editorScale}px ${(layer.shadowOffsetY ?? 4) * editorScale}px ${(layer.shadowBlur ?? 10) * editorScale}px ${layer.shadowColor || "#000000"}`
@@ -5426,9 +5452,9 @@ export default function CustomizerLayout() {
                       fontWeight: getFontWeight(layer.font),
                       fontStyle: getFontStyle(layer.font),
                       whiteSpace: "nowrap",
-                      WebkitTextStroke: isOutline
-                        ? `1px ${layer.color}`
-                        : "none",
+                      WebkitTextStroke: layer.outlineEnabled && layer.outlineWidth
+                        ? `${layer.outlineWidth * editorScale}px ${layer.outlineColor || "#FFFFFF"}`
+                        : (isOutline ? `1px ${layer.color}` : "none"),
                       color: isOutline ? "transparent" : layer.color,
                       textShadow: layer.shadowEnabled
                         ? `${(layer.shadowOffsetX ?? 4) * editorScale}px ${(layer.shadowOffsetY ?? 4) * editorScale}px ${(layer.shadowBlur ?? 10) * editorScale}px ${layer.shadowColor || "#000000"}`
@@ -5846,6 +5872,9 @@ export default function CustomizerLayout() {
       shadowBlur: 10,
       shadowOffsetX: 4,
       shadowOffsetY: 4,
+      outlineEnabled: false,
+      outlineColor: "#FFFFFF",
+      outlineWidth: 4,
     };
     setTextLayers((prev) => [...prev, newLayer]);
     setSelectedLayerId(newId);
@@ -7608,6 +7637,91 @@ export default function CustomizerLayout() {
                               {selectedLayer.curveRadius || 0}°
                             </div>
                           </div>
+                        </div>
+
+                        {/* Text Outline */}
+                        <div className="space-y-3 pt-3 border-t border-zinc-100">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-zinc-800">
+                              Enable Text Outline
+                            </label>
+                            <input
+                              type="checkbox"
+                              checked={!!selectedLayer.outlineEnabled}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setTextLayers((prev) =>
+                                  prev.map((l) =>
+                                    l.id === selectedLayer.id
+                                      ? {
+                                          ...l,
+                                          outlineEnabled: checked,
+                                          outlineColor: l.outlineColor || "#FFFFFF",
+                                          outlineWidth: typeof l.outlineWidth === "number" ? l.outlineWidth : 4,
+                                        }
+                                      : l,
+                                  ),
+                                );
+                              }}
+                              className="w-4 h-4 text-red-600 border-zinc-300 rounded focus:ring-red-500 cursor-pointer"
+                            />
+                          </div>
+
+                          {selectedLayer.outlineEnabled && (
+                            <div className="space-y-3 pl-2 border-l-2 border-red-100">
+                              {/* Outline Color */}
+                              <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-bold text-zinc-600">
+                                  Outline Color
+                                </label>
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="color"
+                                    value={selectedLayer.outlineColor || "#FFFFFF"}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setTextLayers((prev) =>
+                                        prev.map((l) =>
+                                          l.id === selectedLayer.id
+                                            ? { ...l, outlineColor: val }
+                                            : l,
+                                        ),
+                                      );
+                                    }}
+                                    className="w-6 h-6 p-0 border-0 rounded cursor-pointer overflow-hidden"
+                                  />
+                                  <span className="text-[10px] font-bold text-zinc-500 uppercase">
+                                    {selectedLayer.outlineColor || "#FFFFFF"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Outline Width */}
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-[11px] font-bold text-zinc-600">
+                                  <span>Outline Width</span>
+                                  <span>{selectedLayer.outlineWidth ?? 4}px</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="1"
+                                  max="20"
+                                  value={selectedLayer.outlineWidth ?? 4}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setTextLayers((prev) =>
+                                      prev.map((l) =>
+                                        l.id === selectedLayer.id
+                                          ? { ...l, outlineWidth: val }
+                                          : l,
+                                      ),
+                                    );
+                                  }}
+                                  className="w-full accent-red-600 h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Text Shadow */}
