@@ -672,6 +672,11 @@ function useJerseyDecals(state: any) {
       letterSpacingVal: number,
       lineSpacingVal: number,
       curveRadiusVal: number,
+      shadowEnabled?: boolean,
+      shadowColor?: string,
+      shadowBlur?: number,
+      shadowOffsetX?: number,
+      shadowOffsetY?: number,
     ) => {
       ctx.save();
       ctx.translate(x, y);
@@ -687,11 +692,20 @@ function useJerseyDecals(state: any) {
         ctx.font = getFontString(textSize, fontStyle, 100);
         ctx.textBaseline = "middle";
 
-        if (fontStyle === "Neon Glow") {
+        if (shadowEnabled) {
+          ctx.shadowColor = shadowColor || "#000000";
+          ctx.shadowBlur = typeof shadowBlur === "number" ? shadowBlur : 10;
+          ctx.shadowOffsetX = typeof shadowOffsetX === "number" ? shadowOffsetX : 4;
+          ctx.shadowOffsetY = typeof shadowOffsetY === "number" ? shadowOffsetY : 4;
+        } else if (fontStyle === "Neon Glow") {
           ctx.shadowColor = color;
           ctx.shadowBlur = Math.max(10, textSize * 0.15);
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         } else {
           ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         }
 
         const chars = Array.from(line);
@@ -3226,6 +3240,11 @@ function useJerseyDecals(state: any) {
             layer.letterSpacing || 0,
             layer.lineSpacing || 1.15,
             layer.curveRadius || 0,
+            layer.shadowEnabled,
+            layer.shadowColor,
+            layer.shadowBlur,
+            layer.shadowOffsetX,
+            layer.shadowOffsetY,
           );
           ctx.restore();
         } else {
@@ -5212,6 +5231,11 @@ interface TextLayer {
   letterSpacing?: number;
   lineSpacing?: number;
   curveRadius?: number;
+  shadowEnabled?: boolean;
+  shadowColor?: string;
+  shadowBlur?: number;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
 }
 
 interface LogoLayer {
@@ -5302,6 +5326,9 @@ export default function CustomizerLayout() {
             lineHeight: lineSpacing,
             WebkitTextStroke: isOutline ? `1px ${layer.color}` : "none",
             color: isOutline ? "transparent" : layer.color,
+            textShadow: layer.shadowEnabled
+              ? `${(layer.shadowOffsetX ?? 4) * editorScale}px ${(layer.shadowOffsetY ?? 4) * editorScale}px ${(layer.shadowBlur ?? 10) * editorScale}px ${layer.shadowColor || "#000000"}`
+              : undefined,
           }}
         >
           {layer.text}
@@ -5403,6 +5430,9 @@ export default function CustomizerLayout() {
                         ? `1px ${layer.color}`
                         : "none",
                       color: isOutline ? "transparent" : layer.color,
+                      textShadow: layer.shadowEnabled
+                        ? `${(layer.shadowOffsetX ?? 4) * editorScale}px ${(layer.shadowOffsetY ?? 4) * editorScale}px ${(layer.shadowBlur ?? 10) * editorScale}px ${layer.shadowColor || "#000000"}`
+                        : undefined,
                     }}
                   >
                     {char}
@@ -5811,6 +5841,11 @@ export default function CustomizerLayout() {
       letterSpacing: 0,
       lineSpacing: 1.15,
       curveRadius: 0,
+      shadowEnabled: false,
+      shadowColor: "#000000",
+      shadowBlur: 10,
+      shadowOffsetX: 4,
+      shadowOffsetY: 4,
     };
     setTextLayers((prev) => [...prev, newLayer]);
     setSelectedLayerId(newId);
@@ -7573,6 +7608,143 @@ export default function CustomizerLayout() {
                               {selectedLayer.curveRadius || 0}°
                             </div>
                           </div>
+                        </div>
+
+                        {/* Text Shadow */}
+                        <div className="space-y-3 pt-3 border-t border-zinc-100">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-zinc-800">
+                              Enable Text Shadow
+                            </label>
+                            <input
+                              type="checkbox"
+                              checked={!!selectedLayer.shadowEnabled}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setTextLayers((prev) =>
+                                  prev.map((l) =>
+                                    l.id === selectedLayer.id
+                                      ? {
+                                          ...l,
+                                          shadowEnabled: checked,
+                                          shadowColor: l.shadowColor || "#000000",
+                                          shadowBlur: typeof l.shadowBlur === "number" ? l.shadowBlur : 10,
+                                          shadowOffsetX: typeof l.shadowOffsetX === "number" ? l.shadowOffsetX : 4,
+                                          shadowOffsetY: typeof l.shadowOffsetY === "number" ? l.shadowOffsetY : 4,
+                                        }
+                                      : l,
+                                  ),
+                                );
+                              }}
+                              className="w-4 h-4 text-red-600 border-zinc-300 rounded focus:ring-red-500 cursor-pointer"
+                            />
+                          </div>
+
+                          {selectedLayer.shadowEnabled && (
+                            <div className="space-y-3 pl-2 border-l-2 border-red-100">
+                              {/* Shadow Color */}
+                              <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-bold text-zinc-600">
+                                  Shadow Color
+                                </label>
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="color"
+                                    value={selectedLayer.shadowColor || "#000000"}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setTextLayers((prev) =>
+                                        prev.map((l) =>
+                                          l.id === selectedLayer.id
+                                            ? { ...l, shadowColor: val }
+                                            : l,
+                                        ),
+                                      );
+                                    }}
+                                    className="w-6 h-6 p-0 border-0 rounded cursor-pointer overflow-hidden"
+                                  />
+                                  <span className="text-[10px] font-bold text-zinc-500 uppercase">
+                                    {selectedLayer.shadowColor || "#000000"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Shadow Blur */}
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-[11px] font-bold text-zinc-600">
+                                  <span>Shadow Blur</span>
+                                  <span>{selectedLayer.shadowBlur ?? 10}px</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="30"
+                                  value={selectedLayer.shadowBlur ?? 10}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setTextLayers((prev) =>
+                                      prev.map((l) =>
+                                        l.id === selectedLayer.id
+                                          ? { ...l, shadowBlur: val }
+                                          : l,
+                                      ),
+                                    );
+                                  }}
+                                  className="w-full accent-red-600 h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                                />
+                              </div>
+
+                              {/* Offset X */}
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-[11px] font-bold text-zinc-600">
+                                  <span>Offset X</span>
+                                  <span>{selectedLayer.shadowOffsetX ?? 4}px</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="-20"
+                                  max="20"
+                                  value={selectedLayer.shadowOffsetX ?? 4}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setTextLayers((prev) =>
+                                      prev.map((l) =>
+                                        l.id === selectedLayer.id
+                                          ? { ...l, shadowOffsetX: val }
+                                          : l,
+                                      ),
+                                    );
+                                  }}
+                                  className="w-full accent-red-600 h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                                />
+                              </div>
+
+                              {/* Offset Y */}
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-[11px] font-bold text-zinc-600">
+                                  <span>Offset Y</span>
+                                  <span>{selectedLayer.shadowOffsetY ?? 4}px</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="-20"
+                                  max="20"
+                                  value={selectedLayer.shadowOffsetY ?? 4}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setTextLayers((prev) =>
+                                      prev.map((l) =>
+                                        l.id === selectedLayer.id
+                                          ? { ...l, shadowOffsetY: val }
+                                          : l,
+                                      ),
+                                    );
+                                  }}
+                                  className="w-full accent-red-600 h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
