@@ -71,6 +71,23 @@ We implemented two identical 280x280px visual editors (Text tab and Logos tab) w
 - **Expanded Slider Range**: Uncapped the selected logo scale slider maximum threshold from `5.0` to `20.0` (min: `0.01`), allowing for micro-sizing and large zooming via the sidebar.
 - **Off-Canvas Rendering Support**: Confirmed that HTML5 Canvas 2D draws offscreen bounds natively, allowing logo graphics to bleed off the 2D workspace editor coordinates while maintaining seamless texture projections onto the 3D jersey model.
 
+### G. Client-Side Multi-Format Export System
+
+We implemented a unified, 100% client-side export system that triggers native browser downloads for three distinct formats without relying on a backend server or API:
+
+1. **Client-Side 3D Canvas Snapshot (`jersey-3d-preview.png`)**:
+   - Initialized the Three.js WebGLRenderer context with `preserveDrawingBuffer: true` so the WebGL canvas doesn't clear its buffer and return a black image when sampled.
+   - Used a child component `ThreeGrabber` inside the React Three Fiber `<Canvas>` tree to expose the active WebGL `renderer` (gl), `scene`, and `camera` context references to the parent customizer component via a React `useRef`.
+   - On export, forces a synchronous render pass (`gl.render(scene, camera)`) to ensure the canvas buffer is up-to-date and instantly extracts the high-resolution data URL (`gl.domElement.toDataURL('image/png')`).
+
+2. **Client-Side Flat Production Texture Export (`jersey-print-template.png`)**:
+   - Exposed the internal 2D HTML5 canvas texture elements generated inside `useJerseyDecals` to the parent component using a state/ref callback on `<Jersey3D>`.
+   - Targets the texture canvas matching the active customizer side (Front or Back) and extracts the flat high-resolution texture map using `canvas.toDataURL('image/png')`, outputting the exact layout including shapes, graphics, custom shadows, and text borders.
+
+3. **Download Configuration State (`jersey-config.json`)**:
+   - Compiles the entire React customizer state schema (including `textLayers`, `logoLayers`, base styles, neck/collar styles, colors, selected design layouts, and metadata timestamps) into a structured JSON configuration object.
+   - Serializes the JavaScript object into a JSON string, wraps it in a secure Web `Blob` with `type: 'application/json'`, creates a temporary URL via `URL.createObjectURL(blob)`, programmatically clicks a link to trigger the download, and cleans up the memory immediately using `URL.revokeObjectURL(url)`.
+
 ---
 
 ## 3. Bug Fixes & Rendering Enhancements
@@ -98,7 +115,7 @@ We identified and resolved three critical rendering and layering issues in the 3
 ### Bug 4: Aspect Ratio Distortion and Artificial Bounding Constraints
 
 - **Problem**: Uploaded images were previously forced into artificial square bounding boxes or strictly clamped maximum dimensions (e.g., `200x200`), causing native wide or tall graphics to squish, distort, or pad themselves with unnecessary empty space.
-- **Fix**: 
+- **Fix**:
   1. **Removed Clamping Limits**: Completely stripped out `maxDimension`, `Math.min()` limitations, and default `baseSize` bounding dimensions inside the texture generation algorithms and the visual control bounds.
   2. **Render Pure Native Dimensions**: Re-engineered `drawLayerOnCtx`, `LogoCanvasPreview`, and `renderLogoLayer` to compute width and height using purely the unadulterated source file properties (`img.naturalWidth` and `img.naturalHeight`), ensuring a 1:1 pixel fidelity aspect ratio translation natively on the canvas.
   3. **Relative Upload Scaling**: When a new image is instantiated in `handleAddLogoLayer`, the graphic loads at a clean relative percentage scale so it fits the canvas workspace without recalculating or compressing its physical pixel data.
@@ -113,11 +130,12 @@ We identified and resolved three critical rendering and layering issues in the 3
 ## 4. How to Verify
 
 1. Run the local dev server: `npm run dev`
-2. Select the **Logos** tab in the customizer sidebar.
-3. Click a Preset Badge or upload a custom logo.
-4. Locate the **Background Eraser** panel directly **above the Upload Custom Logo dashed container**.
-5. Toggle **Erase Pixels** to start erasing, select a brush size, and drag your cursor/finger on the canvas editor area to erase.
-6. Toggle **Lock Drawing** to lock your edits and restore the normal bounding box controls (drag, scale, rotate).
-7. Locate the **Background Eraser** panel directly **above the Upload Custom Logo dashed container**.
-8. Toggle **Erase Pixels** to start erasing, select a brush size, and drag your cursor/finger on the canvas editor area to erase.
-9. Toggle **Lock Drawing** to lock your edits and restore the normal bounding box controls (drag, scale, rotate).
+2. Customize the jersey: add text, add outlines, shadows, or upload custom logos.
+3. Click the **Export** button in the top-right header menu.
+4. Verify that three simultaneous downloads are initiated:
+   - `jersey-3d-preview.png` (a snapshot of the 3D model canvas, preserving active angles).
+   - `jersey-print-template.png` (the high-resolution flat 2D layout texture canvas).
+   - `jersey-config.json` (the structured JavaScript design configuration file).
+5. Navigate to the **Logos** tab to verify the **Background Eraser** functionality independently:
+   - Toggle **Erase Pixels** to start erasing, select a brush size, and drag your cursor/finger on the canvas editor area to erase.
+   - Toggle **Lock Drawing** to lock your edits and restore the normal bounding box controls.

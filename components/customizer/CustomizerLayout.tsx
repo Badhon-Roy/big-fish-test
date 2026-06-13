@@ -698,8 +698,10 @@ function useJerseyDecals(state: any) {
         if (shadowEnabled) {
           ctx.shadowColor = shadowColor || "#000000";
           ctx.shadowBlur = typeof shadowBlur === "number" ? shadowBlur : 10;
-          ctx.shadowOffsetX = typeof shadowOffsetX === "number" ? shadowOffsetX : 4;
-          ctx.shadowOffsetY = typeof shadowOffsetY === "number" ? shadowOffsetY : 4;
+          ctx.shadowOffsetX =
+            typeof shadowOffsetX === "number" ? shadowOffsetX : 4;
+          ctx.shadowOffsetY =
+            typeof shadowOffsetY === "number" ? shadowOffsetY : 4;
         } else if (fontStyle === "Neon Glow") {
           ctx.shadowColor = color;
           ctx.shadowBlur = Math.max(10, textSize * 0.15);
@@ -724,7 +726,8 @@ function useJerseyDecals(state: any) {
             // Draw outline stroke first (underneath fill)
             if (outlineEnabled) {
               ctx.strokeStyle = customOutlineColor || "#FFFFFF";
-              ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
+              ctx.lineWidth =
+                typeof outlineWidth === "number" ? outlineWidth : 4;
               ctx.strokeText(line, 0, curY);
             } else if (isOutline) {
               ctx.strokeStyle = color;
@@ -748,7 +751,8 @@ function useJerseyDecals(state: any) {
 
               if (outlineEnabled) {
                 ctx.strokeStyle = customOutlineColor || "#FFFFFF";
-                ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
+                ctx.lineWidth =
+                  typeof outlineWidth === "number" ? outlineWidth : 4;
                 ctx.strokeText(char, curX, curY);
               } else if (isOutline) {
                 ctx.strokeStyle = color;
@@ -787,7 +791,8 @@ function useJerseyDecals(state: any) {
 
             if (outlineEnabled) {
               ctx.strokeStyle = customOutlineColor || "#FFFFFF";
-              ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
+              ctx.lineWidth =
+                typeof outlineWidth === "number" ? outlineWidth : 4;
               ctx.strokeText(char, 0, 0);
             } else if (isOutline) {
               ctx.strokeStyle = color;
@@ -4501,9 +4506,47 @@ function createFlexNormalMap() {
   return texture;
 }
 
-function Jersey3D({ colors, collar }: { colors: any; collar: boolean }) {
+function ThreeGrabber({
+  threeRef,
+}: {
+  threeRef: React.MutableRefObject<{
+    gl: THREE.WebGLRenderer;
+    scene: THREE.Scene;
+    camera: THREE.Camera;
+  } | null>;
+}) {
+  const { gl, scene, camera } = useThree();
+  useEffect(() => {
+    threeRef.current = { gl, scene, camera };
+    return () => {
+      threeRef.current = null;
+    };
+  }, [gl, scene, camera, threeRef]);
+  return null;
+}
+
+function Jersey3D({
+  colors,
+  collar,
+  texturesRef,
+}: {
+  colors: any;
+  collar: boolean;
+  texturesRef?: React.MutableRefObject<{
+    front: THREE.CanvasTexture | null;
+    back: THREE.CanvasTexture | null;
+    patternFront?: THREE.CanvasTexture | null;
+    patternBack?: THREE.CanvasTexture | null;
+  }>;
+}) {
   const { nodes } = useGLTF("/models/shirt_baked.glb") as any;
   const { front, back, patternFront, patternBack } = useJerseyDecals(colors);
+
+  useEffect(() => {
+    if (texturesRef) {
+      texturesRef.current = { front, back, patternFront, patternBack };
+    }
+  }, [front, back, patternFront, patternBack, texturesRef]);
   const { collarDecal } = useStyleDecals(colors);
 
   const [logoTexture, setLogoTexture] = useState<THREE.Texture | null>(null);
@@ -5312,6 +5355,19 @@ export default function CustomizerLayout() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploadSubTab, setUploadSubTab] = useState<"logo" | "image">("logo");
 
+  const threeRef = useRef<{
+    gl: THREE.WebGLRenderer;
+    scene: THREE.Scene;
+    camera: THREE.Camera;
+  } | null>(null);
+
+  const texturesRef = useRef<{
+    front: THREE.CanvasTexture | null;
+    back: THREE.CanvasTexture | null;
+    patternFront?: THREE.CanvasTexture | null;
+    patternBack?: THREE.CanvasTexture | null;
+  }>({ front: null, back: null, patternFront: null, patternBack: null });
+
   const editorWidth = 280;
   const canvasSize = 1024;
   const editorScale = editorWidth / canvasSize; // 0.2734
@@ -5348,9 +5404,12 @@ export default function CustomizerLayout() {
             textAlign: "center",
             letterSpacing: `${letterSpacing * editorScale}px`,
             lineHeight: lineSpacing,
-            WebkitTextStroke: layer.outlineEnabled && layer.outlineWidth
-              ? `${layer.outlineWidth * editorScale}px ${layer.outlineColor || "#FFFFFF"}`
-              : (isOutline ? `1px ${layer.color}` : "none"),
+            WebkitTextStroke:
+              layer.outlineEnabled && layer.outlineWidth
+                ? `${layer.outlineWidth * editorScale}px ${layer.outlineColor || "#FFFFFF"}`
+                : isOutline
+                  ? `1px ${layer.color}`
+                  : "none",
             color: isOutline ? "transparent" : layer.color,
             textShadow: layer.shadowEnabled
               ? `${(layer.shadowOffsetX ?? 4) * editorScale}px ${(layer.shadowOffsetY ?? 4) * editorScale}px ${(layer.shadowBlur ?? 10) * editorScale}px ${layer.shadowColor || "#000000"}`
@@ -5452,9 +5511,12 @@ export default function CustomizerLayout() {
                       fontWeight: getFontWeight(layer.font),
                       fontStyle: getFontStyle(layer.font),
                       whiteSpace: "nowrap",
-                      WebkitTextStroke: layer.outlineEnabled && layer.outlineWidth
-                        ? `${layer.outlineWidth * editorScale}px ${layer.outlineColor || "#FFFFFF"}`
-                        : (isOutline ? `1px ${layer.color}` : "none"),
+                      WebkitTextStroke:
+                        layer.outlineEnabled && layer.outlineWidth
+                          ? `${layer.outlineWidth * editorScale}px ${layer.outlineColor || "#FFFFFF"}`
+                          : isOutline
+                            ? `1px ${layer.color}`
+                            : "none",
                       color: isOutline ? "transparent" : layer.color,
                       textShadow: layer.shadowEnabled
                         ? `${(layer.shadowOffsetX ?? 4) * editorScale}px ${(layer.shadowOffsetY ?? 4) * editorScale}px ${(layer.shadowBlur ?? 10) * editorScale}px ${layer.shadowColor || "#000000"}`
@@ -5878,6 +5940,113 @@ export default function CustomizerLayout() {
     };
     setTextLayers((prev) => [...prev, newLayer]);
     setSelectedLayerId(newId);
+  };
+
+  const handleExport = () => {
+    const triggerLocalDownload = (dataUrl: string, fileName: string) => {
+      try {
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = fileName;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up immediately to unblock the browser event loop
+        setTimeout(() => {
+          if (link.parentNode) {
+            document.body.removeChild(link);
+          }
+          if (dataUrl.startsWith("blob:")) {
+            URL.revokeObjectURL(dataUrl); // Free up client-side memory safely
+          }
+        }, 100);
+      } catch (err) {
+        console.error(`Error triggering download for ${fileName}:`, err);
+      }
+    };
+
+    // 1. Client-side 3D Canvas Snapshot (Immediate)
+    setTimeout(() => {
+      try {
+        if (threeRef.current) {
+          const { gl, scene, camera } = threeRef.current;
+          gl.render(scene, camera);
+          const dataURL = gl.domElement.toDataURL("image/png");
+          triggerLocalDownload(dataURL, "jersey-3d-preview.png");
+        } else {
+          console.warn("threeRef.current is null - skipping 3D snapshot");
+        }
+      } catch (err) {
+        console.error("Error capturing 3D preview snapshot:", err);
+      }
+    }, 0);
+
+    // 2. Client-side Flat Production Texture Export (Staggered by 300ms)
+    setTimeout(() => {
+      try {
+        const activeSide =
+          currentView === "back" || currentView === "back-center" ? "Back" : "Front";
+        
+        const activeDecalTexture =
+          activeSide === "Back" ? texturesRef.current.back : texturesRef.current.front;
+        const activePatternTexture =
+          activeSide === "Back" ? texturesRef.current.patternBack : texturesRef.current.patternFront;
+
+        if (activeDecalTexture && activeDecalTexture.image) {
+          const size = 1024;
+          const exportCanvas = document.createElement("canvas");
+          exportCanvas.width = size;
+          exportCanvas.height = size;
+          const exportCtx = exportCanvas.getContext("2d");
+          if (exportCtx) {
+            // 1. Draw base pattern/background color if pattern exists
+            if (activePatternTexture && activePatternTexture.image) {
+              exportCtx.drawImage(activePatternTexture.image as HTMLCanvasElement, 0, 0);
+            } else {
+              // Fallback: fill with active side primary color
+              const fallbackColor =
+                activeSide === "Front"
+                  ? state.primaryFront || state.primary || "#2196F3"
+                  : state.primaryBack || state.primary || "#2196F3";
+              exportCtx.fillStyle = fallbackColor;
+              exportCtx.fillRect(0, 0, size, size);
+            }
+
+            // 2. Draw active text/logo decals on top
+            exportCtx.drawImage(activeDecalTexture.image as HTMLCanvasElement, 0, 0);
+
+            const dataURL = exportCanvas.toDataURL("image/png");
+            triggerLocalDownload(dataURL, "jersey-print-template.png");
+          }
+        } else {
+          console.warn("activeDecalTexture or activeDecalTexture.image is null - skipping flat texture");
+        }
+      } catch (err) {
+        console.error("Error capturing flat print template:", err);
+      }
+    }, 300);
+
+    // 3. Download Configuration State as JSON file (Staggered by 600ms)
+    setTimeout(() => {
+      try {
+        const configData = {
+          selectedDesign,
+          generalState: state,
+          textLayers,
+          logoLayers,
+          timestamp: new Date().toISOString(),
+        };
+
+        const blob = new Blob([JSON.stringify(configData, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        triggerLocalDownload(url, "jersey-config.json");
+      } catch (err) {
+        console.error("Error downloading config JSON:", err);
+      }
+    }, 600);
   };
 
   const handleEraserStart = (e: React.MouseEvent | React.TouchEvent) => {
@@ -7656,8 +7825,12 @@ export default function CustomizerLayout() {
                                       ? {
                                           ...l,
                                           outlineEnabled: checked,
-                                          outlineColor: l.outlineColor || "#FFFFFF",
-                                          outlineWidth: typeof l.outlineWidth === "number" ? l.outlineWidth : 4,
+                                          outlineColor:
+                                            l.outlineColor || "#FFFFFF",
+                                          outlineWidth:
+                                            typeof l.outlineWidth === "number"
+                                              ? l.outlineWidth
+                                              : 4,
                                         }
                                       : l,
                                   ),
@@ -7677,7 +7850,9 @@ export default function CustomizerLayout() {
                                 <div className="flex items-center gap-1.5">
                                   <input
                                     type="color"
-                                    value={selectedLayer.outlineColor || "#FFFFFF"}
+                                    value={
+                                      selectedLayer.outlineColor || "#FFFFFF"
+                                    }
                                     onChange={(e) => {
                                       const val = e.target.value;
                                       setTextLayers((prev) =>
@@ -7700,7 +7875,9 @@ export default function CustomizerLayout() {
                               <div className="space-y-1">
                                 <div className="flex justify-between text-[11px] font-bold text-zinc-600">
                                   <span>Outline Width</span>
-                                  <span>{selectedLayer.outlineWidth ?? 4}px</span>
+                                  <span>
+                                    {selectedLayer.outlineWidth ?? 4}px
+                                  </span>
                                 </div>
                                 <input
                                   type="range"
@@ -7741,10 +7918,20 @@ export default function CustomizerLayout() {
                                       ? {
                                           ...l,
                                           shadowEnabled: checked,
-                                          shadowColor: l.shadowColor || "#000000",
-                                          shadowBlur: typeof l.shadowBlur === "number" ? l.shadowBlur : 10,
-                                          shadowOffsetX: typeof l.shadowOffsetX === "number" ? l.shadowOffsetX : 4,
-                                          shadowOffsetY: typeof l.shadowOffsetY === "number" ? l.shadowOffsetY : 4,
+                                          shadowColor:
+                                            l.shadowColor || "#000000",
+                                          shadowBlur:
+                                            typeof l.shadowBlur === "number"
+                                              ? l.shadowBlur
+                                              : 10,
+                                          shadowOffsetX:
+                                            typeof l.shadowOffsetX === "number"
+                                              ? l.shadowOffsetX
+                                              : 4,
+                                          shadowOffsetY:
+                                            typeof l.shadowOffsetY === "number"
+                                              ? l.shadowOffsetY
+                                              : 4,
                                         }
                                       : l,
                                   ),
@@ -7764,7 +7951,9 @@ export default function CustomizerLayout() {
                                 <div className="flex items-center gap-1.5">
                                   <input
                                     type="color"
-                                    value={selectedLayer.shadowColor || "#000000"}
+                                    value={
+                                      selectedLayer.shadowColor || "#000000"
+                                    }
                                     onChange={(e) => {
                                       const val = e.target.value;
                                       setTextLayers((prev) =>
@@ -7787,7 +7976,9 @@ export default function CustomizerLayout() {
                               <div className="space-y-1">
                                 <div className="flex justify-between text-[11px] font-bold text-zinc-600">
                                   <span>Shadow Blur</span>
-                                  <span>{selectedLayer.shadowBlur ?? 10}px</span>
+                                  <span>
+                                    {selectedLayer.shadowBlur ?? 10}px
+                                  </span>
                                 </div>
                                 <input
                                   type="range"
@@ -7812,7 +8003,9 @@ export default function CustomizerLayout() {
                               <div className="space-y-1">
                                 <div className="flex justify-between text-[11px] font-bold text-zinc-600">
                                   <span>Offset X</span>
-                                  <span>{selectedLayer.shadowOffsetX ?? 4}px</span>
+                                  <span>
+                                    {selectedLayer.shadowOffsetX ?? 4}px
+                                  </span>
                                 </div>
                                 <input
                                   type="range"
@@ -7837,7 +8030,9 @@ export default function CustomizerLayout() {
                               <div className="space-y-1">
                                 <div className="flex justify-between text-[11px] font-bold text-zinc-600">
                                   <span>Offset Y</span>
-                                  <span>{selectedLayer.shadowOffsetY ?? 4}px</span>
+                                  <span>
+                                    {selectedLayer.shadowOffsetY ?? 4}px
+                                  </span>
                                 </div>
                                 <input
                                   type="range"
@@ -9026,7 +9221,10 @@ export default function CustomizerLayout() {
           <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm font-bold text-sm pointer-events-auto hover:bg-zinc-50 transition-all">
             <Share2 className="w-4 h-4" /> Share
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm font-bold text-sm pointer-events-auto hover:bg-zinc-50 transition-all">
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm font-bold text-sm pointer-events-auto hover:bg-zinc-50 transition-all"
+          >
             <Download className="w-4 h-4" /> Export
           </button>
         </div>
@@ -9052,8 +9250,10 @@ export default function CustomizerLayout() {
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 0.9,
+            preserveDrawingBuffer: true,
           }}
         >
+          <ThreeGrabber threeRef={threeRef} />
           {/* Transparent background so parent div gradient shows through */}
           <color attach="background" args={["transparent" as any]} />
           <ambientLight intensity={1.2} />
@@ -9067,6 +9267,7 @@ export default function CustomizerLayout() {
           <pointLight position={[3, 1, -2]} intensity={0.5} />
           <Center>
             <Jersey3D
+              texturesRef={texturesRef}
               colors={{
                 ...state,
                 designPattern: currentPattern,
