@@ -139,3 +139,14 @@ We identified and resolved three critical rendering and layering issues in the 3
 5. Navigate to the **Logos** tab to verify the **Background Eraser** functionality independently:
    - Toggle **Erase Pixels** to start erasing, select a brush size, and drag your cursor/finger on the canvas editor area to erase.
    - Toggle **Lock Drawing** to lock your edits and restore the normal bounding box controls.
+6. **Environment Mapping Reflection Fix**: Set `envMapIntensity` on all decal materials and the base shirt material to `0.0` to completely prevent environment HDR reflections from diluting color saturation.
+7. **Studio Lighting Optimization**: Balanced the Canvas scene lighting by reducing the overexposed `ambientLight` intensity from `1.2` to `0.55` and limiting the HDR `Environment` preset intensity to `0.15`, maintaining vivid, high-fidelity color saturation without fog-like desaturation.
+
+### Enhancement: Opaque Rendering & Solid Decal Pipeline Lock
+
+- **Problem**: Custom design layers and uploaded logo graphics appeared semi-transparent, thin, or faded, letting the white shirt body colors bleed through the artwork and dulling the print template output on the 3D mesh.
+- **Fix**:
+  1. **Primary Mesh Transparency Deactivation**: Configured the main jersey body mesh material (`shirtMat`) to set `transparent: false` and `opacity: 1.0` explicitly, avoiding any accidental alpha-fade defaults.
+  2. **Standard Normal Blending Lock**: Forced `blending: THREE.NormalBlending` (and `blending={THREE.NormalBlending}` on decal materials) to prevent WebGL from rendering custom graphics using additive, multiplicative, or screen blending modes that blend colors with the underlying shirt.
+  3. **Alpha Test Safeguard**: Assigned a strict `alphaTest={0.5}` to all decals (`front`, `back`, `logoTexture`, `collarDecal`). This makes the GPU render pixels with alpha >= 0.5 at 100% solid, fully opaque values while fully discarding pixels below 0.5 (such as logo background transparency), completely removing the semi-transparent bleed effect.
+  4. **Solid Pattern Decals**: Configured full-body pattern decals (`patternFront` and `patternBack`) with `transparent={false}` and `depthWrite={true}` since they are procedurally drawn with solid background fills, preventing any rendering passes from treating them as transparent elements.

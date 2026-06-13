@@ -5986,12 +5986,18 @@ export default function CustomizerLayout() {
     setTimeout(() => {
       try {
         const activeSide =
-          currentView === "back" || currentView === "back-center" ? "Back" : "Front";
-        
+          currentView === "back" || currentView === "back-center"
+            ? "Back"
+            : "Front";
+
         const activeDecalTexture =
-          activeSide === "Back" ? texturesRef.current.back : texturesRef.current.front;
+          activeSide === "Back"
+            ? texturesRef.current.back
+            : texturesRef.current.front;
         const activePatternTexture =
-          activeSide === "Back" ? texturesRef.current.patternBack : texturesRef.current.patternFront;
+          activeSide === "Back"
+            ? texturesRef.current.patternBack
+            : texturesRef.current.patternFront;
 
         if (activeDecalTexture && activeDecalTexture.image) {
           const size = 1024;
@@ -6002,7 +6008,11 @@ export default function CustomizerLayout() {
           if (exportCtx) {
             // 1. Draw base pattern/background color if pattern exists
             if (activePatternTexture && activePatternTexture.image) {
-              exportCtx.drawImage(activePatternTexture.image as HTMLCanvasElement, 0, 0);
+              exportCtx.drawImage(
+                activePatternTexture.image as HTMLCanvasElement,
+                0,
+                0,
+              );
             } else {
               // Fallback: fill with active side primary color
               const fallbackColor =
@@ -6014,13 +6024,19 @@ export default function CustomizerLayout() {
             }
 
             // 2. Draw active text/logo decals on top
-            exportCtx.drawImage(activeDecalTexture.image as HTMLCanvasElement, 0, 0);
+            exportCtx.drawImage(
+              activeDecalTexture.image as HTMLCanvasElement,
+              0,
+              0,
+            );
 
             const dataURL = exportCanvas.toDataURL("image/png");
             triggerLocalDownload(dataURL, "jersey-print-template.png");
           }
         } else {
-          console.warn("activeDecalTexture or activeDecalTexture.image is null - skipping flat texture");
+          console.warn(
+            "activeDecalTexture or activeDecalTexture.image is null - skipping flat texture",
+          );
         }
       } catch (err) {
         console.error("Error capturing flat print template:", err);
