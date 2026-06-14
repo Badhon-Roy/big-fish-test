@@ -6613,7 +6613,7 @@ export default function CustomizerLayout() {
     JERSEY_DESIGNS.find((d) => d.id === selectedDesign)?.pattern ?? "plain";
 
   return (
-    <div className="flex h-screen w-full bg-white flex-col md:flex-row">
+    <div className="flex h-screen w-full bg-white flex-col md:flex-row" data-lenis-prevent>
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-zinc-200">
         <Link href="/" className="text-zinc-600">

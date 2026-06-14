@@ -1,25 +1,17 @@
-import { HeroSection } from "@/components/home/HeroSection";
-import { Categories } from "@/components/home/Categories";
-import { HowItWorks } from "@/components/home/HowItWorks";
-import { FeaturedTemplates } from "@/components/home/FeaturedTemplates";
-import { LivePreview } from "@/components/home/LivePreview";
-import { Testimonials } from "@/components/home/Testimonials";
-import { TrustedBrands } from "@/components/home/TrustedBrands";
-import { Pricing } from "@/components/home/Pricing";
-import { FAQ } from "@/components/home/FAQ";
+import Banner from "@/components/home/banner/Banner";
+import CTA from "@/components/home/cta/CTA";
+import HowItWorks from "@/components/home/how-it-works/HowItWorks";
+import Products from "@/components/home/products/Products";
+import Services from "@/components/home/services/Services";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white overflow-x-hidden font-sans selection:bg-red-500/30 selection:text-red-900">
-      <HeroSection />
-      <TrustedBrands />
-      <FeaturedTemplates />
-      <Categories />
+    <main className="w-full min-h-screen">
+      <Banner />
+      <Services />
+      <Products />
       <HowItWorks />
-      <LivePreview />
-      <Testimonials />
-      <Pricing />
-      <FAQ />
+      <CTA />
     </main>
   );
 }
