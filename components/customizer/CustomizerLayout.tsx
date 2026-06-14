@@ -3,7 +3,7 @@
 import React, { JSX, useMemo, useState, useRef, useEffect } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
-import LogoImg from "@/assets/images/logo.png"
+import LogoImg from "@/assets/images/logo.png";
 import {
   OrbitControls,
   Environment,
@@ -6614,7 +6614,10 @@ export default function CustomizerLayout() {
     JERSEY_DESIGNS.find((d) => d.id === selectedDesign)?.pattern ?? "plain";
 
   return (
-    <div className="flex h-screen w-full bg-white flex-col md:flex-row" data-lenis-prevent>
+    <div
+      className="flex h-screen w-full bg-white flex-col md:flex-row"
+      data-lenis-prevent
+    >
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-zinc-200">
         <Link href="/" className="text-zinc-600">
@@ -6625,23 +6628,50 @@ export default function CustomizerLayout() {
 
       {/* ── Icon Sidebar ── */}
       <div className="hidden md:flex w-20 flex-col items-center bg-white border-r border-zinc-200 py-6 gap-4 z-20 overflow-y-auto">
-
         {/* Brand Logo */}
         <Link href="/" className="mb-2">
-          <img src={LogoImg.src} alt="Logo" width={60} height={40} className="cursor-pointer object-contain" />
+          <img
+            src={LogoImg.src}
+            alt="Logo"
+            width={60}
+            height={40}
+            className="cursor-pointer object-contain"
+          />
         </Link>
-        {TABS?.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`p-3 rounded-lg flex flex-col items-center cursor-pointer gap-1 transition-all w-16 ${activeTab === tab.id ? "bg-zinc-200 text-[#00263C]" : "text-zinc-500 hover:text-[#00263C] hover:bg-zinc-200"}`}
-          >
-            <tab.icon className="w-5 h-5" />
-            <span className="text-xs font-medium leading-tight text-center">
-              {tab.label}
-            </span>
-          </button>
-        ))}
+        {TABS?.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative group py-2.5 rounded-xl flex flex-col items-center justify-center cursor-pointer gap-1 transition-all duration-300 w-16 ${
+                isActive
+                  ? "text-[#00263C]"
+                  : "text-zinc-400 hover:text-[#00263C]"
+              }`}
+            >
+              {/* Highlight background pill for active state */}
+              {isActive && (
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="absolute inset-0 bg-[#00263C]/5 border-l-2 border-[#00263C] rounded-xl"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+
+              <tab.icon
+                className={`w-5 h-5 transition-transform duration-300 ${
+                  isActive ? "scale-110" : "group-hover:scale-105"
+                }`}
+              />
+              <span className={`text-[10px] tracking-wide text-center transition-all duration-300 ${
+                isActive ? "font-bold" : "font-medium text-zinc-500 group-hover:text-[#00263C]"
+              }`}>
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Settings Panel ── */}
@@ -6887,12 +6917,14 @@ export default function CustomizerLayout() {
                             "#2196F3",
                             "#111111",
                             "#FFFFFF",
+                            "#CCCCCC",
                             "#457B9D",
                             "#2A9D8F",
                             "#F4A261",
-                            "#6C63FF",
+                            "#726DE8",
                             "#FF6B6B",
-                            "#43AA8B",
+                            "#80C670",
+                            "#EFBD4E",
                           ].map((c) => (
                             <button
                               key={c}
@@ -7110,10 +7142,14 @@ export default function CustomizerLayout() {
                                   "#2196F3",
                                   "#111111",
                                   "#FFFFFF",
+                                  "#CCCCCC",
                                   "#457B9D",
                                   "#2A9D8F",
                                   "#F4A261",
-                                  "#6C63FF",
+                                  "#726DE8",
+                                  "#FF6B6B",
+                                  "#80C670",
+                                  "#EFBD4E",
                                 ].map((c) => (
                                   <button
                                     key={c}
@@ -7162,14 +7198,18 @@ export default function CustomizerLayout() {
                                   Transparent
                                 </button>
                                 {[
-                                  "#FFFFFF",
                                   "#E63946",
                                   "#2196F3",
                                   "#111111",
+                                  "#FFFFFF",
+                                  "#CCCCCC",
                                   "#457B9D",
                                   "#2A9D8F",
                                   "#F4A261",
-                                  "#6C63FF",
+                                  "#726DE8",
+                                  "#FF6B6B",
+                                  "#80C670",
+                                  "#EFBD4E",
                                 ].map((c) => (
                                   <button
                                     key={c}
