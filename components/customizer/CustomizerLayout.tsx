@@ -7314,7 +7314,7 @@ export default function CustomizerLayout() {
                           </svg>
                         </div>
                         {/* Canvas area grid lines */}
-                        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:20px_20px]" />
+                        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-size-[20px_20px]" />
                       </div>
 
                       {/* Active side text label */}
@@ -7719,7 +7719,7 @@ export default function CustomizerLayout() {
                                 style={{ backgroundColor: c }}
                               />
                             ))}
-                            <div className="w-[1px] h-4 bg-zinc-300 mx-1"></div>
+                            <div className="w-px h-4 bg-zinc-300 mx-1"></div>
                             <input
                               type="color"
                               value={selectedLayer.color}
@@ -8234,7 +8234,7 @@ export default function CustomizerLayout() {
                             <path d="M 30,15 L 70,15 L 85,25 L 80,45 L 70,40 L 70,85 L 30,85 L 30,40 L 20,45 L 15,25 Z" />
                           </svg>
                         </div>
-                        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:20px_20px]" />
+                        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-size-[20px_20px]" />
                       </div>
 
                       {/* Active side text label */}
@@ -8853,7 +8853,7 @@ export default function CustomizerLayout() {
                                     </div>
 
                                     {/* Thumbnail Preview */}
-                                    <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 overflow-hidden flex items-center justify-center p-0.5 flex-shrink-0 shadow-sm">
+                                    <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 overflow-hidden flex items-center justify-center p-0.5 shrink-0 shadow-sm">
                                       {isText ? (
                                         <span className="text-xs font-bold text-zinc-500">
                                           T
