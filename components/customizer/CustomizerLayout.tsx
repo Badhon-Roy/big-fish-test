@@ -6667,7 +6667,7 @@ export default function CustomizerLayout() {
                 <div className="space-y-5">
                   {/* Collar toggle */}
                   <div className="flex items-center justify-between py-3 border-b border-zinc-100">
-                    <span className="text-sm font-semibold text-zinc-800">
+                    <span className="text-sm font-semibold text-[#00263C]">
                       Add Collar
                     </span>
                     <Toggle
