@@ -6647,10 +6647,10 @@ export default function CustomizerLayout() {
       {/* ── Settings Panel ── */}
       <div className="w-full md:w-80 bg-white border-r border-zinc-200 flex flex-col h-full z-10 shadow-lg">
         <div className="p-5 border-b border-zinc-200 bg-zinc-50/60">
-          <h2 className="text-lg font-bold text-zinc-900 capitalize">
+          <h2 className="text-xl font-bold text-[#00263C] capitalize">
             {TABS.find((t) => t.id === activeTab)?.label}
           </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Customize your jersey</p>
+          <p className="text-sm text-[#00263C] mt-0.5">Customize your jersey</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
