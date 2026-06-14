@@ -1,4 +1,4 @@
-import Footer from "@/components/home/Footer";
+import Footer from "@/shared/Footer";
 
 
 export default function MainLayout({

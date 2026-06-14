@@ -10,7 +10,7 @@ import jersey1 from "@/assets/images/banner-jersey-1.png";
 import jersey2 from "@/assets/images/banner-jersey-2.png";
 import jersey3 from "@/assets/images/banner-jersey-3.png";
 import jersey4 from "@/assets/images/banner-jersey-4.png";
-import Navbar from "../Navbar";
+import Navbar from "../../../shared/Navbar";
 
 const Banner = () => {
   const [activeIndex, setActiveIndex] = useState(0);
