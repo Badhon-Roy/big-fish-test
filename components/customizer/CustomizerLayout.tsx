@@ -6664,9 +6664,13 @@ export default function CustomizerLayout() {
                   isActive ? "scale-110" : "group-hover:scale-105"
                 }`}
               />
-              <span className={`text-[10px] tracking-wide text-center transition-all duration-300 ${
-                isActive ? "font-bold" : "font-medium text-zinc-500 group-hover:text-[#00263C]"
-              }`}>
+              <span
+                className={`text-[10px] tracking-wide text-center transition-all duration-300 ${
+                  isActive
+                    ? "font-bold"
+                    : "font-medium text-zinc-500 group-hover:text-[#00263C]"
+                }`}
+              >
                 {tab.label}
               </span>
             </button>
