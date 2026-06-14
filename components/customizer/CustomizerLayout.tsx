@@ -3,6 +3,7 @@
 import React, { JSX, useMemo, useState, useRef, useEffect } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
+import LogoImg from "@/assets/images/logo.png"
 import {
   OrbitControls,
   Environment,
@@ -6624,19 +6625,19 @@ export default function CustomizerLayout() {
 
       {/* ── Icon Sidebar ── */}
       <div className="hidden md:flex w-20 flex-col items-center bg-white border-r border-zinc-200 py-6 gap-4 z-20 overflow-y-auto">
+
+        {/* Brand Logo */}
         <Link href="/" className="mb-2">
-          <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold cursor-pointer hover:bg-black transition-colors">
-            V
-          </div>
+          <img src={LogoImg.src} alt="Logo" width={60} height={40} className="cursor-pointer object-contain" />
         </Link>
         {TABS?.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all w-16 ${activeTab === tab.id ? "bg-zinc-100 text-red-600" : "text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50"}`}
+            className={`p-3 rounded-lg flex flex-col items-center cursor-pointer gap-1 transition-all w-16 ${activeTab === tab.id ? "bg-zinc-200 text-[#00263C]" : "text-zinc-500 hover:text-[#00263C] hover:bg-zinc-200"}`}
           >
             <tab.icon className="w-5 h-5" />
-            <span className="text-[9px] font-bold leading-tight text-center">
+            <span className="text-xs font-medium leading-tight text-center">
               {tab.label}
             </span>
           </button>
