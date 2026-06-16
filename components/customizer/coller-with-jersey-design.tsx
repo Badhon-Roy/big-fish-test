@@ -236,7 +236,7 @@ function useStyleDecals(colors: any) {
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.moveTo(S * 0.22, 0);
-      ctx.lineTo(S * 0.50, S * 0.45);
+      ctx.lineTo(S * 0.5, S * 0.45);
       ctx.lineTo(S * 0.78, 0);
       ctx.closePath();
       ctx.fill();
@@ -244,7 +244,7 @@ function useStyleDecals(colors: any) {
       // 2. Draw the thick V-neck border (white background)
       ctx.beginPath();
       ctx.moveTo(S * 0.22, 0);
-      ctx.lineTo(S * 0.50, S * 0.45);
+      ctx.lineTo(S * 0.5, S * 0.45);
       ctx.lineTo(S * 0.78, 0);
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = S * 0.05;
@@ -255,7 +255,7 @@ function useStyleDecals(colors: any) {
       // 3. Draw the orange center stripe inside the V-neck border
       ctx.beginPath();
       ctx.moveTo(S * 0.22, 0);
-      ctx.lineTo(S * 0.50, S * 0.45);
+      ctx.lineTo(S * 0.5, S * 0.45);
       ctx.lineTo(S * 0.78, 0);
       ctx.strokeStyle = trim; // user's designColor/secondary (e.g. orange)
       ctx.lineWidth = S * 0.015;
@@ -4267,10 +4267,16 @@ function MiniPatternSVG({
 }
 
 // Preload the models to prevent popping
-useGLTF.preload("/Meshy_AI_Emerald_Confidence_Po_0615111446_texture.glb");
+useGLTF.preload("/Meshy_AI_Minimalist_White_Hood_0616043506_generate.glb");
+useGLTF.preload("/Meshy_AI_Create_a_realistic_ta_0616041531_generate.glb");
+useGLTF.preload(
+  "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
+);
 useGLTF.preload("/Meshy_AI_Create_an_exact_3D_sp_0615105857_generate.glb");
 useGLTF.preload("/Meshy_AI_Realistic_sports_polo_0615102145_generate.glb");
-useGLTF.preload("/Meshy_AI_Beige_Puffer_Jacket_3_0615102128_image_to_3d_texture.glb");
+useGLTF.preload(
+  "/Meshy_AI_Beige_Puffer_Jacket_3_0615102128_image_to_3d_texture.glb",
+);
 
 // Procedural texture generators for fabrics
 function createMeshNormalMap() {
@@ -4424,7 +4430,11 @@ interface PoloCollar3DProps {
   };
 }
 
-function PoloCollar3D({ colors, patternFront, fabricConfig }: PoloCollar3DProps) {
+function PoloCollar3D({
+  colors,
+  patternFront,
+  fabricConfig,
+}: PoloCollar3DProps) {
   const trimColor = colors.designColor || colors.secondary || "#ff6600";
   const baseColor = "#ffffff"; // White collar body as in the reference image
 
@@ -4469,138 +4479,181 @@ function PoloCollar3D({ colors, patternFront, fabricConfig }: PoloCollar3DProps)
   const collarGeometry = React.useMemo(() => {
     const uSegments = 40;
     const vSegments = 16;
-    
+
     const positions: number[] = [];
     const normals: number[] = [];
     const uvs: number[] = [];
     const indices: number[] = [];
-    
+
     // Snug fitting neckline snap offsets - widened and lowered to match the shirt opening perfectly
     const rx = 0.068;
     const rz = 0.056;
     const yCenter = 0.203;
     const zCenter = -0.005;
     const thickness = 0.0006; // 0.6mm thickness (scaled to 1.3mm) for thin realistic fabric look
-    
+
     const getPosAndNormal = (u: number, v: number) => {
       // Split V-neck/placket gap: alpha wraps from front-left (0.15) to front-right (2*pi - 0.15)
       const alpha = 0.15 + u * (2 * Math.PI - 0.3);
       const xBase = rx * Math.sin(alpha);
       const zBase = zCenter + rz * Math.cos(alpha);
-      const yBase = yCenter - 0.010 * Math.cos(alpha);
-      
+      const yBase = yCenter - 0.01 * Math.cos(alpha);
+
       const pBase = new THREE.Vector3(xBase, yBase, zBase);
-      const nOut = new THREE.Vector3(rx * Math.sin(alpha), 0, rz * Math.cos(alpha)).normalize();
+      const nOut = new THREE.Vector3(
+        rx * Math.sin(alpha),
+        0,
+        rz * Math.cos(alpha),
+      ).normalize();
       const up = new THREE.Vector3(0, 1, 0);
-      
+
       const hStand = 0.012 + 0.003 * Math.sin(Math.abs(alpha - Math.PI));
       const wLeaf = 0.045 + 0.035 * Math.pow(Math.abs(u - 0.5) * 2, 2.5);
       const lTotal = hStand + wLeaf;
-      
+
       const s = v * lTotal;
       let theta = 0.08;
       if (s <= hStand) {
-        theta = 0.08 + (s / hStand) * 0.30; // stand section: nearly vertical
+        theta = 0.08 + (s / hStand) * 0.3; // stand section: nearly vertical
       } else if (s <= hStand + 0.006) {
         const t = (s - hStand) / 0.006;
         theta = 0.38 + t * 1.47; // roll section: curves outward to 1.85 rad
       } else {
         const t = (s - hStand - 0.006) / (wLeaf - 0.006);
-        theta = 1.85 + t * 0.50; // leaf section: drapes flatter over shoulders to 2.35 rad (outward & downward)
+        theta = 1.85 + t * 0.5; // leaf section: drapes flatter over shoulders to 2.35 rad (outward & downward)
       }
-      
+
       // Numerical integration of tangent vector to get position
       const pos = pBase.clone();
       const numSteps = 16;
       const stepSize = lTotal / numSteps;
       const currentSegmentIndex = Math.round(v * numSteps);
-      
+
       for (let k = 0; k < currentSegmentIndex; k++) {
         const sk = (k + 0.5) * stepSize;
         let tk = 0.08;
         if (sk <= hStand) {
-          tk = 0.08 + (sk / hStand) * 0.30;
+          tk = 0.08 + (sk / hStand) * 0.3;
         } else if (sk <= hStand + 0.006) {
           tk = 0.38 + ((sk - hStand) / 0.006) * 1.47;
         } else {
-          tk = 1.85 + ((sk - hStand - 0.006) / (wLeaf - 0.006)) * 0.50;
+          tk = 1.85 + ((sk - hStand - 0.006) / (wLeaf - 0.006)) * 0.5;
         }
-        const dir = up.clone().multiplyScalar(Math.cos(tk))
+        const dir = up
+          .clone()
+          .multiplyScalar(Math.cos(tk))
           .add(nOut.clone().multiplyScalar(Math.sin(tk)));
         pos.add(dir.multiplyScalar(stepSize));
       }
-      
-      const norm = up.clone().multiplyScalar(-Math.sin(theta))
+
+      const norm = up
+        .clone()
+        .multiplyScalar(-Math.sin(theta))
         .add(nOut.clone().multiplyScalar(Math.cos(theta)))
         .normalize();
-        
+
       return { pos, norm };
     };
-    
+
     for (let i = 0; i <= uSegments; i++) {
       const u = i / uSegments;
       for (let j = 0; j <= vSegments; j++) {
         const v = j / vSegments;
         const { pos, norm } = getPosAndNormal(u, v);
-        
+
         const vOuter = pos.clone().add(norm.clone().multiplyScalar(thickness));
         positions.push(vOuter.x, vOuter.y, vOuter.z);
         normals.push(norm.x, norm.y, norm.z);
         uvs.push(u, v);
-        
+
         const vInner = pos.clone().add(norm.clone().multiplyScalar(-thickness));
         positions.push(vInner.x, vInner.y, vInner.z);
         normals.push(-norm.x, -norm.y, -norm.z);
         uvs.push(u, v);
       }
     }
-    
+
     const getIndex = (i: number, j: number, isInner: boolean) => {
       const baseIdx = (i * (vSegments + 1) + j) * 2;
       return isInner ? baseIdx + 1 : baseIdx;
     };
-    
+
     for (let i = 0; i < uSegments; i++) {
       for (let j = 0; j < vSegments; j++) {
         const o00 = getIndex(i, j, false);
         const o10 = getIndex(i + 1, j, false);
         const o01 = getIndex(i, j + 1, false);
         const o11 = getIndex(i + 1, j + 1, false);
-        
+
         indices.push(o00, o10, o01);
         indices.push(o10, o11, o01);
-        
+
         const i00 = getIndex(i, j, true);
         const i10 = getIndex(i + 1, j, true);
         const i01 = getIndex(i, j + 1, true);
         const i11 = getIndex(i + 1, j + 1, true);
-        
+
         indices.push(i00, i01, i10);
         indices.push(i10, i01, i11);
       }
     }
-    
+
     for (let i = 0; i < uSegments; i++) {
-      indices.push(getIndex(i, 0, false), getIndex(i, 0, true), getIndex(i + 1, 0, false));
-      indices.push(getIndex(i + 1, 0, false), getIndex(i, 0, true), getIndex(i + 1, 0, true));
+      indices.push(
+        getIndex(i, 0, false),
+        getIndex(i, 0, true),
+        getIndex(i + 1, 0, false),
+      );
+      indices.push(
+        getIndex(i + 1, 0, false),
+        getIndex(i, 0, true),
+        getIndex(i + 1, 0, true),
+      );
     }
     for (let i = 0; i < uSegments; i++) {
-      indices.push(getIndex(i, vSegments, false), getIndex(i + 1, vSegments, false), getIndex(i, vSegments, true));
-      indices.push(getIndex(i + 1, vSegments, false), getIndex(i + 1, vSegments, true), getIndex(i, vSegments, true));
+      indices.push(
+        getIndex(i, vSegments, false),
+        getIndex(i + 1, vSegments, false),
+        getIndex(i, vSegments, true),
+      );
+      indices.push(
+        getIndex(i + 1, vSegments, false),
+        getIndex(i + 1, vSegments, true),
+        getIndex(i, vSegments, true),
+      );
     }
     for (let j = 0; j < vSegments; j++) {
-      indices.push(getIndex(0, j, false), getIndex(0, j + 1, false), getIndex(0, j, true));
-      indices.push(getIndex(0, j + 1, false), getIndex(0, j + 1, true), getIndex(0, j, true));
+      indices.push(
+        getIndex(0, j, false),
+        getIndex(0, j + 1, false),
+        getIndex(0, j, true),
+      );
+      indices.push(
+        getIndex(0, j + 1, false),
+        getIndex(0, j + 1, true),
+        getIndex(0, j, true),
+      );
     }
     for (let j = 0; j < vSegments; j++) {
-      indices.push(getIndex(uSegments, j, false), getIndex(uSegments, j, true), getIndex(uSegments, j + 1, false));
-      indices.push(getIndex(uSegments, j + 1, false), getIndex(uSegments, j, true), getIndex(uSegments, j + 1, true));
+      indices.push(
+        getIndex(uSegments, j, false),
+        getIndex(uSegments, j, true),
+        getIndex(uSegments, j + 1, false),
+      );
+      indices.push(
+        getIndex(uSegments, j + 1, false),
+        getIndex(uSegments, j, true),
+        getIndex(uSegments, j + 1, true),
+      );
     }
-    
+
     const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-    geom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geom.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(positions, 3),
+    );
+    geom.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+    geom.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     geom.setIndex(indices);
     geom.computeVertexNormals();
     geom.computeBoundingBox();
@@ -4622,7 +4675,12 @@ function PoloCollar3D({ colors, patternFront, fabricConfig }: PoloCollar3DProps)
 
   return (
     <group>
-      <mesh castShadow receiveShadow geometry={collarGeometry} material={baseMaterial} />
+      <mesh
+        castShadow
+        receiveShadow
+        geometry={collarGeometry}
+        material={baseMaterial}
+      />
     </group>
   );
 }
@@ -4641,7 +4699,10 @@ function Jersey3D({
     patternBack?: THREE.CanvasTexture | null;
   }>;
 }) {
-  const { scene } = useGLTF(colors.glbModel || "/Meshy_AI_Emerald_Confidence_Po_0615111446_texture.glb") as any;
+  const { scene } = useGLTF(
+    colors.glbModel ||
+      "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
+  ) as any;
   const tShirtMesh = React.useMemo<THREE.Mesh | null>(() => {
     let mesh: THREE.Mesh | null = null;
     scene.traverse((child: any) => {
@@ -4654,10 +4715,10 @@ function Jersey3D({
 
   const alignedGeometry = React.useMemo(() => {
     if (!tShirtMesh) return null;
-    
+
     // Clone the geometry so we don't mutate the cached GLTF asset geometry
     const geom = tShirtMesh.geometry.clone();
-    
+
     geom.computeBoundingBox();
     const bbox = geom.boundingBox;
     if (!bbox) return geom;
@@ -4677,7 +4738,7 @@ function Jersey3D({
     const targetCenterY = -0.04546;
     const targetCenterZ = 0.00959;
 
-    const uniformScale = targetHeight / height; 
+    const uniformScale = targetHeight / height;
 
     // Center geometry at origin (0, 0, 0)
     geom.translate(-centerX, -centerY, -centerZ);
@@ -4875,7 +4936,11 @@ function Jersey3D({
   const roughness = fabricConfig.roughness;
 
   return (
-    <group key={colors.glbModel} scale={[scaleX, 2.2, scaleZ]} position={[0, -0.1, 0]}>
+    <group
+      key={colors.glbModel}
+      scale={[scaleX, 2.2, scaleZ]}
+      position={[0, -0.1, 0]}
+    >
       {alignedGeometry && (
         <mesh
           castShadow
@@ -4884,143 +4949,147 @@ function Jersey3D({
           material={shirtMat}
           dispose={null}
         >
-        {/* ── Full-body pattern decals (rendered first, underneath text) ── */}
-        {patternFront && (
-          <Decal
-            position={[0, 0.0, 0.155]}
-            rotation={[0, 0, 0]}
-            scale={[0.54, 0.7, 0.32]}
-            renderOrder={1}
-          >
-            <meshStandardMaterial
-              map={patternFront}
-              transparent
-              alphaTest={0.01}
-              depthWrite={false}
-              polygonOffset
-              polygonOffsetFactor={-3}
-              roughness={roughness}
-              normalMap={fabricConfig.normalMap || undefined}
-              normalScale={fabricConfig.normalScale}
-              envMapIntensity={0.2}
-            />
-          </Decal>
-        )}
-        {patternBack && (
-          <Decal
-            position={[0, 0.0, -0.155]}
-            rotation={[0, Math.PI, 0]}
-            scale={[0.54, 0.7, 0.32]}
-            renderOrder={1}
-          >
-            <meshStandardMaterial
-              map={patternBack}
-              transparent
-              alphaTest={0.01}
-              depthWrite={false}
-              polygonOffset
-              polygonOffsetFactor={-3}
-              roughness={roughness}
-              normalMap={fabricConfig.normalMap || undefined}
-              normalScale={fabricConfig.normalScale}
-              envMapIntensity={0.2}
-            />
-          </Decal>
-        )}
+          {/* ── Full-body pattern decals (rendered first, underneath text) ── */}
+          {patternFront && (
+            <Decal
+              position={[0, 0.0, 0.155]}
+              rotation={[0, 0, 0]}
+              scale={[0.54, 0.7, 0.32]}
+              renderOrder={1}
+            >
+              <meshStandardMaterial
+                map={patternFront}
+                transparent
+                alphaTest={0.01}
+                depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-3}
+                roughness={roughness}
+                normalMap={fabricConfig.normalMap || undefined}
+                normalScale={fabricConfig.normalScale}
+                envMapIntensity={0.2}
+              />
+            </Decal>
+          )}
+          {patternBack && (
+            <Decal
+              position={[0, 0.0, -0.155]}
+              rotation={[0, Math.PI, 0]}
+              scale={[0.54, 0.7, 0.32]}
+              renderOrder={1}
+            >
+              <meshStandardMaterial
+                map={patternBack}
+                transparent
+                alphaTest={0.01}
+                depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-3}
+                roughness={roughness}
+                normalMap={fabricConfig.normalMap || undefined}
+                normalScale={fabricConfig.normalScale}
+                envMapIntensity={0.2}
+              />
+            </Decal>
+          )}
 
-        {/* ── Text / number decals (on top of pattern) ── */}
-        {front && (
-          <Decal
-            position={[0, 0.0, 0.155]}
-            rotation={[0, 0, 0]}
-            scale={[0.54, 0.7, 0.32]}
-            renderOrder={10}
-          >
-            <meshStandardMaterial
-              map={front}
-              transparent
-              alphaTest={0.02}
-              depthWrite={false}
-              polygonOffset
-              polygonOffsetFactor={-4}
-              roughness={roughness}
-              normalMap={fabricConfig.normalMap || undefined}
-              normalScale={fabricConfig.normalScale}
-              envMapIntensity={0.2}
-            />
-          </Decal>
-        )}
-        {back && (
-          <Decal
-            position={[0, 0.0, -0.155]}
-            rotation={[0, Math.PI, 0]}
-            scale={[0.54, 0.7, 0.32]}
-            renderOrder={10}
-          >
-            <meshStandardMaterial
-              map={back}
-              transparent
-              alphaTest={0.02}
-              depthWrite={false}
-              polygonOffset
-              polygonOffsetFactor={-4}
-              roughness={roughness}
-              normalMap={fabricConfig.normalMap || undefined}
-              normalScale={fabricConfig.normalScale}
-              envMapIntensity={0.2}
-            />
-          </Decal>
-        )}
-        {logoTexture && logoParams && (
-          <Decal
-            position={logoParams.position}
-            rotation={logoParams.rotation}
-            scale={logoParams.scale}
-            renderOrder={20}
-          >
-            <meshStandardMaterial
-              map={logoTexture}
-              transparent
-              alphaTest={0.002}
-              depthWrite={false}
-              polygonOffset
-              polygonOffsetFactor={-8}
-              roughness={roughness}
-              normalMap={fabricConfig.normalMap || undefined}
-              normalScale={fabricConfig.normalScale}
-              envMapIntensity={0.2}
-            />
-          </Decal>
-        )}
+          {/* ── Text / number decals (on top of pattern) ── */}
+          {front && (
+            <Decal
+              position={[0, 0.0, 0.155]}
+              rotation={[0, 0, 0]}
+              scale={[0.54, 0.7, 0.32]}
+              renderOrder={10}
+            >
+              <meshStandardMaterial
+                map={front}
+                transparent
+                alphaTest={0.02}
+                depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-4}
+                roughness={roughness}
+                normalMap={fabricConfig.normalMap || undefined}
+                normalScale={fabricConfig.normalScale}
+                envMapIntensity={0.2}
+              />
+            </Decal>
+          )}
+          {back && (
+            <Decal
+              position={[0, 0.0, -0.155]}
+              rotation={[0, Math.PI, 0]}
+              scale={[0.54, 0.7, 0.32]}
+              renderOrder={10}
+            >
+              <meshStandardMaterial
+                map={back}
+                transparent
+                alphaTest={0.02}
+                depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-4}
+                roughness={roughness}
+                normalMap={fabricConfig.normalMap || undefined}
+                normalScale={fabricConfig.normalScale}
+                envMapIntensity={0.2}
+              />
+            </Decal>
+          )}
+          {logoTexture && logoParams && (
+            <Decal
+              position={logoParams.position}
+              rotation={logoParams.rotation}
+              scale={logoParams.scale}
+              renderOrder={20}
+            >
+              <meshStandardMaterial
+                map={logoTexture}
+                transparent
+                alphaTest={0.002}
+                depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-8}
+                roughness={roughness}
+                normalMap={fabricConfig.normalMap || undefined}
+                normalScale={fabricConfig.normalScale}
+                envMapIntensity={0.2}
+              />
+            </Decal>
+          )}
 
-        {/* ── Collar Decal: wrapped flat onto the chest/neckline surface ── */}
-        {collarDecal && (
-          <Decal
-            position={[0.0, 0.19, 0.118]}
-            rotation={[0.15, 0, 0]}
-            scale={[0.22, 0.22, 0.12]}
-            renderOrder={30}
-          >
-            <meshStandardMaterial
-              map={collarDecal}
-              transparent
-              alphaTest={0.008}
-              depthWrite={false}
-              polygonOffset
-              polygonOffsetFactor={-7}
-              roughness={roughness}
-              normalMap={fabricConfig.normalMap || undefined}
-              normalScale={fabricConfig.normalScale}
-              envMapIntensity={0.2}
-            />
-          </Decal>
-        )}
-      </mesh>
+          {/* ── Collar Decal: wrapped flat onto the chest/neckline surface ── */}
+          {collarDecal && (
+            <Decal
+              position={[0.0, 0.19, 0.118]}
+              rotation={[0.15, 0, 0]}
+              scale={[0.22, 0.22, 0.12]}
+              renderOrder={30}
+            >
+              <meshStandardMaterial
+                map={collarDecal}
+                transparent
+                alphaTest={0.008}
+                depthWrite={false}
+                polygonOffset
+                polygonOffsetFactor={-7}
+                roughness={roughness}
+                normalMap={fabricConfig.normalMap || undefined}
+                normalScale={fabricConfig.normalScale}
+                envMapIntensity={0.2}
+              />
+            </Decal>
+          )}
+        </mesh>
       )}
 
       {/* ── Dynamic Collar Elements (Polo 3D Wings, now flush and realistic) ── */}
       {colors.collar && colors.collarType === "Polo" && (
-        <PoloCollar3D colors={colors} patternFront={patternFront} fabricConfig={fabricConfig} />
+        <PoloCollar3D
+          colors={colors}
+          patternFront={patternFront}
+          fabricConfig={fabricConfig}
+        />
       )}
 
       {/* ── Long / 3/4 Sleeve Extensions ─────────────────────────────────── */}
@@ -6556,7 +6625,8 @@ export default function CollerWithJerseyDesign() {
     "Front",
   );
   const [state, setState] = useState({
-    glbModel: "/Meshy_AI_Emerald_Confidence_Po_0615111446_texture.glb",
+    glbModel:
+      "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
     primary: "#2196F3",
     primaryColorSide: "Both",
     primaryFront: "#2196F3",
@@ -9268,8 +9338,16 @@ export default function CollerWithJerseyDesign() {
                     <div className="grid grid-cols-1 gap-2">
                       {[
                         {
-                          name: "Emerald Confidence Polo",
-                          path: "/Meshy_AI_Emerald_Confidence_Po_0615111446_texture.glb",
+                          name: "Minimalist Hoodie",
+                          path: "/Meshy_AI_Minimalist_White_Hood_0616043506_generate.glb",
+                        },
+                        {
+                          name: "Realistic Tank Top",
+                          path: "/Meshy_AI_Create_a_realistic_ta_0616041531_generate.glb",
+                        },
+                        {
+                          name: "Collar Jersey",
+                          path: "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
                         },
                         {
                           name: "Custom Sports Jersey",
@@ -9292,23 +9370,35 @@ export default function CollerWithJerseyDesign() {
                             if (m.name === "Beige Puffer Jacket") {
                               updateState("collar", false);
                               updateState("collarType", "None");
+                            } else if (m.name === "Minimalist Hoodie") {
+                              updateState("collar", false);
+                              updateState("collarType", "None");
+                              updateState("sleeve", "Long");
+                            } else if (m.name === "Realistic Tank Top") {
+                              updateState("collar", false);
+                              updateState("collarType", "None");
+                              updateState("sleeve", "Sleeveless");
                             } else if (
-                              m.name === "Sports Polo Jersey" || 
+                              m.name === "Sports Polo Jersey" ||
                               m.name === "Custom Sports Jersey" ||
-                              m.name === "Emerald Confidence Polo"
+                              m.name === "Collar Jersey"
                             ) {
                               updateState("collar", false);
                               updateState("collarType", "None");
                             }
                           }}
                           className={`p-3 rounded-xl cursor-pointer border text-sm font-bold transition-all active:scale-95 duration-300 text-left px-5 flex items-center justify-between ${
-                            (state.glbModel || "/Meshy_AI_Emerald_Confidence_Po_0615111446_texture.glb") === m.path
+                            (state.glbModel ||
+                              "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb") ===
+                            m.path
                               ? "border-red-500 bg-red-50 text-red-700 font-extrabold shadow-sm"
                               : "border-[#002337] text-[#002337] hover:border-zinc-300 hover:bg-zinc-50"
                           }`}
                         >
                           <span>{m.name}</span>
-                          {(state.glbModel || "/Meshy_AI_Emerald_Confidence_Po_0615111446_texture.glb") === m.path && (
+                          {(state.glbModel ||
+                            "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb") ===
+                            m.path && (
                             <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500/50 animate-pulse" />
                           )}
                         </button>
