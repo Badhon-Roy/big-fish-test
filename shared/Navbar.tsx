@@ -6,13 +6,24 @@ import logoImg from "@/assets/images/logo.png";
 import { motion } from "framer-motion";
 import CommonButton from "@/common/CommonButton";
 
+import { usePathname } from "next/navigation";
+
 const Navbar = () => {
+  const pathname = usePathname();
   const menuItems = [
-    { name: "Home", href: "/", active: true },
+    { name: "Home", href: "/" },
+    { name: "Designs", href: "/designs" },
     { name: "How it Works", href: "/how-it-works" },
     { name: "Products", href: "/products" },
     { name: "Contact Us", href: "/contact" },
   ];
+
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(href);
+  };
 
   return (
     <motion.nav
@@ -39,7 +50,7 @@ const Navbar = () => {
           />
         </Link>
       </motion.div>
-
+ 
       {/* Nav Menu with Staggered Link Drops */}
       <div className="hidden md:flex items-center space-x-8 lg:space-x-12">
         {menuItems.map((item, idx) => (
@@ -54,7 +65,7 @@ const Navbar = () => {
               className="relative py-2 text-sm lg:text-base font-medium text-[#031E39] hover:text-opacity-80 transition-colors duration-200 block"
             >
               {item.name}
-              {item.active && (
+              {isActive(item.href) && (
                 <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#031E39] rounded-full" />
               )}
             </Link>
