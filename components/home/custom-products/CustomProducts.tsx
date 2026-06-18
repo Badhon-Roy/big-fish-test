@@ -19,6 +19,7 @@ import CoofieBegMeshImg from "@/public/assets/mesh/coffee-bag-mockup.png";
 import PaillowMeshImg from "@/public/assets/mesh/paillow.avif";
 import BusinessCardImg from "@/public/assets/mesh/business-card.png";
 import ShoppingBeg from "@/public/assets/mesh/shopping-beg.png";
+import JuiceCupMeshImg from "@/public/assets/mesh/juice-cup.avif"
 
 interface ColorOption {
   colorCode: string;
@@ -51,6 +52,9 @@ const CustomProducts = () => {
         break;
       case "business-card":
         router.push("/business-card-design");
+        break;
+      case "paillow":
+        router.push("/pillow-design");
         break;
       default:
         toast.info("Customizer for this product is coming soon!");
@@ -168,6 +172,16 @@ const CustomProducts = () => {
       name: "Shopping Bag",
       image: ShoppingBeg,
       category: "Bags",
+      colors: [
+        { colorCode: "#000000", name: "Black" },
+        { colorCode: "#808080", name: "Gray" },
+      ],
+    },
+    {
+      id: "juice-cup",
+      name: "Juice Cup",
+      image: JuiceCupMeshImg,
+      category: "Cups",
       colors: [
         { colorCode: "#000000", name: "Black" },
         { colorCode: "#808080", name: "Gray" },
