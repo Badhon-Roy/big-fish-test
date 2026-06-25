@@ -123,7 +123,6 @@ const TABS = [
 
 const PILLOW_DESIGNS = [
   { id: "throw", label: "Throw", pattern: "plain" },
-  { id: "strike", label: "Strike", pattern: "strike" },
   { id: "save", label: "Save", pattern: "save" },
   { id: "fastbreak", label: "Fast Break", pattern: "fastbreak" },
   { id: "final", label: "Final", pattern: "final" },
@@ -135,6 +134,7 @@ const PILLOW_DESIGNS = [
   { id: "orion", label: "Orion", pattern: "orion" },
   { id: "animal", label: "Animal", pattern: "animal" },
   { id: "avatar", label: "Avatar", pattern: "avatar" },
+  { id: "strike", label: "Strike", pattern: "strike" },
   { id: "league", label: "League", pattern: "league" },
   { id: "magic", label: "Magic", pattern: "magic" },
   { id: "raid", label: "Raid", pattern: "raid" },

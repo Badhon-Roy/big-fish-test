@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useGLTF, Decal } from "@react-three/drei";
 import { CustomizerState, JERSEY_DESIGNS, getFontFamily, LogoLayer } from "./types";
 
-// ─── Normal Map Generators ──────────────────────────────────────────────────
+// â”€â”€â”€ Normal Map Generators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function createMeshNormalMap() {
   const size = 128;
   const canvas = document.createElement("canvas");
@@ -92,7 +92,7 @@ function createFlexNormalMap() {
   return texture;
 }
 
-// ─── Style Decals Hook ──────────────────────────────────────────────────────
+// â”€â”€â”€ Style Decals Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function useStyleDecals(colors: any) {
   return useMemo(() => {
     if (!colors?.collar || !colors?.collarType || colors.collarType === "None")
@@ -494,11 +494,11 @@ function useStyleDecals(colors: any) {
   ]);
 }
 
-// ─── Jersey Decals Hook ─────────────────────────────────────────────────────
+// â”€â”€â”€ Jersey Decals Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function useJerseyDecals(state: any) {
   return useMemo(() => {
     const size = 1024;
-    const canvasSize = 2048; // 2× render resolution for HD sharpness
+    const canvasSize = 2048; // 2Ã— render resolution for HD sharpness
     const textColor = state.secondary || "#ffffff";
 
     const makeCanvas = (drawFn: (ctx: CanvasRenderingContext2D) => void) => {
@@ -508,7 +508,7 @@ function useJerseyDecals(state: any) {
       const ctx = cv.getContext("2d");
       if (!ctx) return null;
 
-      // Scale up 2× so all coordinate math (0–1024) stays unchanged
+      // Scale up 2Ã— so all coordinate math (0â€“1024) stays unchanged
       ctx.scale(2, 2);
 
       ctx.fillStyle = textColor;
@@ -1275,10 +1275,6 @@ function useJerseyDecals(state: any) {
             layer.outlineColor,
             layer.outlineWidth,
           );
-        }
-        // logo layers rendered as 3D Decals - skip canvas draw
-      });
-    });
 
     // Back Texture
     const back = makeCanvas((ctx) => {
@@ -1330,10 +1326,6 @@ function useJerseyDecals(state: any) {
             layer.outlineColor,
             layer.outlineWidth,
           );
-        }
-        // logo layers rendered as 3D Decals - skip canvas draw
-      });
-    });
 
     const isSplit = state.primaryColorSide && state.primaryColorSide !== "Both";
 
@@ -1420,7 +1412,7 @@ function useJerseyDecals(state: any) {
   ]);
 }
 
-// ─── Logo Decal Component ──────────────────────────────────────────────────
+// â”€â”€â”€ Logo Decal Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function LogoDecal({
   layer,
   loadedLogoImages,
@@ -1449,28 +1441,25 @@ function LogoDecal({
   }, [img, layer.src]);
 
   const decalParams = useMemo(() => {
-    if (!logoTexture || !img) return null;
+    if (!logoTexture) return null;
+    const relativeX = (layer.x - 512) / 1024;
+    const relativeY = -(layer.y - 500) / 1024;
+
+    const baseSize = 0.54;
+    const finalSizeX = (layer.scale * 200 * aspect) / 1024;
+    const finalSizeY = (layer.scale * 200) / 1024;
 
     const meshWidth = 0.54;
     const meshHeight = 0.7;
-    const canvasSize = 1024;
+
     const relativeZ = 0.155;
+    const zOffset = 0.001;
 
-    // Map image pixel size to 3D world space, preserving the original aspect ratio.
-    // Use meshWidth as the single reference so a square image stays square.
-    const imgW = img.naturalWidth || img.width || 200;
-    const imgH = img.naturalHeight || img.height || 200;
-    const finalSizeX = (imgW * layer.scale / canvasSize) * meshWidth;
-    const finalSizeY = (imgH * layer.scale / canvasSize) * meshWidth; // same base → no stretch
-
-    // Map canvas position (0–1024) to mesh world position
-    const relativeX = (layer.x - canvasSize / 2) / canvasSize;
-    const relativeY = -(layer.y - 500) / canvasSize;
-    let posX = Math.max(-meshWidth / 2, Math.min(meshWidth / 2, relativeX * meshWidth));
-    let posY = Math.max(-meshHeight / 2, Math.min(meshHeight / 2, relativeY * meshHeight));
+    let posX = relativeX * meshWidth;
+    let posY = relativeY * meshHeight;
     let posZ = relativeZ;
-    let rotY = 0;
 
+    let rotY = 0;
     if (layer.side === "Back") {
       posX = -posX;
       posZ = -relativeZ;
@@ -1480,9 +1469,9 @@ function LogoDecal({
     return {
       position: [posX, posY, posZ] as [number, number, number],
       rotation: [0, rotY, -(layer.rotation * Math.PI) / 180] as [number, number, number],
-      scale: [finalSizeX, finalSizeY, 0.3] as [number, number, number],
+      scale: [finalSizeX, finalSizeY, 0.2] as [number, number, number],
     };
-  }, [logoTexture, img, aspect, layer.x, layer.y, layer.scale, layer.rotation, layer.side]);
+  }, [logoTexture, aspect, layer.x, layer.y, layer.scale, layer.rotation, layer.side]);
 
   if (!logoTexture || !decalParams) return null;
 
@@ -1509,7 +1498,7 @@ function LogoDecal({
   );
 }
 
-// ─── Main Jersey3D Component ───────────────────────────────────────────────
+// â”€â”€â”€ Main Jersey3D Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Jersey3D({
   colors,
   collar,
@@ -1868,3 +1857,4 @@ export function Jersey3D({
   );
 }
 useGLTF.preload("/models/shirt_baked.glb");
+
