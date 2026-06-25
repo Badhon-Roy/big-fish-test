@@ -43,7 +43,7 @@ const CustomProducts = () => {
   const handleCustomize = (productId: string) => {
     switch (productId) {
       case "jersey-no-collar":
-        router.push("/brand-new-design");
+        router.push("/jersey-customize");
         break;
       case "jersey-collar":
         router.push("/collar-jersey-design");

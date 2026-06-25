@@ -2282,7 +2282,7 @@ export default function PillowScene() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
-                        Visual Text Editor ({activeSide} View)
+                        Visual Text Editor <br />({activeSide} View)
                       </label>
                       <button
                         onClick={handleAddCustomText}

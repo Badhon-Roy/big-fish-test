@@ -652,7 +652,7 @@ const DesignGallery = ({ isHomePage = false }: { isHomePage?: boolean }) => {
                   </div>
                   
                   <Link
-                    href={`/brand-new-design?pattern=${selectedDesign.fileName}`}
+                    href={`/jersey-customize?pattern=${selectedDesign.fileName}`}
                     className="w-full py-3 bg-[#031E39] hover:bg-[#09355E] text-white text-center text-sm font-bold uppercase tracking-wider rounded-full shadow-sm transition-all duration-200 block"
                   >
                     👕 Jersey (No Collar)
