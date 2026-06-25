@@ -6648,7 +6648,7 @@ export default function CustomizerLayout() {
     cutFit: "None",
     fabric: "Mesh",
     collar: false,
-    zipper: false,
+    zipper: null as boolean | null,
     designSide: "Both",
     logo: null as string | null,
     logoPosition: "Left Chest",
@@ -6890,53 +6890,54 @@ export default function CustomizerLayout() {
               {/* ── DESIGNS TAB ── */}
               {activeTab === "designs" && (
                 <div className="space-y-5">
-                  {/* Collar toggle */}
-                  <div className="flex items-center justify-between py-3 border-b border-zinc-100">
-                    <span className="text-sm font-semibold text-[#00263C]">
-                      Add Collar
-                    </span>
-                    <Toggle
-                      value={state.collar}
-                      onChange={(v) => {
-                        updateState("collar", v);
-                        if (v && state.collarType === "None") {
-                          updateState("collarType", "Polo");
-                        }
-                      }}
-                    />
-                  </div>
                   {/* Closure selection */}
-                  {state.collar &&
-                    (state.collarType === "Polo" ||
-                      state.collarType === "Henley") && (
-                      <div className="py-3 border-b border-zinc-100 space-y-2">
-                        <span className="text-sm font-semibold text-zinc-800 block">
-                          Closure Type
-                        </span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => updateState("zipper", false)}
-                            className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
-                              !state.zipper
-                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                                : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                            }`}
-                          >
-                            Button Placket
-                          </button>
-                          <button
-                            onClick={() => updateState("zipper", true)}
-                            className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
-                              state.zipper
-                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                                : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                            }`}
-                          >
-                            Zipper (+$5)
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                  <div className="py-3 border-b border-zinc-100 space-y-2">
+                    <span className="text-sm font-semibold text-zinc-800 block">
+                      Closure Type
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          if (state.zipper === false) {
+                            updateState("zipper", null);
+                            updateState("collar", false);
+                            updateState("collarType", "None");
+                          } else {
+                            updateState("zipper", false);
+                            updateState("collar", true);
+                            updateState("collarType", "Polo");
+                          }
+                        }}
+                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
+                          state.zipper === false
+                            ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                            : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                        }`}
+                      >
+                        Button Placket
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (state.zipper === true) {
+                            updateState("zipper", null);
+                            updateState("collar", false);
+                            updateState("collarType", "None");
+                          } else {
+                            updateState("zipper", true);
+                            updateState("collar", true);
+                            updateState("collarType", "Polo");
+                          }
+                        }}
+                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200 ${
+                          state.zipper === true
+                            ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                            : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                        }`}
+                      >
+                        Zipper (+$5)
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Grid of designs */}
                   <div className="grid grid-cols-4 gap-3 pt-1">
@@ -9322,72 +9323,51 @@ export default function CustomizerLayout() {
                 <div className="space-y-6">
                   <div>
                     <label className="text-sm font-bold text-zinc-900 mb-2 block">
-                      Sleeves
+                      Closure Type
                     </label>
                     <div className="grid grid-cols-2 gap-2">
-                      {["Short", "Long", "Sleeveless", "3/4"].map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => updateState("sleeve", s)}
-                          className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${state.sleeve === s ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
-                        >
-                          {s}
-                        </button>
-                      ))}
+                      <button
+                        onClick={() => {
+                          if (state.zipper === false) {
+                            updateState("zipper", null);
+                            updateState("collar", false);
+                            updateState("collarType", "None");
+                          } else {
+                            updateState("zipper", false);
+                            updateState("collar", true);
+                            updateState("collarType", "Polo");
+                          }
+                        }}
+                        className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
+                          state.zipper === false
+                            ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                            : "border-[#002337] text-[#002337] hover:border-zinc-300"
+                        }`}
+                      >
+                        Button Placket
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (state.zipper === true) {
+                            updateState("zipper", null);
+                            updateState("collar", false);
+                            updateState("collarType", "None");
+                          } else {
+                            updateState("zipper", true);
+                            updateState("collar", true);
+                            updateState("collarType", "Polo");
+                          }
+                        }}
+                        className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
+                          state.zipper === true
+                            ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
+                            : "border-[#002337] text-[#002337] hover:border-zinc-300"
+                        }`}
+                      >
+                        Zipper (+$5)
+                      </button>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-bold text-zinc-900 mb-2 block">
-                      Collar Type
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {["None", "V-Neck", "Round", "Polo", "Henley"].map(
-                        (c) => (
-                          <button
-                            key={c}
-                            onClick={() => {
-                              updateState("collarType", c);
-                              updateState("collar", c !== "None");
-                            }}
-                            className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${state.collarType === c ? "border-red-500 bg-red-50 text-red-700" : "border-[#002337] text-[#002337] hover:border-zinc-300"}`}
-                          >
-                            {c}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                  {state.collar &&
-                    (state.collarType === "Polo" ||
-                      state.collarType === "Henley") && (
-                      <div>
-                        <label className="text-sm font-bold text-zinc-900 mb-2 block">
-                          Closure Type
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => updateState("zipper", false)}
-                            className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
-                              !state.zipper
-                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                                : "border-[#002337] text-[#002337] hover:border-zinc-300"
-                            }`}
-                          >
-                            Button Placket
-                          </button>
-                          <button
-                            onClick={() => updateState("zipper", true)}
-                            className={`p-3 rounded-full cursor-pointer border text-sm font-bold transition-all active:scale-90 duration-300 ${
-                              state.zipper
-                                ? "border-red-500 bg-red-50 text-red-700 font-extrabold"
-                                : "border-[#002337] text-[#002337] hover:border-zinc-300"
-                            }`}
-                          >
-                            Zipper (+$5)
-                          </button>
-                        </div>
-                      </div>
-                    )}
                 </div>
               )}
 
