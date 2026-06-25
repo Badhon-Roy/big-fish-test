@@ -9361,6 +9361,22 @@ export default function CollerWithJerseyDesign() {
                           name: "Beige Puffer Jacket",
                           path: "/Meshy_AI_Beige_Puffer_Jacket_3_0615102128_image_to_3d_texture.glb",
                         },
+                        {
+                          name: "Perfectly Taut Fabric",
+                          path: "/Meshy_AI_Perfectly_taut_fabric_0620060735_generate.glb",
+                        },
+                        {
+                          name: "White Shopping Bag",
+                          path: "/Meshy_AI_White_Shopping_Bag_0620054631_generate.glb",
+                        },
+                        {
+                          name: "Monogram Paper Bag",
+                          path: "/Meshy_AI_Monogram_Paper_Bag_0620135026_generate.glb",
+                        },
+                        {
+                          name: "White Sneaker",
+                          path: "/Meshy_AI_White_Sneaker_3D_0620143413_image-to-3d-texture.glb",
+                        },
                       ].map((m) => (
                         <button
                           key={m.path}
@@ -9378,6 +9394,15 @@ export default function CollerWithJerseyDesign() {
                               updateState("collar", false);
                               updateState("collarType", "None");
                               updateState("sleeve", "Sleeveless");
+                            } else if (
+                              m.name === "Perfectly Taut Fabric" ||
+                              m.name === "White Shopping Bag" ||
+                              m.name === "Monogram Paper Bag" ||
+                              m.name === "White Sneaker"
+                            ) {
+                              updateState("collar", false);
+                              updateState("collarType", "None");
+                              updateState("sleeve", "Short");
                             } else if (
                               m.name === "Sports Polo Jersey" ||
                               m.name === "Custom Sports Jersey" ||

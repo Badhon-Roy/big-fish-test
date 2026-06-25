@@ -19,8 +19,9 @@ import CoofieBegMeshImg from "@/public/assets/mesh/coffee-bag-mockup.png";
 import PaillowMeshImg from "@/public/assets/mesh/paillow.avif";
 import BusinessCardImg from "@/public/assets/mesh/business-card.png";
 import ShoppingBeg from "@/public/assets/mesh/shopping-beg.png";
-import JuiceCupMeshImg from "@/public/assets/mesh/juice-cup.avif"
-
+import JuiceCupMeshImg from "@/public/assets/mesh/juice-cup.avif";
+import CapMeshImg from "@/public/assets/mesh/cap.png";
+import SneakerMeshImg from "@/public/assets/mesh/shoes.png"
 interface ColorOption {
   colorCode: string;
   name: string;
@@ -73,7 +74,7 @@ const CustomProducts = () => {
     "coffee-bag": 0,
   });
 
-  const categories = ["All", "Homeware", "Paillow", "Business Card", "Bags", "Cups"];
+  const categories = ["All", "Homeware", "Paillow", "Business Card","Cap", "Bags","Sneaker", "Cups"];
 
   const products: Product[] = [
     {
@@ -187,6 +188,26 @@ const CustomProducts = () => {
         { colorCode: "#808080", name: "Gray" },
       ],
     },
+    {
+      id: "cap",
+      name: "Cap",
+      image: CapMeshImg,
+      category: "Cap",
+      colors: [
+        { colorCode: "#000000", name: "Black" },
+        { colorCode: "#808080", name: "Gray" },
+      ],
+    },
+    {
+      id: "sneaker",
+      name: "Sneaker",
+      image: SneakerMeshImg,
+      category: "Sneaker",
+      colors: [
+        { colorCode: "#000000", name: "Black" },
+        { colorCode: "#808080", name: "Gray" },
+      ],
+    }
   ];
 
   const handleColorSelect = (productId: string, colorIndex: number) => {
