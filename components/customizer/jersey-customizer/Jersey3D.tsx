@@ -1,0 +1,1863 @@
+"use client";
+
+import React, { useMemo, useState, useEffect } from "react";
+import * as THREE from "three";
+import { useGLTF, Decal } from "@react-three/drei";
+import { CustomizerState, JERSEY_DESIGNS, getFontFamily, LogoLayer } from "./types";
+
+// ─── Normal Map Generators ──────────────────────────────────────────────────
+function createMeshNormalMap() {
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "rgb(128, 128, 255)";
+  ctx.fillRect(0, 0, size, size);
+
+  const imgData = ctx.getImageData(0, 0, size, size);
+  const data = imgData.data;
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      const hexVal = (Math.round(x / 4) + Math.round(y / 4)) % 2;
+
+      let nx = 128;
+      let ny = 128;
+
+      if (hexVal === 0) {
+        nx = 110;
+        ny = 110;
+      } else {
+        nx = 146;
+        ny = 146;
+      }
+
+      data[idx] = nx;
+      data[idx + 1] = ny;
+      data[idx + 2] = 255;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(40, 40);
+  return texture;
+}
+
+function createFlexNormalMap() {
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "rgb(128, 128, 255)";
+  ctx.fillRect(0, 0, size, size);
+
+  const imgData = ctx.getImageData(0, 0, size, size);
+  const data = imgData.data;
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      const lineVal = Math.round(y / 2) % 2;
+
+      let nx = 128;
+      let ny = 128;
+
+      if (lineVal === 0) {
+        ny = 118;
+      } else {
+        ny = 138;
+      }
+
+      data[idx] = nx;
+      data[idx + 1] = ny;
+      data[idx + 2] = 255;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(65, 65);
+  return texture;
+}
+
+// ─── Style Decals Hook ──────────────────────────────────────────────────────
+function useStyleDecals(colors: any) {
+  return useMemo(() => {
+    if (!colors?.collar || !colors?.collarType || colors.collarType === "None")
+      return { collarDecal: null };
+
+    const S = 1024;
+    const cv = document.createElement("canvas");
+    cv.width = S;
+    cv.height = S;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return { collarDecal: null };
+    ctx.clearRect(0, 0, S, S);
+
+    const drawRoundRect = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    };
+
+    const drawPlacket = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + w, y);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.closePath();
+    };
+
+    const drawRealisticButton = (cx: number, cy: number, r: number) => {
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 2;
+
+      const btnGrad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+      btnGrad.addColorStop(0, "#ffffff");
+      btnGrad.addColorStop(0.7, "#eaeaea");
+      btnGrad.addColorStop(1, "#c0c0c0");
+
+      ctx.fillStyle = btnGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const innerR = r * 0.6;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const holeOffset = r * 0.25;
+      const holeR = r * 0.08;
+      const holes = [
+        { x: cx - holeOffset, y: cy - holeOffset },
+        { x: cx + holeOffset, y: cy - holeOffset },
+        { x: cx - holeOffset, y: cy + holeOffset },
+        { x: cx + holeOffset, y: cy + holeOffset },
+      ];
+
+      ctx.fillStyle = "#333333";
+      holes.forEach((h) => {
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, holeR, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.strokeStyle = "#888888";
+      ctx.lineWidth = 1.2;
+
+      ctx.beginPath();
+      ctx.moveTo(cx - holeOffset, cy - holeOffset);
+      ctx.lineTo(cx + holeOffset, cy + holeOffset);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + holeOffset, cy - holeOffset);
+      ctx.lineTo(cx - holeOffset, cy + holeOffset);
+      ctx.stroke();
+
+      ctx.restore();
+    };
+
+    const trim = colors.designColor || colors.secondary || "#1A1A2E";
+    const base = colors.primary || "#2196F3";
+
+    const hexRgb = (h: string) => {
+      const c = parseInt(h.replace("#", ""), 16);
+      return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+    };
+    const lighten = (h: string, amt: number) => {
+      const [r, g, b] = hexRgb(h);
+      return `rgba(${Math.min(255, r + amt)},${Math.min(255, g + amt)},${Math.min(255, b + amt)},1)`;
+    };
+    const darken = (h: string, amt: number) => {
+      const [r, g, b] = hexRgb(h);
+      return `rgba(${Math.max(0, r - amt)},${Math.max(0, g - amt)},${Math.max(0, b - amt)},1)`;
+    };
+
+    if (colors.collarType === "Round") {
+      const grad = ctx.createLinearGradient(0, 0, 0, S * 0.22);
+      grad.addColorStop(0, lighten(trim, 40));
+      grad.addColorStop(0.5, trim);
+      grad.addColorStop(1, darken(trim, 30));
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = S * 0.085;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.38, 0.08, Math.PI - 0.08);
+      ctx.stroke();
+
+      ctx.strokeStyle = darken(trim, 50);
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        const r2 = S * 0.34 + i * S * 0.013;
+        ctx.beginPath();
+        ctx.arc(S / 2, 0, r2, 0.12, Math.PI - 0.12);
+        ctx.stroke();
+      }
+    } else if (colors.collarType === "V-Neck") {
+      const makeVLeg = (x1: number, y1: number, x2: number, y2: number) => {
+        const lg = ctx.createLinearGradient(x1, y1, x2, y2);
+        lg.addColorStop(0, lighten(trim, 35));
+        lg.addColorStop(0.45, trim);
+        lg.addColorStop(1, darken(trim, 25));
+        ctx.strokeStyle = lg;
+        ctx.lineWidth = S * 0.075;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      };
+      makeVLeg(S * 0.18, 0, S * 0.5, S * 0.52);
+      makeVLeg(S * 0.82, 0, S * 0.5, S * 0.52);
+    } else if (colors.collarType === "Polo") {
+      const band = ctx.createLinearGradient(0, 0, 0, S * 0.18);
+      band.addColorStop(0, lighten(trim, 45));
+      band.addColorStop(1, darken(trim, 20));
+      ctx.fillStyle = band;
+      drawRoundRect(S * 0.08, 0, S * 0.84, S * 0.18, 6);
+      ctx.fill();
+
+      const leftGrad = ctx.createLinearGradient(S * 0.1, 0, S * 0.5, S * 0.5);
+      leftGrad.addColorStop(0, lighten(trim, 30));
+      leftGrad.addColorStop(1, darken(trim, 15));
+      ctx.fillStyle = leftGrad;
+      ctx.beginPath();
+      ctx.moveTo(S * 0.08, S * 0.14);
+      ctx.lineTo(S * 0.08, S * 0.56);
+      ctx.lineTo(S * 0.5, S * 0.35);
+      ctx.lineTo(S * 0.5, S * 0.14);
+      ctx.closePath();
+      ctx.fill();
+
+      const rightGrad = ctx.createLinearGradient(S * 0.5, 0, S * 0.9, S * 0.5);
+      rightGrad.addColorStop(0, lighten(trim, 30));
+      rightGrad.addColorStop(1, darken(trim, 15));
+      ctx.fillStyle = rightGrad;
+      ctx.beginPath();
+      ctx.moveTo(S * 0.92, S * 0.14);
+      ctx.lineTo(S * 0.92, S * 0.56);
+      ctx.lineTo(S * 0.5, S * 0.35);
+      ctx.lineTo(S * 0.5, S * 0.14);
+      ctx.closePath();
+      ctx.fill();
+
+      const pkGrad = ctx.createLinearGradient(S * 0.45, S * 0.34, S * 0.55, S * 0.34);
+      pkGrad.addColorStop(0, lighten(trim, 20));
+      pkGrad.addColorStop(1, darken(trim, 10));
+      ctx.fillStyle = pkGrad;
+      drawPlacket(S * 0.46, S * 0.34, S * 0.08, S * 0.34, S * 0.04);
+      ctx.fill();
+      ctx.strokeStyle = darken(trim, 40);
+      ctx.lineWidth = 2;
+      drawPlacket(S * 0.46, S * 0.34, S * 0.08, S * 0.34, S * 0.04);
+      ctx.stroke();
+
+      if (colors.zipper) {
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.492, S * 0.34);
+        ctx.lineTo(S * 0.492, S * 0.68);
+        ctx.moveTo(S * 0.508, S * 0.34);
+        ctx.lineTo(S * 0.508, S * 0.68);
+        ctx.stroke();
+
+        const sliderY = S * 0.41;
+        ctx.strokeStyle = "#a0a0a0";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, sliderY);
+        ctx.lineTo(S * 0.5, S * 0.68);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#d8d8d8";
+        ctx.lineWidth = 2;
+        for (let y = sliderY + S * 0.01; y <= S * 0.68; y += 5) {
+          ctx.beginPath();
+          ctx.moveTo(S * 0.493, y);
+          ctx.lineTo(S * 0.5, y);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(S * 0.5, y + 2.5);
+          ctx.lineTo(S * 0.507, y + 2.5);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, S * 0.34);
+        ctx.lineTo(S * 0.5, S * 0.68);
+        ctx.stroke();
+
+        ctx.fillStyle = "#a0a0a0";
+        ctx.strokeStyle = "#666666";
+        ctx.lineWidth = 1;
+        drawRoundRect(S * 0.491, sliderY - S * 0.008, S * 0.018, S * 0.012, 1);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#2d2d2d";
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(S * 0.48, sliderY, S * 0.04, S * 0.05, 1.5);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(S * 0.495, sliderY + S * 0.008, S * 0.01, S * 0.034);
+
+        ctx.fillStyle = "#555555";
+        drawRoundRect(S * 0.492, sliderY + S * 0.015, S * 0.016, S * 0.018, 1);
+        ctx.fill();
+
+        ctx.fillStyle = "#333333";
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(S * 0.487, sliderY + S * 0.042, S * 0.026, S * 0.065, 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 2;
+        drawRoundRect(S * 0.493, sliderY + S * 0.048, S * 0.014, S * 0.053, 1);
+        ctx.stroke();
+      } else {
+        [0.45, 0.57].forEach((yf) => {
+          drawRealisticButton(S * 0.5, S * yf, S * 0.02);
+        });
+      }
+    } else if (colors.collarType === "Henley") {
+      const hb = ctx.createLinearGradient(0, 0, 0, S * 0.14);
+      hb.addColorStop(0, lighten(trim, 40));
+      hb.addColorStop(1, darken(trim, 20));
+      ctx.strokeStyle = hb;
+      ctx.lineWidth = S * 0.07;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.38, 0.08, Math.PI - 0.08);
+      ctx.stroke();
+
+      ctx.strokeStyle = darken(trim, 50);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.35, 0.1, Math.PI - 0.1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(S / 2, 0, S * 0.37, 0.1, Math.PI - 0.1);
+      ctx.stroke();
+
+      const pg2 = ctx.createLinearGradient(S * 0.44, 0, S * 0.56, 0);
+      pg2.addColorStop(0, lighten(base, 20));
+      pg2.addColorStop(0.5, base);
+      pg2.addColorStop(1, darken(base, 15));
+      ctx.fillStyle = pg2;
+      drawPlacket(S * 0.44, S * 0.28, S * 0.12, S * 0.42, S * 0.06);
+      ctx.fill();
+      ctx.strokeStyle = darken(trim, 35);
+      ctx.lineWidth = 2;
+      drawPlacket(S * 0.44, S * 0.28, S * 0.12, S * 0.42, S * 0.06);
+      ctx.stroke();
+
+      if (colors.zipper) {
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.492, S * 0.28);
+        ctx.lineTo(S * 0.492, S * 0.7);
+        ctx.moveTo(S * 0.508, S * 0.28);
+        ctx.lineTo(S * 0.508, S * 0.7);
+        ctx.stroke();
+
+        const sliderY = S * 0.43;
+        ctx.strokeStyle = "#a0a0a0";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, sliderY);
+        ctx.lineTo(S * 0.5, S * 0.7);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#d8d8d8";
+        ctx.lineWidth = 2;
+        for (let y = sliderY + S * 0.01; y <= S * 0.7; y += 5) {
+          ctx.beginPath();
+          ctx.moveTo(S * 0.493, y);
+          ctx.lineTo(S * 0.5, y);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(S * 0.5, y + 2.5);
+          ctx.lineTo(S * 0.507, y + 2.5);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5, S * 0.28);
+        ctx.lineTo(S * 0.5, S * 0.7);
+        ctx.stroke();
+
+        ctx.fillStyle = "#a0a0a0";
+        ctx.strokeStyle = "#666666";
+        ctx.lineWidth = 1;
+        drawRoundRect(S * 0.491, sliderY - S * 0.008, S * 0.018, S * 0.012, 1);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#2d2d2d";
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(S * 0.48, sliderY, S * 0.04, S * 0.05, 1.5);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(S * 0.495, sliderY + S * 0.008, S * 0.01, S * 0.034);
+
+        ctx.fillStyle = "#555555";
+        drawRoundRect(S * 0.492, sliderY + S * 0.015, S * 0.016, S * 0.018, 1);
+        ctx.fill();
+
+        ctx.fillStyle = "#333333";
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(S * 0.487, sliderY + S * 0.042, S * 0.026, S * 0.065, 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 2;
+        drawRoundRect(S * 0.493, sliderY + S * 0.048, S * 0.014, S * 0.053, 1);
+        ctx.stroke();
+      } else {
+        [0.48, 0.6].forEach((yf) => {
+          drawRealisticButton(S * 0.5, S * yf, S * 0.02);
+        });
+      }
+    }
+
+    const tex = new THREE.CanvasTexture(cv);
+    tex.anisotropy = 16;
+    tex.needsUpdate = true;
+    return { collarDecal: tex };
+  }, [
+    colors?.collar,
+    colors?.collarType,
+    colors?.zipper,
+    colors?.designColor,
+    colors?.secondary,
+    colors?.primary,
+  ]);
+}
+
+// ─── Jersey Decals Hook ─────────────────────────────────────────────────────
+function useJerseyDecals(state: any) {
+  return useMemo(() => {
+    const size = 1024;
+    const textColor = state.secondary || "#ffffff";
+
+    const makeCanvas = (drawFn: (ctx: CanvasRenderingContext2D) => void) => {
+      const cv = document.createElement("canvas");
+      cv.width = size;
+      cv.height = size;
+      const ctx = cv.getContext("2d");
+      if (!ctx) return null;
+      ctx.fillStyle = textColor;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.strokeStyle = "transparent";
+      ctx.lineWidth = 0;
+
+      drawFn(ctx);
+
+      const texture = new THREE.CanvasTexture(cv);
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.generateMipmaps = false;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+
+      const meshDecalAspectRatio = 0.54 / 0.7;
+      texture.repeat.set(meshDecalAspectRatio, 1);
+      texture.offset.set((1 - meshDecalAspectRatio) / 2, 0);
+
+      texture.needsUpdate = true;
+      return texture;
+    };
+
+    const drawLayerOnCtx = (ctx: CanvasRenderingContext2D, layer: any) => {
+      const img = state.loadedLogoImages[layer.src];
+      if (!img) return;
+      ctx.save();
+      ctx.strokeStyle = "transparent";
+      ctx.lineWidth = 0;
+      ctx.shadowBlur = 0;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      const opacity = typeof layer.opacity === "number" ? layer.opacity : 1.0;
+      ctx.globalAlpha = opacity;
+      ctx.translate(layer.x, layer.y);
+      ctx.rotate((layer.rotation * Math.PI) / 180);
+      ctx.scale(layer.scale, layer.scale);
+
+      const imgWidth = img.naturalWidth || img.width || 200;
+      const imgHeight = img.naturalHeight || img.height || 200;
+      const drawWidth = imgWidth;
+      const drawHeight = imgHeight;
+
+      if (layer.eraserPaths && layer.eraserPaths.length > 0) {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = drawWidth;
+        tempCanvas.height = drawHeight;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+          tempCtx.drawImage(img, 0, 0, drawWidth, drawHeight);
+          tempCtx.globalCompositeOperation = "destination-out";
+          tempCtx.lineCap = "round";
+          tempCtx.lineJoin = "round";
+          tempCtx.strokeStyle = "rgba(0,0,0,1)";
+          layer.eraserPaths.forEach((path: any) => {
+            tempCtx.lineWidth = path.size;
+            tempCtx.beginPath();
+            path.points.forEach((pt: any, idx: number) => {
+              if (idx === 0) {
+                tempCtx.moveTo(pt.x, pt.y);
+              } else {
+                tempCtx.lineTo(pt.x, pt.y);
+              }
+            });
+            tempCtx.stroke();
+          });
+          ctx.drawImage(tempCanvas, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        } else {
+          ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        }
+      } else {
+        ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      }
+      ctx.restore();
+    };
+
+    const getFontString = (sizeStr: any, fontStyle: string, defaultSize: number) => {
+      const sz = sizeStr || defaultSize;
+      if (fontStyle === "Italic") return `italic 900 ${sz}px Impact, sans-serif`;
+      if (fontStyle === "Script") return `bold ${sz}px "Brush Script MT", cursive`;
+      if (fontStyle === "Block") return `900 ${sz}px "Courier New", monospace`;
+      if (fontStyle === "Varsity") return `900 ${sz}px "Arial Black", sans-serif`;
+      if (fontStyle === "Serif Athletic") return `900 ${sz}px "Alfa Slab One", serif`;
+      if (fontStyle === "Cyberpunk") return `900 ${sz}px "Orbitron", sans-serif`;
+      if (fontStyle === "Grunge") return `400 ${sz}px "Rubik Glitch", display`;
+      if (fontStyle === "Neon Glow") return `400 ${sz}px "Monoton", sans-serif`;
+      if (fontStyle === "Gothic") return `400 ${sz}px "UnifrakturMaguntia", serif`;
+      return `900 ${sz}px Impact, sans-serif`;
+    };
+
+    const drawTextWithSpacing = (
+      ctx: CanvasRenderingContext2D,
+      text: string,
+      x: number,
+      y: number,
+      fontStyle: string,
+      textSize: number,
+      color: string,
+      isOutline: boolean,
+      outlineColor: string,
+      letterSpacingVal: number,
+      lineSpacingVal: number,
+      curveRadiusVal: number,
+      shadowEnabled?: boolean,
+      shadowColor?: string,
+      shadowBlur?: number,
+      shadowOffsetX?: number,
+      shadowOffsetY?: number,
+      outlineEnabled?: boolean,
+      customOutlineColor?: string,
+      outlineWidth?: number,
+    ) => {
+      ctx.save();
+      ctx.translate(x, y);
+
+      const lines = text.split("\n");
+      const lineSpacingHeight = textSize * (lineSpacingVal || 1.15);
+      const totalHeight = (lines.length - 1) * lineSpacingHeight;
+      const verticalOffset = -totalHeight / 2;
+
+      lines.forEach((line, lineIndex) => {
+        const curY = verticalOffset + lineIndex * lineSpacingHeight;
+
+        ctx.font = getFontString(textSize, fontStyle, 100);
+        ctx.textBaseline = "middle";
+
+        if (shadowEnabled) {
+          ctx.shadowColor = shadowColor || "#000000";
+          ctx.shadowBlur = typeof shadowBlur === "number" ? shadowBlur : 10;
+          ctx.shadowOffsetX = typeof shadowOffsetX === "number" ? shadowOffsetX : 4;
+          ctx.shadowOffsetY = typeof shadowOffsetY === "number" ? shadowOffsetY : 4;
+        } else if (fontStyle === "Neon Glow") {
+          ctx.shadowColor = color;
+          ctx.shadowBlur = Math.max(10, textSize * 0.15);
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        } else {
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        }
+
+        const chars = Array.from(line);
+        const charWidths = chars.map((c) => ctx.measureText(c).width);
+        const totalWidth = charWidths.reduce((a, b) => a + b, 0) + (chars.length - 1) * letterSpacingVal;
+
+        if (!curveRadiusVal || curveRadiusVal === 0) {
+          if (!letterSpacingVal || letterSpacingVal === 0) {
+            ctx.textAlign = "center";
+            if (outlineEnabled) {
+              ctx.strokeStyle = customOutlineColor || "#FFFFFF";
+              ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
+              ctx.strokeText(line, 0, curY);
+            } else if (isOutline) {
+              ctx.strokeStyle = color;
+              ctx.lineWidth = Math.max(2, textSize * 0.04);
+              ctx.strokeText(line, 0, curY);
+            }
+
+            if (!isOutline) {
+              ctx.fillStyle = color;
+              ctx.fillText(line, 0, curY);
+            }
+          } else {
+            let curX = -totalWidth / 2;
+            ctx.textAlign = "left";
+            chars.forEach((char, charIdx) => {
+              const charW = charWidths[charIdx];
+              if (outlineEnabled) {
+                ctx.strokeStyle = customOutlineColor || "#FFFFFF";
+                ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
+                ctx.strokeText(char, curX, curY);
+              } else if (isOutline) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = Math.max(2, textSize * 0.04);
+                ctx.strokeText(char, curX, curY);
+              }
+
+              if (!isOutline) {
+                ctx.fillStyle = color;
+                ctx.fillText(char, curX, curY);
+              }
+              curX += charW + letterSpacingVal;
+            });
+          }
+        } else {
+          const totalAngle = (curveRadiusVal * Math.PI) / 180;
+          const R = totalWidth / totalAngle;
+          let currentS = 0;
+          ctx.textAlign = "center";
+
+          chars.forEach((char, charIdx) => {
+            const charW = charWidths[charIdx];
+            const charCenterS = currentS + charW / 2;
+            const angle = (charCenterS - totalWidth / 2) / R;
+
+            const cx = R * Math.sin(angle);
+            const cy = curY + R * (1 - Math.cos(angle));
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+
+            if (outlineEnabled) {
+              ctx.strokeStyle = customOutlineColor || "#FFFFFF";
+              ctx.lineWidth = typeof outlineWidth === "number" ? outlineWidth : 4;
+              ctx.strokeText(char, 0, 0);
+            } else if (isOutline) {
+              ctx.strokeStyle = color;
+              ctx.lineWidth = Math.max(2, textSize * 0.04);
+              ctx.strokeText(char, 0, 0);
+            }
+
+            if (!isOutline) {
+              ctx.fillStyle = color;
+              ctx.fillText(char, 0, 0);
+            }
+            ctx.restore();
+            currentS += charW + letterSpacingVal;
+          });
+        }
+      });
+      ctx.restore();
+    };
+
+    const drawPattern = (ctx: CanvasRenderingContext2D) => {
+      const dp = state.designPattern;
+      if (!dp || dp === "plain") return;
+      const sc = size / 100;
+      const sec = state.designColor || state.secondary || "#1A1A2E";
+      const pri = state.primary || "#2196F3";
+      ctx.save();
+      ctx.fillStyle = sec;
+      ctx.strokeStyle = sec;
+      switch (dp) {
+        case "strike":
+          ctx.beginPath();
+          ctx.moveTo(60 * sc, 10 * sc);
+          ctx.lineTo(80 * sc, 10 * sc);
+          ctx.lineTo(50 * sc, 90 * sc);
+          ctx.lineTo(30 * sc, 90 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "save":
+          ctx.fillRect(0, 0, 45 * sc, size);
+          break;
+        case "fastbreak":
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(30 * sc, 0);
+          ctx.lineTo(0, 50 * sc);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(100 * sc, 50 * sc);
+          ctx.lineTo(100 * sc, 100 * sc);
+          ctx.lineTo(70 * sc, 100 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "final":
+          ctx.fillRect(0, 0, 35 * sc, size);
+          ctx.fillRect(65 * sc, 0, 35 * sc, size);
+          break;
+        case "victory":
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(40 * sc, 0);
+          ctx.lineTo(20 * sc, 100 * sc);
+          ctx.lineTo(0, 100 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "city":
+          ctx.lineWidth = 4 * sc;
+          [25, 50, 75].forEach((y) => {
+            ctx.beginPath();
+            ctx.moveTo(0, y * sc);
+            ctx.lineTo(size, y * sc);
+            ctx.stroke();
+          });
+          break;
+        case "pure":
+          ctx.beginPath();
+          ctx.moveTo(70 * sc, 0);
+          ctx.lineTo(100 * sc, 0);
+          ctx.lineTo(100 * sc, 40 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "level":
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(55 * sc, 0);
+          ctx.lineTo(0, 70 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "vivo":
+          ctx.beginPath();
+          ctx.moveTo(60 * sc, 100 * sc);
+          ctx.lineTo(100 * sc, 0);
+          ctx.lineTo(100 * sc, 100 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "orion":
+          ctx.globalAlpha = 0.18;
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          [
+            [30, 20],
+            [70, 20],
+            [90, 60],
+            [50, 90],
+            [10, 60],
+          ].forEach(([x, y], i) => {
+            i === 0 ? ctx.moveTo(x * sc, y * sc) : ctx.lineTo(x * sc, y * sc);
+          });
+          ctx.closePath();
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+          ctx.fillStyle = sec;
+          ctx.beginPath();
+          [
+            [40, 30],
+            [60, 30],
+            [70, 55],
+            [50, 72],
+            [30, 55],
+          ].forEach(([x, y], i) => {
+            i === 0 ? ctx.moveTo(x * sc, y * sc) : ctx.lineTo(x * sc, y * sc);
+          });
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "animal":
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.quadraticCurveTo(25 * sc, 40 * sc, 50 * sc, 10 * sc);
+          ctx.quadraticCurveTo(75 * sc, 40 * sc, 100 * sc, 0);
+          ctx.lineTo(100 * sc, 50 * sc);
+          ctx.quadraticCurveTo(75 * sc, 80 * sc, 50 * sc, 55 * sc);
+          ctx.quadraticCurveTo(25 * sc, 80 * sc, 0, 50 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "avatar":
+          ctx.beginPath();
+          ctx.moveTo(0, 100 * sc);
+          ctx.lineTo(45 * sc, 0);
+          ctx.lineTo(55 * sc, 0);
+          ctx.lineTo(0, 100 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "league":
+          ctx.fillRect(0, 0, 50 * sc, size);
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = pri;
+          ctx.fillRect(50 * sc, 0, 50 * sc, size);
+          break;
+        case "magic": {
+          const grad = ctx.createRadialGradient(50 * sc, 40 * sc, 0, 50 * sc, 40 * sc, 80 * sc);
+          grad.addColorStop(0, sec);
+          grad.addColorStop(1, "transparent");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, size, size);
+          break;
+        }
+        case "raid":
+          ctx.fillRect(0, 0, size, 50 * sc);
+          break;
+        case "rush":
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(0, 100 * sc);
+          ctx.lineTo(40 * sc, 100 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "score":
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(100 * sc, 0);
+          ctx.lineTo(100 * sc, 100 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        default:
+          break;
+      }
+      ctx.restore();
+    };
+
+    const drawFabricPattern = (
+      ctx: CanvasRenderingContext2D,
+      patternName: string,
+      isFront: boolean,
+    ) => {
+      if (!patternName || patternName === "None") return;
+      const loadedImg = state.loadedPatterns?.[patternName];
+      if (loadedImg) {
+        const customize = isFront
+          ? state.fabricPatternCustomizeFront
+          : state.fabricPatternCustomizeBack;
+
+        if (!customize) {
+          ctx.save();
+          ctx.drawImage(loadedImg, 0, 0, size, size);
+          ctx.restore();
+          return;
+        }
+
+        const fgColor = isFront
+          ? state.fabricPatternColorFront
+          : state.fabricPatternColorBack;
+        const bgColor = isFront
+          ? state.fabricPatternBgFront
+          : state.fabricPatternBgBack;
+
+        const hexToRgb = (hex: string) => {
+          const cleanHex = hex.replace("#", "");
+          const num = parseInt(cleanHex, 16);
+          return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255,
+          };
+        };
+
+        const bgIsTransparent =
+          bgColor.toLowerCase() === "transparent" || bgColor === "";
+        const fgRgb = hexToRgb(fgColor);
+
+        // Process pixel data to extract foreground shapes with transparency
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = size;
+        tempCanvas.height = size;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (!tempCtx) return;
+
+        tempCtx.drawImage(loadedImg, 0, 0, size, size);
+        const imgData = tempCtx.getImageData(0, 0, size, size);
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          // Calculate distance from white (255, 255, 255)
+          const dist = Math.sqrt(
+            (255 - r) ** 2 + (255 - g) ** 2 + (255 - b) ** 2,
+          );
+
+          // Interpolation factor t:
+          // dist < 30 -> background
+          // dist > 90 -> foreground
+          const t = Math.max(0, Math.min(1, (dist - 30) / 60));
+
+          data[i] = fgRgb.r;
+          data[i + 1] = fgRgb.g;
+          data[i + 2] = fgRgb.b;
+          data[i + 3] = Math.round(a * t);
+        }
+
+        tempCtx.putImageData(imgData, 0, 0);
+
+        ctx.save();
+        if (!bgIsTransparent) {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, size, size);
+        }
+        ctx.drawImage(tempCanvas, 0, 0, size, size);
+        ctx.restore();
+      }
+    };
+
+    const drawSublimatedPattern = (ctx: CanvasRenderingContext2D, patternName: string, color: string, isBackSide: boolean) => {
+      if (!patternName || patternName === "None") return;
+      ctx.save();
+
+      const patternColor = color || "#ffffff";
+
+      // Seeded random helper
+      let seed = isBackSide ? 98765 : 12345;
+      const random = () => {
+        const x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+      };
+
+      if (patternName === "Street Shard") {
+        const drawShard = (x: number, y: number, rSize: number, col: string) => {
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(x + (random() - 0.5) * rSize, y + (random() - 0.5) * rSize);
+          const points = 3 + Math.floor(random() * 4);
+          for (let p = 0; p < points; p++) {
+            const angle = (p / points) * Math.PI * 2 + random() * 0.5;
+            const px = x + Math.cos(angle) * rSize * (0.6 + random() * 0.6);
+            const py = y + Math.sin(angle) * rSize * (0.6 + random() * 0.6);
+            ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fill();
+        };
+
+        for (let i = 0; i < 20; i++) {
+          const rx = random() * (size * 0.33);
+          const ry = random() * size;
+          const rS = 30 + random() * 50;
+          const isDark = random() > 0.3;
+          drawShard(rx, ry, rS, isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)");
+          if (rx < rS) drawShard(rx + size, ry, rS, isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)");
+        }
+
+        for (let i = 0; i < 20; i++) {
+          const rx = size * 0.67 + random() * (size * 0.33);
+          const ry = random() * size;
+          const rS = 30 + random() * 50;
+          const isDark = random() > 0.3;
+          drawShard(rx, ry, rS, isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)");
+          if (rx + rS > size) drawShard(rx - size, ry, rS, isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.12)");
+        }
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 15; i++) {
+          ctx.beginPath();
+          const sx = random() * size;
+          const sy = random() * size;
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + (random() - 0.5) * 120, sy + (random() - 0.5) * 120);
+          ctx.stroke();
+        }
+
+        const bandStart = size * 0.36;
+        const bandEnd = size * 0.64;
+        const bandWidth = bandEnd - bandStart;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+        ctx.fillRect(bandStart, 0, bandWidth, size);
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 10; i++) {
+          ctx.beginPath();
+          const sx = bandStart + random() * bandWidth;
+          const sy = random() * size;
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo(sx + (random() - 0.5) * 30, sy + 50, sx + (random() - 0.5) * 30, sy + 100);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+        const dotSpacing = 10;
+        for (let x = bandStart - 40; x <= bandStart; x += dotSpacing) {
+          const distance = bandStart - x;
+          const maxRadius = 3.5;
+          const radius = Math.max(0.5, maxRadius * (1 - distance / 40));
+          for (let y = 0; y < size; y += dotSpacing) {
+            ctx.beginPath();
+            const offset = (Math.round(y / dotSpacing) % 2) * (dotSpacing / 2);
+            ctx.arc(x, y + offset, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        for (let x = bandEnd; x <= bandEnd + 40; x += dotSpacing) {
+          const distance = x - bandEnd;
+          const maxRadius = 3.5;
+          const radius = Math.max(0.5, maxRadius * (1 - distance / 40));
+          for (let y = 0; y < size; y += dotSpacing) {
+            ctx.beginPath();
+            const offset = (Math.round(y / dotSpacing) % 2) * (dotSpacing / 2);
+            ctx.arc(x, y + offset, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      } else if (patternName === "JerseyHexDot") {
+        ctx.fillStyle = patternColor;
+        ctx.fillRect(0, 0, size, size);
+
+        const hexSize = 48;
+        const cols = Math.ceil(size / (hexSize * 1.6)) + 2;
+        const rows = Math.ceil(size / (hexSize * 1.4)) + 2;
+
+        for (let row = -1; row < rows; row++) {
+          for (let col = -1; col < cols; col++) {
+            const offsetX = row % 2 === 0 ? 0 : hexSize * 0.9;
+            const cx = col * hexSize * 1.7 + offsetX;
+            const cy = row * hexSize * 1.35;
+
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const angle = (Math.PI / 180) * (60 * i - 30);
+              const x = cx + hexSize * 0.82 * Math.cos(angle);
+              const y = cy + hexSize * 0.82 * Math.sin(angle);
+              i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+
+            const hexR = parseInt(patternColor.slice(1, 3), 16);
+            const hexG = parseInt(patternColor.slice(3, 5), 16);
+            const hexB = parseInt(patternColor.slice(5, 7), 16);
+            const dr2 = Math.round(hexR * 0.65);
+            const dg2 = Math.round(hexG * 0.65);
+            const db2 = Math.round(hexB * 0.65);
+            ctx.strokeStyle = `rgba(${dr2}, ${dg2}, ${db2}, 0.5)`;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            const dotRows = 5;
+            const dotCols = 5;
+            const dotSpacing = hexSize * 0.32;
+
+            for (let dr = 0; dr < dotRows; dr++) {
+              for (let dc = 0; dc < dotCols; dc++) {
+                const dx = cx - ((dotCols - 1) * dotSpacing) / 2 + dc * dotSpacing;
+                const dy = cy - ((dotRows - 1) * dotSpacing) / 2 + dr * dotSpacing;
+                const dist = Math.sqrt((dx - cx) ** 2 + (dy - cy) ** 2);
+                const maxDist = hexSize * 0.75;
+                if (dist > maxDist) continue;
+
+                const fade = 1 - dist / maxDist;
+                const r = 1.6 * fade + 0.4;
+                ctx.beginPath();
+                ctx.arc(dx, dy, r, 0, Math.PI * 2);
+
+                const dr3 = Math.round(hexR * 0.7);
+                const dg3 = Math.round(hexG * 0.7);
+                const db3 = Math.round(hexB * 0.7);
+                ctx.fillStyle = `rgba(${dr3}, ${dg3}, ${db3}, ${0.55 * fade + 0.15})`;
+                ctx.fill();
+              }
+            }
+          }
+        }
+
+        const vignette = ctx.createRadialGradient(size / 2, size / 2, size * 0.2, size / 2, size / 2, size * 0.85);
+        vignette.addColorStop(0, "rgba(0,0,0,0)");
+        vignette.addColorStop(1, "rgba(0,0,0,0.22)");
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, size, size);
+      } else if (patternName === "BlueGrungeJersey") {
+        const pr = parseInt(patternColor.slice(1, 3), 16);
+        const pg = parseInt(patternColor.slice(3, 5), 16);
+        const pb = parseInt(patternColor.slice(5, 7), 16);
+
+        const lr = Math.round(pr * 0.4 + 255 * 0.6);
+        const lg = Math.round(pg * 0.4 + 255 * 0.6);
+        const lb = Math.round(pb * 0.4 + 255 * 0.6);
+        const lightSide = `rgb(${lr}, ${lg}, ${lb})`;
+
+        const deepR = Math.round(pr * 0.35);
+        const deepG = Math.round(pg * 0.35);
+        const deepB = Math.round(pb * 0.35);
+
+        ctx.fillStyle = patternColor;
+        ctx.fillRect(0, 0, size, size);
+
+        ctx.fillStyle = lightSide;
+        ctx.fillRect(0, 0, size * 0.38, size);
+        ctx.fillRect(size * 0.62, 0, size * 0.38, size);
+
+        const drawGrungeTriangles = (areaX: number, areaW: number, count: number, seedOffset: number) => {
+          for (let i = 0; i < count; i++) {
+            const r1 = random();
+            const r2 = random();
+            const r3 = random();
+            const r4 = random();
+            const r5 = random();
+            const r6 = random();
+
+            const x1 = areaX + r1 * areaW;
+            const y1 = r2 * size;
+            const triSize = 40 + r3 * 120;
+            const angle = r4 * Math.PI * 2;
+
+            const x2 = x1 + Math.cos(angle) * triSize;
+            const y2 = y1 + Math.sin(angle) * triSize;
+            const x3 = x1 + Math.cos(angle + 2.3) * triSize * 0.7;
+            const y3 = y1 + Math.sin(angle + 2.3) * triSize * 0.7;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x3, y3);
+            ctx.closePath();
+
+            if (r5 > 0.5) {
+              ctx.fillStyle = `rgba(${deepR}, ${deepG}, ${deepB}, 0.75)`;
+              ctx.fill();
+            } else {
+              ctx.strokeStyle = `rgba(${deepR}, ${deepG}, ${deepB}, 0.85)`;
+              ctx.lineWidth = 2 + r6 * 4;
+              ctx.stroke();
+            }
+          }
+        };
+
+        drawGrungeTriangles(0, size * 0.33, 10, 0);
+        drawGrungeTriangles(size * 0.67, size * 0.33, 10, 50);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
+        ctx.fillRect(size * 0.38, 0, size * 0.24, size);
+      }
+
+      ctx.restore();
+    };
+
+    // Front Texture
+    const front = makeCanvas((ctx) => {
+      const side = "Front";
+      const sideTextLayers = state.textLayers.filter((l: any) => l.side === side);
+      const sideLogoLayers = state.logoLayers.filter((l: any) => l.side === side);
+
+      const activeSideLayers = [
+        ...sideTextLayers.map((l: any) => ({ ...l, layerType: "text" })),
+        ...sideLogoLayers.map((l: any) => ({ ...l, layerType: "logo" })),
+      ];
+
+      const sortedLayers = [...activeSideLayers].sort((a, b) => {
+        const idxA = state.layersOrder.indexOf(a.id);
+        const idxB = state.layersOrder.indexOf(b.id);
+        const getPriority = (l: any) => {
+          if (l.layerType === "text") return 1;
+          if (l.type === "image") {
+            return l.zOrder === "above-text" ? 2 : 0;
+          }
+          return 3;
+        };
+        const valA = idxA !== -1 ? idxA : getPriority(a) * 1000;
+        const valB = idxB !== -1 ? idxB : getPriority(b) * 1000;
+        return valA - valB;
+      });
+
+      sortedLayers.forEach((layer) => {
+        if (layer.layerType === "text") {
+          drawTextWithSpacing(
+            ctx,
+            layer.text,
+            layer.x,
+            layer.y,
+            layer.font,
+            layer.textSize,
+            layer.color,
+            false,
+            "#FFFFFF",
+            layer.letterSpacing || 0,
+            layer.lineSpacing || 1.15,
+            layer.curveRadius || 0,
+            layer.shadowEnabled,
+            layer.shadowColor,
+            layer.shadowBlur,
+            layer.shadowOffsetX,
+            layer.shadowOffsetY,
+            layer.outlineEnabled,
+            layer.outlineColor,
+            layer.outlineWidth,
+          );
+        } else {
+          drawLayerOnCtx(ctx, layer);
+        }
+      });
+    });
+
+    // Back Texture
+    const back = makeCanvas((ctx) => {
+      const side = "Back";
+      const sideTextLayers = state.textLayers.filter((l: any) => l.side === side);
+      const sideLogoLayers = state.logoLayers.filter((l: any) => l.side === side);
+
+      const activeSideLayers = [
+        ...sideTextLayers.map((l: any) => ({ ...l, layerType: "text" })),
+        ...sideLogoLayers.map((l: any) => ({ ...l, layerType: "logo" })),
+      ];
+
+      const sortedLayers = [...activeSideLayers].sort((a, b) => {
+        const idxA = state.layersOrder.indexOf(a.id);
+        const idxB = state.layersOrder.indexOf(b.id);
+        const getPriority = (l: any) => {
+          if (l.layerType === "text") return 1;
+          if (l.type === "image") {
+            return l.zOrder === "above-text" ? 2 : 0;
+          }
+          return 3;
+        };
+        const valA = idxA !== -1 ? idxA : getPriority(a) * 1000;
+        const valB = idxB !== -1 ? idxB : getPriority(b) * 1000;
+        return valA - valB;
+      });
+
+      sortedLayers.forEach((layer) => {
+        if (layer.layerType === "text") {
+          drawTextWithSpacing(
+            ctx,
+            layer.text,
+            layer.x,
+            layer.y,
+            layer.font,
+            layer.textSize,
+            layer.color,
+            false,
+            "#FFFFFF",
+            layer.letterSpacing || 0,
+            layer.lineSpacing || 1.15,
+            layer.curveRadius || 0,
+            layer.shadowEnabled,
+            layer.shadowColor,
+            layer.shadowBlur,
+            layer.shadowOffsetX,
+            layer.shadowOffsetY,
+            layer.outlineEnabled,
+            layer.outlineColor,
+            layer.outlineWidth,
+          );
+        } else {
+          drawLayerOnCtx(ctx, layer);
+        }
+      });
+    });
+
+    const isSplit = state.primaryColorSide && state.primaryColorSide !== "Both";
+
+    const showFrontDecal =
+      isSplit ||
+      (state.designPattern &&
+        state.designPattern !== "plain" &&
+        (state.designSide === "Front" || state.designSide === "Both" || !state.designSide)) ||
+      (state.fabricPatternFront && state.fabricPatternFront !== "None");
+
+    const showBackDecal =
+      isSplit ||
+      (state.designPattern &&
+        state.designPattern !== "plain" &&
+        (state.designSide === "Back" || state.designSide === "Both")) ||
+      (state.fabricPatternBack && state.fabricPatternBack !== "None");
+
+    // Pattern Front Texture
+    const patternFront = showFrontDecal
+      ? makeCanvas((ctx) => {
+        // 1. Draw base color / fabric pattern first
+        if (state.fabricPatternFront && state.fabricPatternFront !== "None") {
+          drawFabricPattern(ctx, state.fabricPatternFront, true);
+        } else {
+          // Fill with front primary color
+          ctx.fillStyle = state.primaryFront || state.primary || "#2196F3";
+          ctx.fillRect(0, 0, size, size);
+        }
+        // 2. Draw design pattern on top
+        if (
+          state.designPattern &&
+          state.designPattern !== "plain" &&
+          (state.designSide === "Front" || state.designSide === "Both" || !state.designSide)
+        ) {
+          drawPattern(ctx);
+        }
+      })
+      : null;
+
+    // Pattern Back Texture
+    const patternBack = showBackDecal
+      ? makeCanvas((ctx) => {
+        // 1. Draw base color / fabric pattern first
+        if (state.fabricPatternBack && state.fabricPatternBack !== "None") {
+          drawFabricPattern(ctx, state.fabricPatternBack, false);
+        } else {
+          // Fill with back primary color
+          ctx.fillStyle = state.primaryBack || state.primary || "#2196F3";
+          ctx.fillRect(0, 0, size, size);
+        }
+        // 2. Draw design pattern on top
+        if (
+          state.designPattern &&
+          state.designPattern !== "plain" &&
+          (state.designSide === "Back" || state.designSide === "Both")
+        ) {
+          drawPattern(ctx);
+        }
+      })
+      : null;
+
+    return { front, back, patternFront, patternBack };
+  }, [
+    state.primary,
+    state.primaryColorSide,
+    state.primaryFront,
+    state.primaryBack,
+    state.secondary,
+    state.designColor,
+    state.designPattern,
+    state.textLayers,
+    state.logoLayers,
+    state.loadedLogoImages,
+    state.layersOrder,
+    state.fabricPatternColorFront,
+    state.fabricPatternFront,
+    state.fabricPatternCustomizeFront,
+    state.fabricPatternBgFront,
+    state.fabricPatternCustomizeBack,
+    state.fabricPatternColorBack,
+    state.fabricPatternBack,
+    state.fabricPatternBgBack,
+    state.loadedPatterns,
+  ]);
+}
+
+// ─── Logo Decal Component ──────────────────────────────────────────────────
+function LogoDecal({
+  layer,
+  loadedLogoImages,
+  roughness,
+  fabricConfig,
+}: {
+  layer: LogoLayer;
+  loadedLogoImages: Record<string, HTMLImageElement>;
+  roughness: number;
+  fabricConfig: any;
+}) {
+  const img = loadedLogoImages[layer.src];
+  const [logoTexture, setLogoTexture] = useState<THREE.Texture | null>(null);
+  const [aspect, setAspect] = useState(1.0);
+
+  useEffect(() => {
+    if (!img) return;
+    const tex = new THREE.Texture(img);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.anisotropy = 16;
+    tex.needsUpdate = true;
+    setAspect(img.naturalWidth / img.naturalHeight || 1.0);
+    setLogoTexture(tex);
+  }, [img, layer.src]);
+
+  const decalParams = useMemo(() => {
+    if (!logoTexture) return null;
+    const relativeX = (layer.x - 512) / 1024;
+    const relativeY = -(layer.y - 500) / 1024;
+
+    const baseSize = 0.54;
+    const finalSizeX = (layer.scale * 200 * aspect) / 1024;
+    const finalSizeY = (layer.scale * 200) / 1024;
+
+    const meshWidth = 0.54;
+    const meshHeight = 0.7;
+
+    const relativeZ = 0.155;
+    const zOffset = 0.001;
+
+    let posX = relativeX * meshWidth;
+    let posY = relativeY * meshHeight;
+    let posZ = relativeZ;
+
+    let rotY = 0;
+    if (layer.side === "Back") {
+      posX = -posX;
+      posZ = -relativeZ;
+      rotY = Math.PI;
+    }
+
+    return {
+      position: [posX, posY, posZ] as [number, number, number],
+      rotation: [0, rotY, -(layer.rotation * Math.PI) / 180] as [number, number, number],
+      scale: [finalSizeX, finalSizeY, 0.2] as [number, number, number],
+    };
+  }, [logoTexture, aspect, layer.x, layer.y, layer.scale, layer.rotation, layer.side]);
+
+  if (!logoTexture || !decalParams) return null;
+
+  return (
+    <Decal
+      position={decalParams.position}
+      rotation={decalParams.rotation}
+      scale={decalParams.scale}
+      renderOrder={40}
+    >
+      <meshStandardMaterial
+        map={logoTexture}
+        transparent
+        alphaTest={0.002}
+        depthWrite={false}
+        polygonOffset
+        polygonOffsetFactor={-10}
+        roughness={roughness}
+        normalMap={fabricConfig.normalMap || undefined}
+        normalScale={fabricConfig.normalScale}
+        envMapIntensity={0.2}
+      />
+    </Decal>
+  );
+}
+
+// ─── Main Jersey3D Component ───────────────────────────────────────────────
+export function Jersey3D({
+  colors,
+  collar,
+  texturesRef,
+}: {
+  colors: any;
+  collar: boolean;
+  texturesRef?: React.MutableRefObject<{
+    front: THREE.CanvasTexture | null;
+    back: THREE.CanvasTexture | null;
+    patternFront?: THREE.CanvasTexture | null;
+    patternBack?: THREE.CanvasTexture | null;
+  }>;
+}) {
+  const { nodes } = useGLTF("/models/shirt_baked.glb") as any;
+  const { front, back, patternFront, patternBack } = useJerseyDecals(colors);
+
+  useEffect(() => {
+    if (texturesRef) {
+      texturesRef.current = { front, back, patternFront, patternBack };
+    }
+  }, [front, back, patternFront, patternBack, texturesRef]);
+
+  const { collarDecal } = useStyleDecals(colors);
+  const [logoTexture, setLogoTexture] = useState<THREE.Texture | null>(null);
+  const [logoAspect, setLogoAspect] = useState(1);
+
+  useEffect(() => {
+    if (!colors.logo) {
+      setLogoTexture(null);
+      return;
+    }
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      colors.logo,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.anisotropy = 16;
+        tex.needsUpdate = true;
+        const img = tex.image;
+        if (img) {
+          setLogoAspect(img.width / img.height);
+        }
+        setLogoTexture(tex);
+      },
+      undefined,
+      (err) => {
+        console.error("Error loading logo texture:", err);
+      },
+    );
+  }, [colors.logo]);
+
+  const logoParams = useMemo(() => {
+    if (!logoTexture) return null;
+    const size = colors.logoSize || 0.15;
+    const aspect = logoAspect || 1.0;
+
+    switch (colors.logoPosition) {
+      case "Left Chest":
+        return {
+          position: [0.062, 0.16, 0.138] as [number, number, number],
+          rotation: [0, 0, 0] as [number, number, number],
+          scale: [size * aspect * 0.75, size * 0.75, 0.2] as [number, number, number],
+        };
+      case "Right Chest":
+        return {
+          position: [-0.062, 0.16, 0.138] as [number, number, number],
+          rotation: [0, 0, 0] as [number, number, number],
+          scale: [size * aspect * 0.75, size * 0.75, 0.2] as [number, number, number],
+        };
+      case "Center":
+        return {
+          position: [0.0, 0.08, 0.15] as [number, number, number],
+          rotation: [0, 0, 0] as [number, number, number],
+          scale: [size * aspect * 1.3, size * 1.3, 0.2] as [number, number, number],
+        };
+      case "Back Top":
+        return {
+          position: [0.0, 0.23, -0.135] as [number, number, number],
+          rotation: [0, Math.PI, 0] as [number, number, number],
+          scale: [size * aspect * 0.9, size * 0.9, 0.2] as [number, number, number],
+        };
+      case "Back Center":
+        return {
+          position: [0.0, 0.05, -0.15] as [number, number, number],
+          rotation: [0, Math.PI, 0] as [number, number, number],
+          scale: [size * aspect * 1.3, size * 1.3, 0.2] as [number, number, number],
+        };
+      case "Sleeve":
+        return {
+          position: [0.22, 0.16, 0.0] as [number, number, number],
+          rotation: [0, Math.PI / 2, 0] as [number, number, number],
+          scale: [size * aspect, size, 0.2] as [number, number, number],
+        };
+      default:
+        return null;
+    }
+  }, [logoTexture, logoAspect, colors.logoPosition, colors.logoSize]);
+
+  const meshNormalMap = useMemo(() => createMeshNormalMap(), []);
+  const flexNormalMap = useMemo(() => createFlexNormalMap(), []);
+
+  const fabricConfig = useMemo(() => {
+    if (colors.fabric === "Flex") {
+      return {
+        roughness: 0.4,
+        normalMap: flexNormalMap,
+        normalScale: new THREE.Vector2(0.15, 0.15),
+      };
+    } else {
+      return {
+        roughness: 0.8,
+        normalMap: meshNormalMap,
+        normalScale: new THREE.Vector2(0.4, 0.4),
+      };
+    }
+  }, [colors.fabric, meshNormalMap, flexNormalMap]);
+
+  const shirtMat = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: colors.primaryFront || colors.primary,
+      roughness: fabricConfig.roughness,
+      metalness: 0.04,
+      normalMap: fabricConfig.normalMap || undefined,
+      normalScale: fabricConfig.normalScale,
+      envMapIntensity: 0.25,
+    });
+  }, [fabricConfig, colors.primaryFront, colors.primary]);
+
+  let scaleX = 2.2;
+  let scaleZ = 2.2;
+  if (colors.cutFit === "Slim Fit") {
+    scaleX = 2.05;
+    scaleZ = 2.05;
+  } else if (colors.cutFit === "Relaxed") {
+    scaleX = 2.35;
+    scaleZ = 2.35;
+  }
+
+  const SLEEVE_SEAM_X = 0.187;
+  const SLEEVE_SEAM_Y = 0.087;
+  const SLEEVE_ROT_Z = Math.PI / 2 + 0.35;
+  const SLEEVE_AX = Math.sin(SLEEVE_ROT_Z);
+  const SLEEVE_AY = Math.cos(SLEEVE_ROT_Z);
+
+  const sleeveLen = colors.sleeve === "Long" ? 0.34 : 0.17;
+  const sleeveHalf = sleeveLen / 2;
+  const sleeveCX = SLEEVE_SEAM_X + sleeveHalf * SLEEVE_AX;
+  const sleeveCY = SLEEVE_SEAM_Y + sleeveHalf * SLEEVE_AY;
+  const sleeveWristX = SLEEVE_SEAM_X + sleeveLen * SLEEVE_AX;
+  const sleeveWristY = SLEEVE_SEAM_Y + sleeveLen * SLEEVE_AY;
+
+  const trimColor = colors.designColor || colors.secondary || "#ffffff";
+  const roughness = fabricConfig.roughness;
+
+  return (
+    <group scale={[scaleX, 2.2, scaleZ]} position={[0, -0.1, 0]}>
+      <mesh
+        castShadow
+        receiveShadow
+        geometry={nodes.T_Shirt_male.geometry}
+        material={shirtMat}
+        dispose={null}
+      >
+        {patternFront && (
+          <Decal
+            position={[0, 0.0, 0.155]}
+            rotation={[0, 0, 0]}
+            scale={[0.54, 0.7, 0.309]}
+            renderOrder={1}
+          >
+            <meshStandardMaterial
+              map={patternFront}
+              transparent
+              alphaTest={0.01}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-3}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              envMapIntensity={0.2}
+            />
+          </Decal>
+        )}
+        {patternBack && (
+          <Decal
+            position={[0, 0.0, -0.155]}
+            rotation={[0, Math.PI, 0]}
+            scale={[0.54, 0.7, 0.309]}
+            renderOrder={1}
+          >
+            <meshStandardMaterial
+              map={patternBack}
+              transparent
+              alphaTest={0.01}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-3}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              envMapIntensity={0.2}
+            />
+          </Decal>
+        )}
+
+        {front && (
+          <Decal
+            position={[0, 0.0, 0.155]}
+            rotation={[0, 0, 0]}
+            scale={[0.54, 0.7, 0.309]}
+            renderOrder={10}
+          >
+            <meshStandardMaterial
+              map={front}
+              transparent
+              alphaTest={0.02}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-4}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              envMapIntensity={0.2}
+            />
+          </Decal>
+        )}
+        {back && (
+          <Decal
+            position={[0, 0.0, -0.155]}
+            rotation={[0, Math.PI, 0]}
+            scale={[0.54, 0.7, 0.309]}
+            renderOrder={10}
+          >
+            <meshStandardMaterial
+              map={back}
+              transparent
+              alphaTest={0.02}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-4}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              envMapIntensity={0.2}
+            />
+          </Decal>
+        )}
+        {logoTexture && logoParams && (
+          <Decal
+            position={logoParams.position}
+            rotation={logoParams.rotation}
+            scale={logoParams.scale}
+            renderOrder={20}
+          >
+            <meshStandardMaterial
+              map={logoTexture}
+              transparent
+              alphaTest={0.002}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-8}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              envMapIntensity={0.2}
+            />
+          </Decal>
+        )}
+
+        {collarDecal && (
+          <Decal
+            position={[0.0, 0.19, 0.118]}
+            rotation={[0.15, 0, 0]}
+            scale={[0.22, 0.22, 0.12]}
+            renderOrder={30}
+          >
+            <meshStandardMaterial
+              map={collarDecal}
+              transparent
+              alphaTest={0.008}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-7}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              envMapIntensity={0.2}
+            />
+          </Decal>
+        )}
+
+        {(colors.logoLayers || [])
+          .filter((l: any) => l.type === "logo" || !l.type)
+          .map((layer: any) => (
+            <LogoDecal
+              key={layer.id}
+              layer={layer}
+              loadedLogoImages={colors.loadedLogoImages || {}}
+              roughness={roughness}
+              fabricConfig={fabricConfig}
+            />
+          ))}
+      </mesh>
+
+      {colors.collar && colors.collarType === "Polo" && (
+        <group>
+          <mesh castShadow receiveShadow position={[-0.038, 0.198, 0.045]} rotation={[0.35, -0.35, -0.4]}>
+            <boxGeometry args={[0.055, 0.004, 0.065]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+          <mesh castShadow receiveShadow position={[0.038, 0.198, 0.045]} rotation={[0.35, 0.35, 0.4]}>
+            <boxGeometry args={[0.055, 0.004, 0.065]} />
+            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
+          </mesh>
+        </group>
+      )}
+
+      {(colors.sleeve === "Long" || colors.sleeve === "3/4") && (
+        <group>
+          <mesh castShadow receiveShadow position={[sleeveCX, sleeveCY, -0.01]} rotation={[0, 0, -SLEEVE_ROT_Z]}>
+            <cylinderGeometry args={[0.042, colors.sleeve === "Long" ? 0.028 : 0.034, sleeveLen, 32]} />
+            <meshStandardMaterial
+              color={colors.primaryFront || colors.primary}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              metalness={0.03}
+              envMapIntensity={1.1}
+            />
+          </mesh>
+          {colors.sleeve === "Long" && (
+            <mesh castShadow receiveShadow position={[sleeveWristX, sleeveWristY, -0.01]} rotation={[0, 0, -SLEEVE_ROT_Z]}>
+              <cylinderGeometry args={[0.029, 0.028, 0.018, 32]} />
+              <meshStandardMaterial color={trimColor} roughness={0.5} metalness={0.02} />
+            </mesh>
+          )}
+
+          <mesh castShadow receiveShadow position={[-sleeveCX, sleeveCY, -0.01]} rotation={[0, 0, SLEEVE_ROT_Z]}>
+            <cylinderGeometry args={[0.042, colors.sleeve === "Long" ? 0.028 : 0.034, sleeveLen, 32]} />
+            <meshStandardMaterial
+              color={colors.primaryFront || colors.primary}
+              roughness={roughness}
+              normalMap={fabricConfig.normalMap || undefined}
+              normalScale={fabricConfig.normalScale}
+              metalness={0.03}
+              envMapIntensity={1.1}
+            />
+          </mesh>
+        </group>
+      )}
+    </group>
+  );
+}
+useGLTF.preload("/models/shirt_baked.glb");

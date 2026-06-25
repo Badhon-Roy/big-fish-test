@@ -185,10 +185,10 @@ function Toggle({
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative w-11 h-6 rounded-full transition-colors duration-300 ${value ? "bg-zinc-900" : "bg-zinc-300"}`}
+      className={`relative w-10 h-6 rounded-full transition-colors duration-300 ${value ? "bg-zinc-900" : "bg-zinc-300"}`}
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${value ? "translate-x-5" : "translate-x-0"}`}
+        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${value ? "translate-x-4" : "translate-x-0"}`}
       />
     </button>
   );
@@ -1916,9 +1916,8 @@ export default function PillowScene() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative group py-2.5 rounded-xl flex flex-col items-center justify-center cursor-pointer gap-1 transition-all duration-300 w-16 ${
-                isActive ? "text-[#00263C]" : "text-zinc-400 hover:text-[#00263C]"
-              }`}
+              className={`relative group py-2.5 rounded-xl flex flex-col items-center justify-center cursor-pointer gap-1 transition-all duration-300 w-16 ${isActive ? "text-[#00263C]" : "text-zinc-400 hover:text-[#00263C]"
+                }`}
             >
               {isActive && (
                 <motion.div
@@ -1928,9 +1927,8 @@ export default function PillowScene() {
                 />
               )}
               <tab.icon
-                className={`w-5 h-5 transition-transform duration-300 ${
-                  isActive ? "scale-110" : "group-hover:scale-105"
-                }`}
+                className={`w-5 h-5 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-105"
+                  }`}
               />
               <span className="text-[10px] tracking-wide text-center font-medium">
                 {tab.label}
@@ -1966,9 +1964,8 @@ export default function PillowScene() {
                       <button
                         key={d.id}
                         onClick={() => setSelectedDesign(d.id)}
-                        className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all ${
-                          selectedDesign === d.id ? "bg-red-50 ring-2 ring-red-500" : "hover:bg-zinc-50"
-                        }`}
+                        className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all ${selectedDesign === d.id ? "bg-red-50 ring-2 ring-red-500" : "hover:bg-zinc-50"
+                          }`}
                       >
                         <div className="w-14 h-14">
                           <PillowSVG
@@ -2000,11 +1997,10 @@ export default function PillowScene() {
                             <button
                               key={side}
                               onClick={() => updateState("designSide", side)}
-                              className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                state.designSide === side
+                              className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${state.designSide === side
                                   ? "border-red-500 bg-red-50 text-red-600"
                                   : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                              }`}
+                                }`}
                             >
                               {side}
                             </button>
@@ -2031,9 +2027,8 @@ export default function PillowScene() {
                             <button
                               key={c}
                               onClick={() => updateState("designColor", c)}
-                              className={`w-7 h-7 rounded-full border transition-transform ${
-                                state.designColor === c ? "border-zinc-950 scale-110 ring-1 ring-offset-1 ring-zinc-400" : "border-black/10 hover:scale-105"
-                              }`}
+                              className={`w-7 h-7 rounded-full border transition-transform ${state.designColor === c ? "border-zinc-950 scale-110 ring-1 ring-offset-1 ring-zinc-400" : "border-black/10 hover:scale-105"
+                                }`}
                               style={{ backgroundColor: c }}
                             />
                           ))}
@@ -2089,9 +2084,8 @@ export default function PillowScene() {
                             <button
                               key={c}
                               onClick={() => handleColorChange(c)}
-                              className={`w-9 h-9 rounded border-2 transition-transform ${
-                                activeColor === c ? "border-zinc-900 scale-110 ring-2 ring-offset-1 ring-zinc-400" : "border-black/10 hover:scale-105"
-                              }`}
+                              className={`w-9 h-9 rounded border-2 transition-transform ${activeColor === c ? "border-zinc-900 scale-110 ring-2 ring-offset-1 ring-zinc-400" : "border-black/10 hover:scale-105"
+                                }`}
                               style={{ backgroundColor: c }}
                             />
                           ))}
@@ -2119,17 +2113,15 @@ export default function PillowScene() {
                   <div className="flex gap-1.5 p-1 bg-zinc-100 rounded border">
                     <button
                       onClick={() => updateState("primaryColorSide", "Front")}
-                      className={`flex-1 py-2 text-xs font-bold rounded cursor-pointer transition-all text-center ${
-                        state.primaryColorSide === "Front" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"
-                      }`}
+                      className={`flex-1 py-2 text-xs font-bold rounded cursor-pointer transition-all text-center ${state.primaryColorSide === "Front" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"
+                        }`}
                     >
                       Front Side
                     </button>
                     <button
                       onClick={() => updateState("primaryColorSide", "Back")}
-                      className={`flex-1 py-2 text-xs font-bold rounded cursor-pointer transition-all text-center ${
-                        state.primaryColorSide === "Back" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"
-                      }`}
+                      className={`flex-1 py-2 text-xs font-bold rounded cursor-pointer transition-all text-center ${state.primaryColorSide === "Back" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"
+                        }`}
                     >
                       Back Side
                     </button>
@@ -2158,9 +2150,8 @@ export default function PillowScene() {
                               p.id
                             )
                           }
-                          className={`flex flex-col p-2.5 rounded-lg border transition-all text-left ${
-                            isSelected ? "border-red-500 bg-red-50/50" : "border-zinc-200 hover:border-zinc-300"
-                          }`}
+                          className={`flex flex-col p-2.5 rounded-lg border transition-all text-left ${isSelected ? "border-red-500 bg-red-50/50" : "border-zinc-200 hover:border-zinc-300"
+                            }`}
                         >
                           <div className="w-full h-20 rounded-lg overflow-hidden mb-2 bg-zinc-100 border border-zinc-200/50 flex items-center justify-center relative">
                             {p.id === "None" ? (
@@ -2268,22 +2259,20 @@ export default function PillowScene() {
                     <button
                       type="button"
                       onClick={() => setCurrentView("front")}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        activeSide === "Front"
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${activeSide === "Front"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-900"
-                      }`}
+                        }`}
                     >
                       Front Side
                     </button>
                     <button
                       type="button"
                       onClick={() => setCurrentView("back")}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        activeSide === "Back"
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${activeSide === "Back"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-900"
-                      }`}
+                        }`}
                     >
                       Back Side
                     </button>
@@ -2522,11 +2511,10 @@ export default function PillowScene() {
                               <div
                                 key={layer.id}
                                 onClick={() => setSelectedLayerId(layer.id)}
-                                className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
-                                  isSelected
+                                className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${isSelected
                                     ? "border-red-500 bg-red-50/30"
                                     : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
-                                }`}
+                                  }`}
                               >
                                 <div className="flex items-center gap-2">
                                   <Type
@@ -2600,7 +2588,7 @@ export default function PillowScene() {
                         <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                           Layer Settings (
                           {selectedLayer.id.startsWith("front-") ||
-                          selectedLayer.id.startsWith("back-")
+                            selectedLayer.id.startsWith("back-")
                             ? "System Layer"
                             : "Custom Layer"}
                           )
@@ -2676,11 +2664,10 @@ export default function PillowScene() {
                                     updateState("numberFont", f);
                                   }
                                 }}
-                                className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all active:scale-90 duration-300 ${
-                                  selectedLayer.font === f
+                                className={`p-1.5 rounded-full cursor-pointer border text-[10px] font-bold transition-all active:scale-90 duration-300 ${selectedLayer.font === f
                                     ? "border-red-500 bg-red-50 text-red-700"
                                     : "border-[#002337] text-[#002337] hover:border-zinc-300"
-                                }`}
+                                  }`}
                               >
                                 {f}
                               </button>
@@ -2722,11 +2709,10 @@ export default function PillowScene() {
                                     updateState("numberColor", c);
                                   }
                                 }}
-                                className={`w-7 h-7 rounded-full border-2 transition-transform ${
-                                  selectedLayer.color === c
+                                className={`w-7 h-7 rounded-full border-2 transition-transform ${selectedLayer.color === c
                                     ? "border-zinc-900 scale-110"
                                     : "border-black/10 hover:scale-105"
-                                }`}
+                                  }`}
                                 style={{ backgroundColor: c }}
                               />
                             ))}
@@ -2895,15 +2881,15 @@ export default function PillowScene() {
                                   prev.map((l) =>
                                     l.id === selectedLayer.id
                                       ? {
-                                          ...l,
-                                          outlineEnabled: checked,
-                                          outlineColor:
-                                            l.outlineColor || "#FFFFFF",
-                                          outlineWidth:
-                                            typeof l.outlineWidth === "number"
-                                              ? l.outlineWidth
-                                              : 4,
-                                        }
+                                        ...l,
+                                        outlineEnabled: checked,
+                                        outlineColor:
+                                          l.outlineColor || "#FFFFFF",
+                                        outlineWidth:
+                                          typeof l.outlineWidth === "number"
+                                            ? l.outlineWidth
+                                            : 4,
+                                      }
                                       : l,
                                   ),
                                 );
@@ -2988,23 +2974,23 @@ export default function PillowScene() {
                                   prev.map((l) =>
                                     l.id === selectedLayer.id
                                       ? {
-                                          ...l,
-                                          shadowEnabled: checked,
-                                          shadowColor:
-                                            l.shadowColor || "#000000",
-                                          shadowBlur:
-                                            typeof l.shadowBlur === "number"
-                                              ? l.shadowBlur
-                                              : 10,
-                                          shadowOffsetX:
-                                            typeof l.shadowOffsetX === "number"
-                                              ? l.shadowOffsetX
-                                              : 4,
-                                          shadowOffsetY:
-                                            typeof l.shadowOffsetY === "number"
-                                              ? l.shadowOffsetY
-                                              : 4,
-                                        }
+                                        ...l,
+                                        shadowEnabled: checked,
+                                        shadowColor:
+                                          l.shadowColor || "#000000",
+                                        shadowBlur:
+                                          typeof l.shadowBlur === "number"
+                                            ? l.shadowBlur
+                                            : 10,
+                                        shadowOffsetX:
+                                          typeof l.shadowOffsetX === "number"
+                                            ? l.shadowOffsetX
+                                            : 4,
+                                        shadowOffsetY:
+                                          typeof l.shadowOffsetY === "number"
+                                            ? l.shadowOffsetY
+                                            : 4,
+                                      }
                                       : l,
                                   ),
                                 );
@@ -3153,11 +3139,10 @@ export default function PillowScene() {
                         setUploadSubTab("logo");
                         setSelectedLogoId(null); // Deselect on switch
                       }}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        uploadSubTab === "logo"
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${uploadSubTab === "logo"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-900"
-                      }`}
+                        }`}
                     >
                       Logo
                     </button>
@@ -3167,11 +3152,10 @@ export default function PillowScene() {
                         setUploadSubTab("image");
                         setSelectedLogoId(null); // Deselect on switch
                       }}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        uploadSubTab === "image"
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${uploadSubTab === "image"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-900"
-                      }`}
+                        }`}
                     >
                       Image (Wrap/BG)
                     </button>
@@ -3182,22 +3166,20 @@ export default function PillowScene() {
                     <button
                       type="button"
                       onClick={() => setCurrentView("front")}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        activeSide === "Front"
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${activeSide === "Front"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-900"
-                      }`}
+                        }`}
                     >
                       Front Side
                     </button>
                     <button
                       type="button"
                       onClick={() => setCurrentView("back")}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                        activeSide === "Back"
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${activeSide === "Back"
                           ? "bg-white text-zinc-900 shadow-sm"
                           : "text-zinc-500 hover:text-zinc-900"
-                      }`}
+                        }`}
                     >
                       Back Side
                     </button>
@@ -3456,11 +3438,10 @@ export default function PillowScene() {
                           <button
                             type="button"
                             onClick={() => setIsEraserMode((prev) => !prev)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
-                              isEraserMode
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${isEraserMode
                                 ? "bg-red-500 hover:bg-red-600 text-white"
                                 : "bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300"
-                            }`}
+                              }`}
                             title={
                               isEraserMode
                                 ? "Click to lock artwork"
@@ -3866,13 +3847,12 @@ export default function PillowScene() {
                                       setSelectedLayerId(null);
                                     }
                                   }}
-                                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
-                                    isSelected
+                                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none ${isSelected
                                       ? "border-red-500 bg-red-50/30 font-semibold"
                                       : dragOverIdx === index
                                         ? "border-dashed border-red-400 bg-zinc-50 scale-[0.98]"
                                         : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
-                                  } ${draggedIdx === index ? "opacity-45" : ""}`}
+                                    } ${draggedIdx === index ? "opacity-45" : ""}`}
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
                                     {/* Drag Handle */}
@@ -3978,11 +3958,10 @@ export default function PillowScene() {
                                     ),
                                   );
                                 }}
-                                className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
-                                  selectedLayer.zOrder !== "above-text"
+                                className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${selectedLayer.zOrder !== "above-text"
                                     ? "bg-white text-zinc-900 shadow-sm"
                                     : "text-zinc-500 hover:text-zinc-900"
-                                }`}
+                                  }`}
                               >
                                 Send to Back
                               </button>
@@ -3997,11 +3976,10 @@ export default function PillowScene() {
                                     ),
                                   );
                                 }}
-                                className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
-                                  selectedLayer.zOrder === "above-text"
+                                className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${selectedLayer.zOrder === "above-text"
                                     ? "bg-white text-zinc-900 shadow-sm"
                                     : "text-zinc-500 hover:text-zinc-900"
-                                }`}
+                                  }`}
                               >
                                 Bring to Front
                               </button>
@@ -4126,11 +4104,11 @@ export default function PillowScene() {
                                     prev.map((l) =>
                                       l.id === selectedLayer.id
                                         ? {
-                                            ...l,
-                                            x: p.x,
-                                            y: p.y,
-                                            side: targetSide,
-                                          }
+                                          ...l,
+                                          x: p.x,
+                                          y: p.y,
+                                          side: targetSide,
+                                        }
                                         : l,
                                     ),
                                   );
@@ -4308,9 +4286,8 @@ export default function PillowScene() {
                   <button
                     key={s.id}
                     onClick={() => updateState("cutFit", s.id)}
-                    className={`py-2 rounded-xl text-center text-xs font-bold border transition-all ${
-                      state.cutFit === s.id ? "border-red-500 bg-red-50/50 text-red-700" : "border-zinc-200 text-zinc-500"
-                    }`}
+                    className={`py-2 rounded-xl text-center text-xs font-bold border transition-all ${state.cutFit === s.id ? "border-red-500 bg-red-50/50 text-red-700" : "border-zinc-200 text-zinc-500"
+                      }`}
                   >
                     {s.label}
                   </button>
