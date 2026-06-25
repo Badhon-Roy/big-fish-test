@@ -1464,10 +1464,11 @@ function LogoDecal({
     const finalSizeY = (imgH * layer.scale / canvasSize) * meshWidth; // same base → no stretch
 
     // Map canvas position (0–1024) to mesh world position
+    // Canvas center = 512,512 → mesh center = 0,0
     const relativeX = (layer.x - canvasSize / 2) / canvasSize;
-    const relativeY = -(layer.y - 500) / canvasSize;
-    let posX = Math.max(-meshWidth / 2, Math.min(meshWidth / 2, relativeX * meshWidth));
-    let posY = Math.max(-meshHeight / 2, Math.min(meshHeight / 2, relativeY * meshHeight));
+    const relativeY = -(layer.y - canvasSize / 2) / canvasSize;   // 512 is true center
+    let posX = relativeX * meshWidth;    // no clamping — full freedom of movement
+    let posY = relativeY * meshHeight;   // use meshHeight for Y axis
     let posZ = relativeZ;
     let rotY = 0;
 
