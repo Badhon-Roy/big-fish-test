@@ -1637,6 +1637,159 @@ function LogoDecal({
   );
 }
 
+// ─── Image (Wrap/BG) Decal Component ─────────────────────────────────────────
+// Projects uploaded Wrap/BG images as full-body decals matching patternFront/Back.
+// The image is redrawn on an off-screen canvas whenever the user changes
+// position, scale, rotation or opacity — so the 3D jersey stays in sync with
+// the visual editor in real time.
+function ImageDecal({
+  layer,
+  loadedLogoImages,
+  roughness,
+  fabricConfig,
+  glbModel,
+}: {
+  layer: LogoLayer;
+  loadedLogoImages: Record<string, HTMLImageElement>;
+  roughness: number;
+  fabricConfig: any;
+  glbModel: string;
+}) {
+  const img = loadedLogoImages[layer.src];
+  const [imageTexture, setImageTexture] = useState<THREE.CanvasTexture | null>(null);
+
+  useEffect(() => {
+    if (!img) return;
+
+    // ── Draw the image onto an off-screen 1024×1024 canvas ──────────────────
+    // The canvas coordinate system matches the visual editor exactly:
+    //   (layer.x, layer.y) is the image centre, scale is a multiplier on
+    //   the image's natural dimensions, rotation is in degrees.
+    const canvas = document.createElement("canvas");
+    canvas.width  = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const imgW    = img.naturalWidth  || img.width  || 200;
+    const imgH    = img.naturalHeight || img.height || 200;
+    const opacity = typeof layer.opacity === "number" ? layer.opacity : 1.0;
+
+    // ── Scale decoupling + aspect ratio correction ────────────────────────────
+    // The decal box is 0.54 wide × 0.7 tall. A 1024×1024 square canvas
+    // projected onto this non-square decal STRETCHES content vertically by
+    // 0.7/0.54 ≈ 1.3×. We pre-compensate by drawing the image WIDER on the
+    // canvas by the same factor: scaleX = drawScale / meshDecalAspectRatio.
+    // The decal then compresses it back to the correct proportions on the jersey.
+    //
+    // Effective horizontal canvas space = 1024 × (0.54/0.7) ≈ 790 px.
+    // coverScale uses this effective width so that both axes fill together.
+    //
+    // drawScale = (layer.scale / containScale) × coverScale
+    //
+    // At initial upload : layer.scale = containScale → drawScale = coverScale → full fill ✅
+    // User scales up 2× : drawScale = 2×coverScale → still fills ✅
+    // User scales down ½: drawScale = ½×coverScale → partial fill (expected) ✅
+    // Proportions       : image always appears with its natural aspect ratio ✅
+    const meshDecalAspectRatio = 0.54 / 0.7;           // ≈ 0.7714
+    const effectiveW   = 1024 * meshDecalAspectRatio;  // ≈ 790 px effective horizontal space
+    const containScale = Math.min(1024 / imgW, 1024 / imgH) || 1;  // visual editor display scale
+    const coverScale   = Math.max(effectiveW / imgW, 1024 / imgH) || 1; // fill both axes correctly
+    const scaleFactor  = layer.scale / containScale;
+    const drawScale    = coverScale * scaleFactor;
+
+    ctx.clearRect(0, 0, 1024, 1024);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.globalAlpha = opacity;
+    ctx.translate(layer.x, layer.y);
+    ctx.rotate((layer.rotation * Math.PI) / 180);
+    ctx.scale(drawScale / meshDecalAspectRatio, drawScale); // wider X pre-compensates decal's horizontal compression
+
+    // Handle eraser paths the same way the visual editor does
+    if ((layer as any).eraserPaths && (layer as any).eraserPaths.length > 0) {
+      const tmp = document.createElement("canvas");
+      tmp.width  = imgW;
+      tmp.height = imgH;
+      const tCtx = tmp.getContext("2d");
+      if (tCtx) {
+        tCtx.drawImage(img, 0, 0, imgW, imgH);
+        tCtx.globalCompositeOperation = "destination-out";
+        tCtx.lineCap  = "round";
+        tCtx.lineJoin = "round";
+        tCtx.strokeStyle = "rgba(0,0,0,1)";
+        (layer as any).eraserPaths.forEach((path: any) => {
+          tCtx.lineWidth = path.size;
+          tCtx.beginPath();
+          path.points.forEach((pt: any, i: number) => {
+            if (i === 0) tCtx.moveTo(pt.x, pt.y);
+            else tCtx.lineTo(pt.x, pt.y);
+          });
+          tCtx.stroke();
+        });
+        ctx.drawImage(tmp, -imgW / 2, -imgH / 2, imgW, imgH);
+      } else {
+        ctx.drawImage(img, -imgW / 2, -imgH / 2, imgW, imgH);
+      }
+    } else {
+      ctx.drawImage(img, -imgW / 2, -imgH / 2, imgW, imgH);
+    }
+    ctx.restore();
+
+    // ── Create a CanvasTexture from the rendered canvas ──────────────────────
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.anisotropy = 16;
+    tex.needsUpdate = true;
+
+    setImageTexture((prev) => {
+      if (prev) prev.dispose();   // free GPU memory of the old texture
+      return tex;
+    });
+
+    return () => { tex.dispose(); };
+  }, [img, layer.src, layer.x, layer.y, layer.scale, layer.rotation, layer.opacity, (layer as any).eraserPaths]);
+
+  if (!imageTexture) return null;
+
+  const isCollar = glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+  const isFront  = layer.side !== "Back";
+
+  // Mirror patternFront/patternBack position expressions exactly:
+  //   y: 0.0 + (isCollar ? -0.05 : 0.0)
+  //   z: ±0.155 + (isCollar ? -0.02 : 0.0)
+  return (
+    <Decal
+      position={[
+        0,
+        0.0 + (isCollar ? -0.05 : 0.0),
+        (isFront ? 0.155 : -0.155) + (isCollar ? -0.02 : 0.0),
+      ]}
+      rotation={[0, isFront ? 0 : Math.PI, 0]}
+      scale={[0.54, 0.7, 0.309]}
+      renderOrder={isFront ? 5 : 6}
+    >
+      <meshStandardMaterial
+        map={imageTexture}
+        transparent
+        alphaTest={0.01}
+        depthWrite={false}
+        polygonOffset
+        polygonOffsetFactor={-5}
+        roughness={roughness}
+        normalMap={fabricConfig.normalMap || undefined}
+        normalScale={fabricConfig.normalScale}
+        envMapIntensity={0.2}
+      />
+    </Decal>
+  );
+}
+
 // ─── Main Jersey3D Component ───────────────────────────────────────────────
 export function Jersey3D({
   colors,
@@ -2002,6 +2155,20 @@ export function Jersey3D({
           .filter((l: any) => l.type === "logo" || !l.type)
           .map((layer: any) => (
             <LogoDecal
+              key={layer.id}
+              layer={layer}
+              loadedLogoImages={colors.loadedLogoImages || {}}
+              roughness={roughness}
+              fabricConfig={fabricConfig}
+              glbModel={glbPath}
+            />
+          ))}
+
+        {/* Wrap/BG uploads — full-body decals identical in size to patternFront/patternBack */}
+        {(colors.logoLayers || [])
+          .filter((l: any) => l.type === "image")
+          .map((layer: any) => (
+            <ImageDecal
               key={layer.id}
               layer={layer}
               loadedLogoImages={colors.loadedLogoImages || {}}

@@ -251,17 +251,24 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
     img.onload = () => {
       const imgWidth = img.naturalWidth || img.width || 200;
       const imgHeight = img.naturalHeight || img.height || 200;
-      const maxDim = Math.max(imgWidth, imgHeight);
 
-      const targetSize = type === "image" ? 400 : 200;
-      const initialScale = targetSize / maxDim;
+      // For Wrap/BG images: contain-fit within the 1024×1024 canvas so all
+      // four corner handles are visible in the visual editor on first upload.
+      // The user can then scale up to fill. For logo layers: 200px reference size.
+      let initialScale: number;
+      if (type === "image") {
+        initialScale = Math.min(1024 / imgWidth, 1024 / imgHeight);
+      } else {
+        const maxDim = Math.max(imgWidth, imgHeight);
+        initialScale = 200 / maxDim;
+      }
 
       const newId = `custom-logo-${Date.now()}`;
       const newLayer: LogoLayer = {
         id: newId,
         src,
         x: 512,
-        y: 500,
+        y: type === "image" ? 512 : 500,  // image: true center; logo: slightly above center
         scale: initialScale,
         rotation: 0,
         side: get().activeSide,
