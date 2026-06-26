@@ -191,9 +191,44 @@ export function CustomizerLayout() {
       try {
         if (threeRef.current) {
           const { gl, scene, camera } = threeRef.current;
+          
+          // Save original camera settings
+          const persCamera = camera as THREE.PerspectiveCamera;
+          const originalPosition = persCamera.position.clone();
+          const originalQuaternion = persCamera.quaternion.clone();
+          const originalFov = persCamera.fov;
+          
+          const target = new THREE.Vector3(0, -0.12, 0);
+          const exportDistance = 2.8; 
+          
+          // --- CAPTURE FRONT VIEW ---
+          persCamera.position.set(0, -0.12, exportDistance);
+          persCamera.lookAt(target);
+          persCamera.updateProjectionMatrix();
+          
+          // Force render
+          gl.render(scene, persCamera);
+          const frontDataURL = gl.domElement.toDataURL("image/png");
+          triggerLocalDownload(frontDataURL, "jersey-3d-front.png");
+          
+          // --- CAPTURE BACK VIEW ---
+          persCamera.position.set(0, -0.12, -exportDistance);
+          persCamera.lookAt(target);
+          persCamera.updateProjectionMatrix();
+          
+          // Force render
+          gl.render(scene, persCamera);
+          const backDataURL = gl.domElement.toDataURL("image/png");
+          triggerLocalDownload(backDataURL, "jersey-3d-back.png");
+          
+          // --- RESTORE ORIGINAL ---
+          persCamera.position.copy(originalPosition);
+          persCamera.quaternion.copy(originalQuaternion);
+          persCamera.fov = originalFov;
+          persCamera.updateProjectionMatrix();
+          
+          // Re-render original view for the screen
           gl.render(scene, camera);
-          const dataURL = gl.domElement.toDataURL("image/png");
-          triggerLocalDownload(dataURL, "jersey-3d-preview.png");
         } else {
           console.warn("threeRef.current is null - skipping 3D snapshot");
         }
@@ -213,34 +248,136 @@ export function CustomizerLayout() {
         const activePatternTexture =
           activeSideName === "Back" ? texturesRef.current.patternBack : texturesRef.current.patternFront;
 
-        if (activeDecalTexture && activeDecalTexture.image) {
-          const size = 1024;
-          const exportCanvas = document.createElement("canvas");
-          exportCanvas.width = size;
-          exportCanvas.height = size;
-          const exportCtx = exportCanvas.getContext("2d");
-          if (exportCtx) {
-            // 1. Draw base pattern/background color if pattern exists
-            if (activePatternTexture && activePatternTexture.image) {
-              exportCtx.drawImage(activePatternTexture.image as HTMLCanvasElement, 0, 0);
-            } else {
-              // Fallback: fill with active side primary color
-              const fallbackColor =
-                activeSideName === "Front"
-                  ? state.primaryFront || state.primary || "#2196F3"
-                  : state.primaryBack || state.primary || "#2196F3";
-              exportCtx.fillStyle = fallbackColor;
-              exportCtx.fillRect(0, 0, size, size);
-            }
-
-            // 2. Draw active text/logo decals on top
-            exportCtx.drawImage(activeDecalTexture.image as HTMLCanvasElement, 0, 0);
-
-            const dataURL = exportCanvas.toDataURL("image/png");
-            triggerLocalDownload(dataURL, "jersey-print-template.png");
+        const size = 1024;
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = size;
+        exportCanvas.height = size;
+        const exportCtx = exportCanvas.getContext("2d");
+        
+        if (exportCtx) {
+          // 1. Draw base pattern/background color if pattern exists
+          if (activePatternTexture && activePatternTexture.image) {
+            exportCtx.drawImage(activePatternTexture.image as HTMLCanvasElement, 0, 0);
+          } else {
+            // Fallback: fill with active side primary color
+            const fallbackColor =
+              activeSideName === "Front"
+                ? state.primaryFront || state.primary || "#2196F3"
+                : state.primaryBack || state.primary || "#2196F3";
+            exportCtx.fillStyle = fallbackColor;
+            exportCtx.fillRect(0, 0, size, size);
           }
-        } else {
-          console.warn("activeDecalTexture or activeDecalTexture.image is null - skipping flat texture");
+
+          // 2. Draw Wrap/BG images (type === "image")
+          const sideWrapLayers = logoLayers.filter(
+            (l) => (l.side === activeSideName || l.side === "Both") && l.type === "image"
+          );
+          sideWrapLayers.forEach((layer) => {
+            const img = loadedLogoImages[layer.src];
+            if (!img) return;
+            const imgW = img.naturalWidth || img.width || 200;
+            const imgH = img.naturalHeight || img.height || 200;
+            const opacity = typeof layer.opacity === "number" ? layer.opacity : 1.0;
+            const containScale = Math.min(1024 / imgW, 1024 / imgH) || 1;
+            const coverScale = Math.max(1024 / imgW, 1024 / imgH) || 1;
+            const scaleFactor = layer.scale / containScale;
+            const drawScale = coverScale * scaleFactor;
+
+            exportCtx.save();
+            exportCtx.imageSmoothingEnabled = true;
+            exportCtx.imageSmoothingQuality = "high";
+            exportCtx.globalAlpha = opacity;
+            exportCtx.translate(layer.x, layer.y);
+            exportCtx.rotate((layer.rotation * Math.PI) / 180);
+            exportCtx.scale(drawScale, drawScale);
+
+            if (layer.eraserPaths && layer.eraserPaths.length > 0) {
+              const tmp = document.createElement("canvas");
+              tmp.width = imgW;
+              tmp.height = imgH;
+              const tCtx = tmp.getContext("2d");
+              if (tCtx) {
+                tCtx.drawImage(img, 0, 0, imgW, imgH);
+                tCtx.globalCompositeOperation = "destination-out";
+                tCtx.lineCap = "round";
+                tCtx.lineJoin = "round";
+                tCtx.strokeStyle = "rgba(0,0,0,1)";
+                layer.eraserPaths.forEach((path: any) => {
+                  tCtx.lineWidth = path.size;
+                  tCtx.beginPath();
+                  path.points.forEach((pt: any, i: number) => {
+                    if (i === 0) tCtx.moveTo(pt.x, pt.y);
+                    else tCtx.lineTo(pt.x, pt.y);
+                  });
+                  tCtx.stroke();
+                });
+                exportCtx.drawImage(tmp, -imgW / 2, -imgH / 2, imgW, imgH);
+              } else {
+                exportCtx.drawImage(img, -imgW / 2, -imgH / 2, imgW, imgH);
+              }
+            } else {
+              exportCtx.drawImage(img, -imgW / 2, -imgH / 2, imgW, imgH);
+            }
+            exportCtx.restore();
+          });
+
+          // 3. Draw active text decals (activeDecalTexture) if they exist
+          if (activeDecalTexture && activeDecalTexture.image) {
+            exportCtx.drawImage(activeDecalTexture.image as HTMLCanvasElement, 0, 0);
+          }
+
+          // 4. Draw active logo decals (type === "logo" or undefined)
+          const sideLogoLayers = logoLayers.filter(
+            (l) => (l.side === activeSideName || l.side === "Both") && (l.type === "logo" || !l.type)
+          );
+          sideLogoLayers.forEach((layer) => {
+            const img = loadedLogoImages[layer.src];
+            if (!img) return;
+            const imgW = img.naturalWidth || img.width || 200;
+            const imgH = img.naturalHeight || img.height || 200;
+            const opacity = typeof layer.opacity === "number" ? layer.opacity : 1.0;
+            const drawScale = layer.scale;
+
+            exportCtx.save();
+            exportCtx.imageSmoothingEnabled = true;
+            exportCtx.imageSmoothingQuality = "high";
+            exportCtx.globalAlpha = opacity;
+            exportCtx.translate(layer.x, layer.y);
+            exportCtx.rotate((layer.rotation * Math.PI) / 180);
+            exportCtx.scale(drawScale, drawScale);
+
+            if (layer.eraserPaths && layer.eraserPaths.length > 0) {
+              const tmp = document.createElement("canvas");
+              tmp.width = imgW;
+              tmp.height = imgH;
+              const tCtx = tmp.getContext("2d");
+              if (tCtx) {
+                tCtx.drawImage(img, 0, 0, imgW, imgH);
+                tCtx.globalCompositeOperation = "destination-out";
+                tCtx.lineCap = "round";
+                tCtx.lineJoin = "round";
+                tCtx.strokeStyle = "rgba(0,0,0,1)";
+                layer.eraserPaths.forEach((path: any) => {
+                  tCtx.lineWidth = path.size;
+                  tCtx.beginPath();
+                  path.points.forEach((pt: any, i: number) => {
+                    if (i === 0) tCtx.moveTo(pt.x, pt.y);
+                    else tCtx.lineTo(pt.x, pt.y);
+                  });
+                  tCtx.stroke();
+                });
+                exportCtx.drawImage(tmp, -imgW / 2, -imgH / 2, imgW, imgH);
+              } else {
+                exportCtx.drawImage(img, -imgW / 2, -imgH / 2, imgW, imgH);
+              }
+            } else {
+              exportCtx.drawImage(img, -imgW / 2, -imgH / 2, imgW, imgH);
+            }
+            exportCtx.restore();
+          });
+
+          const dataURL = exportCanvas.toDataURL("image/png");
+          triggerLocalDownload(dataURL, "jersey-print-template.png");
         }
       } catch (err) {
         console.error("Error capturing flat print template:", err);
