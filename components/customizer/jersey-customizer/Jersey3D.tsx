@@ -98,6 +98,21 @@ function useStyleDecals(colors: any) {
     if (!colors?.collar || !colors?.collarType || colors.collarType === "None")
       return { collarDecal: null };
 
+    // Apply offset/render rules for collar model geometry
+    const isCollarModel = colors?.glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+    if (isCollarModel) {
+      // For collar model, do not project faux Round/V-Neck lines,
+      // and do not draw any placket/buttons if no closure is selected.
+      if (
+        colors.collarType === "Round" ||
+        colors.collarType === "V-Neck" ||
+        colors.zipper === null ||
+        colors.zipper === undefined
+      ) {
+        return { collarDecal: null };
+      }
+    }
+
     const S = 1024;
     const cv = document.createElement("canvas");
     cv.width = S;
@@ -252,36 +267,39 @@ function useStyleDecals(colors: any) {
       makeVLeg(S * 0.18, 0, S * 0.5, S * 0.52);
       makeVLeg(S * 0.82, 0, S * 0.5, S * 0.52);
     } else if (colors.collarType === "Polo") {
-      const band = ctx.createLinearGradient(0, 0, 0, S * 0.18);
-      band.addColorStop(0, lighten(trim, 45));
-      band.addColorStop(1, darken(trim, 20));
-      ctx.fillStyle = band;
-      drawRoundRect(S * 0.08, 0, S * 0.84, S * 0.18, 6);
-      ctx.fill();
+      // Only draw faux collar flaps and band for the no-collar model
+      if (!isCollarModel) {
+        const band = ctx.createLinearGradient(0, 0, 0, S * 0.18);
+        band.addColorStop(0, lighten(trim, 45));
+        band.addColorStop(1, darken(trim, 20));
+        ctx.fillStyle = band;
+        drawRoundRect(S * 0.08, 0, S * 0.84, S * 0.18, 6);
+        ctx.fill();
 
-      const leftGrad = ctx.createLinearGradient(S * 0.1, 0, S * 0.5, S * 0.5);
-      leftGrad.addColorStop(0, lighten(trim, 30));
-      leftGrad.addColorStop(1, darken(trim, 15));
-      ctx.fillStyle = leftGrad;
-      ctx.beginPath();
-      ctx.moveTo(S * 0.08, S * 0.14);
-      ctx.lineTo(S * 0.08, S * 0.56);
-      ctx.lineTo(S * 0.5, S * 0.35);
-      ctx.lineTo(S * 0.5, S * 0.14);
-      ctx.closePath();
-      ctx.fill();
+        const leftGrad = ctx.createLinearGradient(S * 0.1, 0, S * 0.5, S * 0.5);
+        leftGrad.addColorStop(0, lighten(trim, 30));
+        leftGrad.addColorStop(1, darken(trim, 15));
+        ctx.fillStyle = leftGrad;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.08, S * 0.14);
+        ctx.lineTo(S * 0.08, S * 0.56);
+        ctx.lineTo(S * 0.5, S * 0.35);
+        ctx.lineTo(S * 0.5, S * 0.14);
+        ctx.closePath();
+        ctx.fill();
 
-      const rightGrad = ctx.createLinearGradient(S * 0.5, 0, S * 0.9, S * 0.5);
-      rightGrad.addColorStop(0, lighten(trim, 30));
-      rightGrad.addColorStop(1, darken(trim, 15));
-      ctx.fillStyle = rightGrad;
-      ctx.beginPath();
-      ctx.moveTo(S * 0.92, S * 0.14);
-      ctx.lineTo(S * 0.92, S * 0.56);
-      ctx.lineTo(S * 0.5, S * 0.35);
-      ctx.lineTo(S * 0.5, S * 0.14);
-      ctx.closePath();
-      ctx.fill();
+        const rightGrad = ctx.createLinearGradient(S * 0.5, 0, S * 0.9, S * 0.5);
+        rightGrad.addColorStop(0, lighten(trim, 30));
+        rightGrad.addColorStop(1, darken(trim, 15));
+        ctx.fillStyle = rightGrad;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.92, S * 0.14);
+        ctx.lineTo(S * 0.92, S * 0.56);
+        ctx.lineTo(S * 0.5, S * 0.35);
+        ctx.lineTo(S * 0.5, S * 0.14);
+        ctx.closePath();
+        ctx.fill();
+      }
 
       const pkGrad = ctx.createLinearGradient(S * 0.45, S * 0.34, S * 0.55, S * 0.34);
       pkGrad.addColorStop(0, lighten(trim, 20));
@@ -371,24 +389,27 @@ function useStyleDecals(colors: any) {
         });
       }
     } else if (colors.collarType === "Henley") {
-      const hb = ctx.createLinearGradient(0, 0, 0, S * 0.14);
-      hb.addColorStop(0, lighten(trim, 40));
-      hb.addColorStop(1, darken(trim, 20));
-      ctx.strokeStyle = hb;
-      ctx.lineWidth = S * 0.07;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.arc(S / 2, 0, S * 0.38, 0.08, Math.PI - 0.08);
-      ctx.stroke();
+      // Only draw the collar band for the no-collar model
+      if (!isCollarModel) {
+        const hb = ctx.createLinearGradient(0, 0, 0, S * 0.14);
+        hb.addColorStop(0, lighten(trim, 40));
+        hb.addColorStop(1, darken(trim, 20));
+        ctx.strokeStyle = hb;
+        ctx.lineWidth = S * 0.07;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(S / 2, 0, S * 0.38, 0.08, Math.PI - 0.08);
+        ctx.stroke();
 
-      ctx.strokeStyle = darken(trim, 50);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(S / 2, 0, S * 0.35, 0.1, Math.PI - 0.1);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(S / 2, 0, S * 0.37, 0.1, Math.PI - 0.1);
-      ctx.stroke();
+        ctx.strokeStyle = darken(trim, 50);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(S / 2, 0, S * 0.35, 0.1, Math.PI - 0.1);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(S / 2, 0, S * 0.37, 0.1, Math.PI - 0.1);
+        ctx.stroke();
+      }
 
       const pg2 = ctx.createLinearGradient(S * 0.44, 0, S * 0.56, 0);
       pg2.addColorStop(0, lighten(base, 20));
@@ -491,6 +512,7 @@ function useStyleDecals(colors: any) {
     colors?.designColor,
     colors?.secondary,
     colors?.primary,
+    colors?.glbModel,
   ]);
 }
 
@@ -1426,11 +1448,13 @@ function LogoDecal({
   loadedLogoImages,
   roughness,
   fabricConfig,
+  glbModel,
 }: {
   layer: LogoLayer;
   loadedLogoImages: Record<string, HTMLImageElement>;
   roughness: number;
   fabricConfig: any;
+  glbModel: string;
 }) {
   const img = loadedLogoImages[layer.src];
   const [logoTexture, setLogoTexture] = useState<THREE.Texture | null>(null);
@@ -1478,12 +1502,19 @@ function LogoDecal({
       rotY = Math.PI;
     }
 
+    // Apply offset for collar model geometry scale/translation
+    const isCollarModel = glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+    if (isCollarModel) {
+      posY += -0.05;
+      posZ += 0.005;
+    }
+
     return {
       position: [posX, posY, posZ] as [number, number, number],
       rotation: [0, rotY, -(layer.rotation * Math.PI) / 180] as [number, number, number],
       scale: [finalSizeX, finalSizeY, 0.3] as [number, number, number],
     };
-  }, [logoTexture, img, aspect, layer.x, layer.y, layer.scale, layer.rotation, layer.side]);
+  }, [logoTexture, img, aspect, layer.x, layer.y, layer.scale, layer.rotation, layer.side, glbModel]);
 
   if (!logoTexture || !decalParams) return null;
 
@@ -1525,7 +1556,37 @@ export function Jersey3D({
     patternBack?: THREE.CanvasTexture | null;
   }>;
 }) {
-  const { nodes } = useGLTF("/models/shirt_baked.glb") as any;
+  const glbPath = colors.glbModel || "/models/shirt_baked.glb";
+  const { nodes } = useGLTF(glbPath) as any;
+
+  // Find the mesh geometry dynamically from nodes to support multiple apparel models
+  const meshNode = nodes.T_Shirt_male || nodes.mesh_node || Object.values(nodes).find((n: any) => n.isMesh || n.type === "Mesh");
+
+  // Create a scaled clone of the geometry so both models share the exact same scale, coordinates, and positions
+  const shirtGeometry = useMemo(() => {
+    if (!meshNode?.geometry) return null;
+    const geo = meshNode.geometry.clone();
+
+    // Ensure vertex normals exist
+    if (!geo.attributes.normal) {
+      geo.computeVertexNormals();
+    }
+    // Ensure UV coordinates exist
+    if (!geo.attributes.uv) {
+      const count = geo.attributes.position.count;
+      const uvs = new Float32Array(count * 2);
+      geo.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+    }
+
+    // Scale collar model to match no-collar T-Shirt model boundaries
+    if (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb") {
+      geo.scale(0.33, 0.33, 0.33);
+      geo.translate(0, -0.05, 0.005);
+    }
+
+    return geo;
+  }, [meshNode, glbPath]);
+
   const { front, back, patternFront, patternBack } = useJerseyDecals(colors);
 
   useEffect(() => {
@@ -1570,47 +1631,74 @@ export function Jersey3D({
     const size = colors.logoSize || 0.15;
     const aspect = logoAspect || 1.0;
 
+    let posX = 0;
+    let posY = 0;
+    let posZ = 0;
+    let rotY = 0;
+    let scaleX = size * aspect;
+    let scaleY = size;
+
     switch (colors.logoPosition) {
       case "Left Chest":
-        return {
-          position: [0.062, 0.16, 0.138] as [number, number, number],
-          rotation: [0, 0, 0] as [number, number, number],
-          scale: [size * aspect * 0.75, size * 0.75, 0.2] as [number, number, number],
-        };
+        posX = 0.062;
+        posY = 0.16;
+        posZ = 0.138;
+        scaleX *= 0.75;
+        scaleY *= 0.75;
+        break;
       case "Right Chest":
-        return {
-          position: [-0.062, 0.16, 0.138] as [number, number, number],
-          rotation: [0, 0, 0] as [number, number, number],
-          scale: [size * aspect * 0.75, size * 0.75, 0.2] as [number, number, number],
-        };
+        posX = -0.062;
+        posY = 0.16;
+        posZ = 0.138;
+        scaleX *= 0.75;
+        scaleY *= 0.75;
+        break;
       case "Center":
-        return {
-          position: [0.0, 0.08, 0.15] as [number, number, number],
-          rotation: [0, 0, 0] as [number, number, number],
-          scale: [size * aspect * 1.3, size * 1.3, 0.2] as [number, number, number],
-        };
+        posX = 0.0;
+        posY = 0.08;
+        posZ = 0.15;
+        scaleX *= 1.3;
+        scaleY *= 1.3;
+        break;
       case "Back Top":
-        return {
-          position: [0.0, 0.23, -0.135] as [number, number, number],
-          rotation: [0, Math.PI, 0] as [number, number, number],
-          scale: [size * aspect * 0.9, size * 0.9, 0.2] as [number, number, number],
-        };
+        posX = 0.0;
+        posY = 0.23;
+        posZ = -0.135;
+        rotY = Math.PI;
+        scaleX *= 0.9;
+        scaleY *= 0.9;
+        break;
       case "Back Center":
-        return {
-          position: [0.0, 0.05, -0.15] as [number, number, number],
-          rotation: [0, Math.PI, 0] as [number, number, number],
-          scale: [size * aspect * 1.3, size * 1.3, 0.2] as [number, number, number],
-        };
+        posX = 0.0;
+        posY = 0.05;
+        posZ = -0.15;
+        rotY = Math.PI;
+        scaleX *= 1.3;
+        scaleY *= 1.3;
+        break;
       case "Sleeve":
-        return {
-          position: [0.22, 0.16, 0.0] as [number, number, number],
-          rotation: [0, Math.PI / 2, 0] as [number, number, number],
-          scale: [size * aspect, size, 0.2] as [number, number, number],
-        };
+        posX = 0.22;
+        posY = 0.16;
+        posZ = 0.0;
+        rotY = Math.PI / 2;
+        break;
       default:
         return null;
     }
-  }, [logoTexture, logoAspect, colors.logoPosition, colors.logoSize]);
+
+    // Apply offset for collar model geometry scale/translation
+    const isCollarModel = glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+    if (isCollarModel) {
+      posY += -0.05;
+      posZ += 0.005;
+    }
+
+    return {
+      position: [posX, posY, posZ] as [number, number, number],
+      rotation: [0, rotY, 0] as [number, number, number],
+      scale: [scaleX, scaleY, 0.2] as [number, number, number],
+    };
+  }, [logoTexture, logoAspect, colors.logoPosition, colors.logoSize, glbPath]);
 
   const meshNormalMap = useMemo(() => createMeshNormalMap(), []);
   const flexNormalMap = useMemo(() => createFlexNormalMap(), []);
@@ -1673,15 +1761,15 @@ export function Jersey3D({
       <mesh
         castShadow
         receiveShadow
-        geometry={nodes.T_Shirt_male.geometry}
+        geometry={shirtGeometry}
         material={shirtMat}
         dispose={null}
       >
         {patternFront && (
           <Decal
-            position={[0, 0.0, 0.155]}
+            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), 0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0)]}
             rotation={[0, 0, 0]}
-            scale={[0.54, 0.7, 0.309]}
+            scale={[0.54, 0.7, 0.48]}
             renderOrder={1}
           >
             <meshStandardMaterial
@@ -1700,9 +1788,9 @@ export function Jersey3D({
         )}
         {patternBack && (
           <Decal
-            position={[0, 0.0, -0.155]}
+            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), -0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0)]}
             rotation={[0, Math.PI, 0]}
-            scale={[0.54, 0.7, 0.309]}
+            scale={[0.54, 0.7, 0.48]}
             renderOrder={1}
           >
             <meshStandardMaterial
@@ -1722,9 +1810,9 @@ export function Jersey3D({
 
         {front && (
           <Decal
-            position={[0, 0.0, 0.155]}
+            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), 0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0)]}
             rotation={[0, 0, 0]}
-            scale={[0.54, 0.7, 0.309]}
+            scale={[0.54, 0.7, 0.48]}
             renderOrder={10}
           >
             <meshStandardMaterial
@@ -1743,9 +1831,9 @@ export function Jersey3D({
         )}
         {back && (
           <Decal
-            position={[0, 0.0, -0.155]}
+            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), -0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0)]}
             rotation={[0, Math.PI, 0]}
-            scale={[0.54, 0.7, 0.309]}
+            scale={[0.54, 0.7, 0.48]}
             renderOrder={10}
           >
             <meshStandardMaterial
@@ -1786,7 +1874,7 @@ export function Jersey3D({
 
         {collarDecal && (
           <Decal
-            position={[0.0, 0.19, 0.118]}
+            position={[0.0, 0.19 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), 0.118 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0)]}
             rotation={[0.15, 0, 0]}
             scale={[0.22, 0.22, 0.12]}
             renderOrder={30}
@@ -1815,11 +1903,12 @@ export function Jersey3D({
               loadedLogoImages={colors.loadedLogoImages || {}}
               roughness={roughness}
               fabricConfig={fabricConfig}
+              glbModel={glbPath}
             />
           ))}
       </mesh>
 
-      {colors.collar && colors.collarType === "Polo" && (
+      {glbPath === "/models/shirt_baked.glb" && colors.collar && colors.collarType === "Polo" && (
         <group>
           <mesh castShadow receiveShadow position={[-0.038, 0.198, 0.045]} rotation={[0.35, -0.35, -0.4]}>
             <boxGeometry args={[0.055, 0.004, 0.065]} />
@@ -1833,7 +1922,7 @@ export function Jersey3D({
       )}
 
       {(colors.sleeve === "Long" || colors.sleeve === "3/4") && (
-        <group>
+        <group position={[0, glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0, glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0]}>
           <mesh castShadow receiveShadow position={[sleeveCX, sleeveCY, -0.01]} rotation={[0, 0, -SLEEVE_ROT_Z]}>
             <cylinderGeometry args={[0.042, colors.sleeve === "Long" ? 0.028 : 0.034, sleeveLen, 32]} />
             <meshStandardMaterial
@@ -1869,3 +1958,4 @@ export function Jersey3D({
   );
 }
 useGLTF.preload("/models/shirt_baked.glb");
+useGLTF.preload("/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb");

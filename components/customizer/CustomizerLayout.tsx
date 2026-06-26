@@ -40,6 +40,43 @@ export function CustomizerLayout() {
   const setLoadedPatterns = useCustomizerStore((s) => s.setLoadedPatterns);
   const setLoadedLogoImages = useCustomizerStore((s) => s.setLoadedLogoImages);
   const setIsEraserMode = useCustomizerStore((s) => s.setIsEraserMode);
+  const updateStateBulk = useCustomizerStore((s) => s.updateStateBulk);
+  const setSelectedDesign = useCustomizerStore((s) => s.setSelectedDesign);
+
+  // Load and apply search parameters on page mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      
+      // Parse jersey model type
+      const type = params.get("type");
+      if (type === "collar") {
+        updateStateBulk({
+          glbModel: "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
+          collar: true,
+          collarType: "Polo",
+        });
+      } else if (type === "no-collar") {
+        updateStateBulk({
+          glbModel: "/models/shirt_baked.glb",
+          collar: false,
+          collarType: "None",
+        });
+      }
+
+      // Parse design pattern (e.g. strike, save, final)
+      const pattern = params.get("pattern");
+      if (pattern) {
+        const designExists = JERSEY_DESIGNS.some((d) => d.id === pattern || d.pattern === pattern);
+        if (designExists) {
+          const matchedDesign = JERSEY_DESIGNS.find((d) => d.id === pattern || d.pattern === pattern);
+          if (matchedDesign) {
+            setSelectedDesign(matchedDesign.id);
+          }
+        }
+      }
+    }
+  }, [updateStateBulk, setSelectedDesign]);
 
   const threeRef = useRef<{
     gl: THREE.WebGLRenderer;
@@ -271,7 +308,7 @@ export function CustomizerLayout() {
               {activeTab === "patterns" && <TabPatterns />}
               {activeTab === "text" && <TabText />}
               {activeTab === "logos" && <TabUpload />}
-              {activeTab === "style" && <TabStyle showModelSelector={false} />}
+              {activeTab === "style" && <TabStyle showModelSelector={true} />}
               {activeTab === "fabric" && <TabFabric />}
             </motion.div>
           </AnimatePresence>

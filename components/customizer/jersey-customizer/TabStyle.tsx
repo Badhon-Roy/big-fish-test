@@ -13,16 +13,20 @@ export function TabStyle({ showModelSelector = false }: TabStyleProps) {
 
   const glbModels = [
     {
+      name: "Jersey (No Collar)",
+      path: "/models/shirt_baked.glb",
+    },
+    {
+      name: "Jersey (Collar)",
+      path: "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
+    },
+    {
       name: "Minimalist Hoodie",
       path: "/Meshy_AI_Minimalist_White_Hood_0616043506_generate.glb",
     },
     {
       name: "Realistic Tank Top",
       path: "/Meshy_AI_Create_a_realistic_ta_0616041531_generate.glb",
-    },
-    {
-      name: "Collar Jersey",
-      path: "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
     },
     {
       name: "Custom Sports Jersey",
@@ -63,7 +67,7 @@ export function TabStyle({ showModelSelector = false }: TabStyleProps) {
           </label>
           <div className="grid grid-cols-1 gap-2">
             {glbModels.map((m) => {
-              const currentModel = state.glbModel || "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+              const currentModel = state.glbModel || "/models/shirt_baked.glb";
               const isSelected = currentModel === m.path;
               return (
                 <button
@@ -71,7 +75,13 @@ export function TabStyle({ showModelSelector = false }: TabStyleProps) {
                   onClick={() => {
                     updateState("glbModel", m.path);
                     // Auto toggle collar logic for presets
-                    if (m.name === "Beige Puffer Jacket") {
+                    if (m.name === "Jersey (Collar)") {
+                      updateState("collar", true);
+                      updateState("collarType", "Polo");
+                    } else if (m.name === "Jersey (No Collar)") {
+                      updateState("collar", false);
+                      updateState("collarType", "None");
+                    } else if (m.name === "Beige Puffer Jacket") {
                       updateState("collar", false);
                       updateState("collarType", "None");
                     } else if (m.name === "Minimalist Hoodie") {

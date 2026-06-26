@@ -650,16 +650,15 @@ const DesignGallery = ({ isHomePage = false }: { isHomePage?: boolean }) => {
                   <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
                     Select a 3D Model:
                   </div>
-                  
                   <Link
-                    href={`/jersey-customize?pattern=${selectedDesign.fileName}`}
+                    href={`/jersey-customize?type=no-collar&pattern=${selectedDesign.fileName}`}
                     className="w-full py-3 bg-[#031E39] hover:bg-[#09355E] text-white text-center text-sm font-bold uppercase tracking-wider rounded-full shadow-sm transition-all duration-200 block"
                   >
                     👕 Jersey (No Collar)
                   </Link>
 
                   <Link
-                    href={`/collar-jersey-design?pattern=${selectedDesign.fileName}`}
+                    href={`/jersey-customize?type=collar&pattern=${selectedDesign.fileName}`}
                     className="w-full py-3 bg-[#031E39] hover:bg-[#09355E] text-white text-center text-sm font-bold uppercase tracking-wider rounded-full shadow-sm transition-all duration-200 block"
                   >
                     👔 Jersey (Collar)

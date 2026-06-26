@@ -66,7 +66,7 @@ const resolveVal = (arg: any, prev: any) =>
 
 export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
   state: {
-    glbModel: "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
+    glbModel: "/models/shirt_baked.glb",
     primary: "#2196F3",
     primaryColorSide: "Both",
     primaryFront: "#2196F3",
