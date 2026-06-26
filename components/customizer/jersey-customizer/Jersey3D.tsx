@@ -98,8 +98,8 @@ function useStyleDecals(colors: any) {
     if (!colors?.collar || !colors?.collarType || colors.collarType === "None")
       return { collarDecal: null };
 
-    // Apply offset/render rules for collar model geometry
-    const isCollarModel = colors?.glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+    // Treat any model other than the standard flat T-Shirt as a physical 3D model to suppress faux collar band/flaps
+    const isCollarModel = colors?.glbModel !== "/models/shirt_baked.glb";
     if (isCollarModel) {
       // For collar model, do not project faux Round/V-Neck lines,
       // and do not draw any placket/buttons if no closure is selected.
@@ -120,6 +120,22 @@ function useStyleDecals(colors: any) {
     const ctx = cv.getContext("2d");
     if (!ctx) return { collarDecal: null };
     ctx.clearRect(0, 0, S, S);
+
+    const placketBase = colors.primaryFront || colors.primary || "#2196F3";
+    const trim = colors.designColor || colors.secondary || "#1A1A2E";
+
+    const hexRgb = (h: string) => {
+      const c = parseInt(h.replace("#", ""), 16);
+      return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+    };
+    const lighten = (h: string, amt: number) => {
+      const [r, g, b] = hexRgb(h);
+      return `rgba(${Math.min(255, r + amt)},${Math.min(255, g + amt)},${Math.min(255, b + amt)},1)`;
+    };
+    const darken = (h: string, amt: number) => {
+      const [r, g, b] = hexRgb(h);
+      return `rgba(${Math.max(0, r - amt)},${Math.max(0, g - amt)},${Math.max(0, b - amt)},1)`;
+    };
 
     const drawRoundRect = (x: number, y: number, w: number, h: number, r: number) => {
       ctx.beginPath();
@@ -144,6 +160,29 @@ function useStyleDecals(colors: any) {
       ctx.lineTo(x + r, y + h);
       ctx.quadraticCurveTo(x, y + h, x, y + h - r);
       ctx.closePath();
+    };
+
+    const drawButtonhole = (cx: number, cy: number, length: number) => {
+      ctx.save();
+      // Draw inner slit
+      ctx.strokeStyle = "#1a1a1a";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(cx - length / 2, cy);
+      ctx.lineTo(cx + length / 2, cy);
+      ctx.stroke();
+
+      // Draw dense satin stitching border
+      ctx.strokeStyle = darken(placketBase, 35);
+      ctx.lineWidth = 2.0;
+      ctx.setLineDash([2, 1]); // Dense stitch effect
+      ctx.beginPath();
+      ctx.moveTo(cx - length / 2, cy - 1);
+      ctx.lineTo(cx + length / 2, cy - 1);
+      ctx.moveTo(cx - length / 2, cy + 1);
+      ctx.lineTo(cx + length / 2, cy + 1);
+      ctx.stroke();
+      ctx.restore();
     };
 
     const drawRealisticButton = (cx: number, cy: number, r: number) => {
@@ -213,20 +252,302 @@ function useStyleDecals(colors: any) {
       ctx.restore();
     };
 
-    const trim = colors.designColor || colors.secondary || "#1A1A2E";
-    const base = colors.primary || "#2196F3";
+    const drawPlacketClosure = (
+      topY: number,
+      botY: number,
+      width: number,
+      leftX: number,
+      sliderY: number,
+      buttonYFs: number[],
+      curveOffset: number
+    ) => {
+      const R = isCollarModel ? 0.61 : 1.0;
 
-    const hexRgb = (h: string) => {
-      const c = parseInt(h.replace("#", ""), 16);
-      return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
-    };
-    const lighten = (h: string, amt: number) => {
-      const [r, g, b] = hexRgb(h);
-      return `rgba(${Math.min(255, r + amt)},${Math.min(255, g + amt)},${Math.min(255, b + amt)},1)`;
-    };
-    const darken = (h: string, amt: number) => {
-      const [r, g, b] = hexRgb(h);
-      return `rgba(${Math.max(0, r - amt)},${Math.max(0, g - amt)},${Math.max(0, b - amt)},1)`;
+      const w = width * R;
+      const x = S * 0.5 - w / 2;
+      const yTop = topY;
+      const yBot = topY + (botY - topY) * R;
+      const sY = topY + (sliderY - topY) * R;
+      const cOffset = curveOffset * R;
+
+      // 1. Placket Background
+      const pkGrad = ctx.createLinearGradient(x, yTop, x + w, yTop);
+      pkGrad.addColorStop(0, lighten(placketBase, 15));
+      pkGrad.addColorStop(0.5, placketBase);
+      pkGrad.addColorStop(1, darken(placketBase, 12));
+
+      // Draw shadow under placket for 3D depth
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+      ctx.shadowBlur = 8 * R;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 4 * R;
+      ctx.fillStyle = pkGrad;
+      drawPlacket(x, yTop, w, yBot - yTop, S * 0.008 * R);
+      ctx.fill();
+      ctx.restore();
+
+      // Border outline for placket structure
+      ctx.strokeStyle = darken(placketBase, 25);
+      ctx.lineWidth = 2.5 * R;
+      drawPlacket(x, yTop, w, yBot - yTop, S * 0.008 * R);
+      ctx.stroke();
+
+      // Vertical overlap line down the middle (gives placket a realistic fabric fold)
+      ctx.save();
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+      ctx.lineWidth = 2.0 * R;
+      ctx.beginPath();
+      ctx.moveTo(S * 0.503, yTop);
+      ctx.lineTo(S * 0.503, yBot - S * 0.005 * R);
+      ctx.stroke();
+
+      ctx.strokeStyle = darken(placketBase, 30);
+      ctx.lineWidth = 1.2 * R;
+      ctx.beginPath();
+      ctx.moveTo(S * 0.505, yTop);
+      ctx.lineTo(S * 0.505, yBot - S * 0.005 * R);
+      ctx.stroke();
+      ctx.restore();
+
+      // Stitching on placket edges
+      ctx.save();
+      ctx.strokeStyle = darken(placketBase, 40);
+      ctx.lineWidth = 2.0 * R;
+      ctx.setLineDash([5 * R, 5 * R]);
+      ctx.beginPath();
+      // Left side stitching
+      ctx.moveTo(x + S * 0.01 * R, yTop);
+      ctx.lineTo(x + S * 0.01 * R, yBot - S * 0.01 * R);
+      // Right side stitching
+      ctx.moveTo(x + w - S * 0.01 * R, yTop);
+      ctx.lineTo(x + w - S * 0.01 * R, yBot - S * 0.01 * R);
+      // Bottom stitching
+      ctx.moveTo(x + S * 0.01 * R, yBot - S * 0.01 * R);
+      ctx.lineTo(x + w - S * 0.01 * R, yBot - S * 0.01 * R);
+      ctx.stroke();
+      ctx.restore();
+
+      // Overlap stitching line
+      ctx.save();
+      ctx.strokeStyle = darken(placketBase, 40);
+      ctx.lineWidth = 1.5 * R;
+      ctx.setLineDash([4 * R, 4 * R]);
+      ctx.beginPath();
+      ctx.moveTo(S * 0.5 + S * 0.012 * R, yTop);
+      ctx.lineTo(S * 0.5 + S * 0.012 * R, yBot - S * 0.01 * R);
+      ctx.stroke();
+      ctx.restore();
+
+      // Reinforced bottom bar-tack (box-and-cross tack stitch)
+      ctx.save();
+      ctx.strokeStyle = darken(placketBase, 45);
+      ctx.lineWidth = 2.0 * R;
+      ctx.setLineDash([4 * R, 4 * R]);
+      const boxH = S * 0.035 * R;
+      ctx.strokeRect(x + S * 0.005 * R, yBot - boxH - S * 0.005 * R, w - S * 0.01 * R, boxH);
+      ctx.beginPath();
+      ctx.moveTo(x + S * 0.005 * R, yBot - boxH - S * 0.005 * R);
+      ctx.lineTo(x + w - S * 0.005 * R, yBot - S * 0.005 * R);
+      ctx.moveTo(x + w - S * 0.005 * R, yBot - boxH - S * 0.005 * R);
+      ctx.lineTo(x + S * 0.005 * R, yBot - S * 0.005 * R);
+      ctx.stroke();
+      ctx.restore();
+
+      if (colors.zipper) {
+        // --- ZIPPER SHAPE ---
+        const getLeftTapeX = (y: number) => {
+          if (y >= sY) return S * 0.4925;
+          const t = (sY - y) / (sY - yTop);
+          return S * 0.4925 - t * t * cOffset;
+        };
+
+        const getRightTapeX = (y: number) => {
+          if (y >= sY) return S * 0.5075;
+          const t = (sY - y) / (sY - yTop);
+          return S * 0.5075 + t * t * cOffset;
+        };
+
+        // Draw left tape polygon
+        ctx.fillStyle = darken(placketBase, 20);
+        ctx.beginPath();
+        for (let y = yTop; y <= yBot - S * 0.01 * R; y += 4 * R) {
+          const lx = getLeftTapeX(y);
+          ctx.lineTo(lx - S * 0.008 * R, y);
+        }
+        for (let y = yBot - S * 0.01 * R; y >= yTop; y -= 4 * R) {
+          const lx = getLeftTapeX(y);
+          ctx.lineTo(lx + S * 0.008 * R, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw left tape stitching
+        ctx.strokeStyle = darken(placketBase, 35);
+        ctx.lineWidth = 1.2 * R;
+        ctx.setLineDash([3 * R, 3 * R]);
+        ctx.beginPath();
+        for (let y = yTop; y <= yBot - S * 0.01 * R; y += 4 * R) {
+          const lx = getLeftTapeX(y);
+          ctx.lineTo(lx - S * 0.005 * R, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw right tape polygon
+        ctx.fillStyle = darken(placketBase, 20);
+        ctx.beginPath();
+        for (let y = yTop; y <= yBot - S * 0.01 * R; y += 4 * R) {
+          const rx = getRightTapeX(y);
+          ctx.lineTo(rx - S * 0.008 * R, y);
+        }
+        for (let y = yBot - S * 0.01 * R; y >= yTop; y -= 4 * R) {
+          const rx = getRightTapeX(y);
+          ctx.lineTo(rx + S * 0.008 * R, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw right tape stitching
+        ctx.strokeStyle = darken(placketBase, 35);
+        ctx.lineWidth = 1.2 * R;
+        ctx.setLineDash([3 * R, 3 * R]);
+        ctx.beginPath();
+        for (let y = yTop; y <= yBot - S * 0.01 * R; y += 4 * R) {
+          const rx = getRightTapeX(y);
+          ctx.lineTo(rx + S * 0.005 * R, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Dark track gap in center (only below slider)
+        ctx.fillStyle = "#151515";
+        ctx.fillRect(S * 0.5 - S * 0.003 * R, sY, S * 0.006 * R, yBot - S * 0.01 * R - sY);
+
+        // Metallic zipper teeth
+        const toothGrad = ctx.createLinearGradient(S * 0.49, 0, S * 0.51, 0);
+        toothGrad.addColorStop(0, "#777777");
+        toothGrad.addColorStop(0.3, "#f0f0f0");
+        toothGrad.addColorStop(0.5, "#ffffff");
+        toothGrad.addColorStop(0.7, "#bbbbbb");
+        toothGrad.addColorStop(1, "#444444");
+
+        const stepY = S * 0.0055 * R;
+        ctx.fillStyle = toothGrad;
+        for (let y = yTop; y <= yBot - S * 0.015 * R; y += stepY) {
+          if (y >= sY) {
+            // Closed teeth - interlocking
+            // Left tooth
+            ctx.fillRect(S * 0.5 - S * 0.009 * R, y, S * 0.009 * R, 2 * R);
+            // Right tooth (offset by stepY / 2)
+            if (y + stepY / 2 <= yBot - S * 0.015 * R) {
+              ctx.fillRect(S * 0.5, y + stepY / 2, S * 0.009 * R, 2 * R);
+            }
+          } else {
+            // Open teeth - separate on curved tapes
+            const lx = getLeftTapeX(y);
+            const rx = getRightTapeX(y);
+            // Left tooth pointing inward
+            ctx.fillRect(lx - 1, y, S * 0.008 * R, 1.8 * R);
+            // Right tooth pointing inward
+            ctx.fillRect(rx - S * 0.007 * R, y, S * 0.008 * R, 1.8 * R);
+          }
+        }
+
+        // --- Slider & Pull Tab ---
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+        ctx.shadowBlur = 6 * R;
+        ctx.shadowOffsetX = 1 * R;
+        ctx.shadowOffsetY = 3 * R;
+
+        const sliderWidthTop = S * 0.032 * R;
+        const sliderWidthBot = S * 0.024 * R;
+        const sliderHeight = S * 0.042 * R;
+        const sliderTopY = sY - S * 0.01 * R;
+
+        // Draw slider body (wedge shape)
+        ctx.fillStyle = toothGrad;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5 - sliderWidthTop / 2, sliderTopY);
+        ctx.lineTo(S * 0.5 + sliderWidthTop / 2, sliderTopY);
+        ctx.lineTo(S * 0.5 + sliderWidthBot / 2, sliderTopY + sliderHeight);
+        ctx.lineTo(S * 0.5 - sliderWidthBot / 2, sliderTopY + sliderHeight);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "#1a1a1a";
+        ctx.lineWidth = 1.5 * R;
+        ctx.stroke();
+
+        // Inner grooves
+        ctx.strokeStyle = "#444444";
+        ctx.lineWidth = 1.0 * R;
+        ctx.beginPath();
+        ctx.moveTo(S * 0.5 - sliderWidthTop / 4, sliderTopY + 2 * R);
+        ctx.lineTo(S * 0.5 - sliderWidthBot / 4, sliderTopY + sliderHeight - 2 * R);
+        ctx.moveTo(S * 0.5 + sliderWidthTop / 4, sliderTopY + 2 * R);
+        ctx.lineTo(S * 0.5 + sliderWidthBot / 4, sliderTopY + sliderHeight - 2 * R);
+        ctx.stroke();
+
+        // Top crown loop for pull tab
+        ctx.fillStyle = toothGrad;
+        drawRoundRect(S * 0.5 - S * 0.009 * R, sliderTopY + S * 0.01 * R, S * 0.018 * R, S * 0.016 * R, 1 * R);
+        ctx.fill();
+        ctx.stroke();
+
+        // Pull tab connector ring
+        ctx.strokeStyle = "#333333";
+        ctx.lineWidth = 2.0 * R;
+        ctx.beginPath();
+        ctx.arc(S * 0.5, sliderTopY + S * 0.018 * R, S * 0.005 * R, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Pull Tab body
+        const tabWidth = S * 0.024 * R;
+        const tabHeight = S * 0.065 * R;
+        const tabX = S * 0.5 - tabWidth / 2;
+        const tabY = sliderTopY + S * 0.024 * R;
+
+        ctx.fillStyle = toothGrad;
+        drawRoundRect(tabX, tabY, tabWidth, tabHeight, 2 * R);
+        ctx.fill();
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 1.8 * R;
+        ctx.stroke();
+
+        // Central slot inside pull tab
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        drawRoundRect(S * 0.5 - S * 0.007 * R, tabY + S * 0.02 * R, S * 0.014 * R, S * 0.035 * R, 1 * R);
+        ctx.fill();
+        ctx.strokeStyle = "#222222";
+        ctx.lineWidth = 1.0 * R;
+        ctx.stroke();
+
+        // Subtle grip ridges
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+        ctx.lineWidth = 1.0 * R;
+        ctx.beginPath();
+        ctx.moveTo(tabX + 4 * R, tabY + S * 0.01 * R);
+        ctx.lineTo(tabX + tabWidth - 4 * R, tabY + S * 0.01 * R);
+        ctx.moveTo(tabX + 4 * R, tabY + S * 0.014 * R);
+        ctx.lineTo(tabX + tabWidth - 4 * R, tabY + S * 0.014 * R);
+        ctx.stroke();
+
+        ctx.restore();
+      } else {
+        // --- BUTTONS SHAPE ---
+        buttonYFs.forEach((yf) => {
+          const cy = yTop + (S * yf - topY) * R;
+          const cx = S * 0.5;
+
+          // Buttonhole first
+          drawButtonhole(cx, cy, S * 0.045 * R);
+
+          // Button on top
+          drawRealisticButton(cx, cy, S * 0.02 * R);
+        });
+      }
     };
 
     if (colors.collarType === "Round") {
@@ -267,238 +588,13 @@ function useStyleDecals(colors: any) {
       makeVLeg(S * 0.18, 0, S * 0.5, S * 0.52);
       makeVLeg(S * 0.82, 0, S * 0.5, S * 0.52);
     } else if (colors.collarType === "Polo") {
-      // Only draw faux collar flaps and band for the no-collar model
-      if (!isCollarModel) {
-        const band = ctx.createLinearGradient(0, 0, 0, S * 0.18);
-        band.addColorStop(0, lighten(trim, 45));
-        band.addColorStop(1, darken(trim, 20));
-        ctx.fillStyle = band;
-        drawRoundRect(S * 0.08, 0, S * 0.84, S * 0.18, 6);
-        ctx.fill();
-
-        const leftGrad = ctx.createLinearGradient(S * 0.1, 0, S * 0.5, S * 0.5);
-        leftGrad.addColorStop(0, lighten(trim, 30));
-        leftGrad.addColorStop(1, darken(trim, 15));
-        ctx.fillStyle = leftGrad;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.08, S * 0.14);
-        ctx.lineTo(S * 0.08, S * 0.56);
-        ctx.lineTo(S * 0.5, S * 0.35);
-        ctx.lineTo(S * 0.5, S * 0.14);
-        ctx.closePath();
-        ctx.fill();
-
-        const rightGrad = ctx.createLinearGradient(S * 0.5, 0, S * 0.9, S * 0.5);
-        rightGrad.addColorStop(0, lighten(trim, 30));
-        rightGrad.addColorStop(1, darken(trim, 15));
-        ctx.fillStyle = rightGrad;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.92, S * 0.14);
-        ctx.lineTo(S * 0.92, S * 0.56);
-        ctx.lineTo(S * 0.5, S * 0.35);
-        ctx.lineTo(S * 0.5, S * 0.14);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      const pkGrad = ctx.createLinearGradient(S * 0.45, S * 0.34, S * 0.55, S * 0.34);
-      pkGrad.addColorStop(0, lighten(trim, 20));
-      pkGrad.addColorStop(1, darken(trim, 10));
-      ctx.fillStyle = pkGrad;
-      drawPlacket(S * 0.46, S * 0.34, S * 0.08, S * 0.34, S * 0.04);
-      ctx.fill();
-      ctx.strokeStyle = darken(trim, 40);
-      ctx.lineWidth = 2;
-      drawPlacket(S * 0.46, S * 0.34, S * 0.08, S * 0.34, S * 0.04);
-      ctx.stroke();
-
-      if (colors.zipper) {
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.492, S * 0.34);
-        ctx.lineTo(S * 0.492, S * 0.68);
-        ctx.moveTo(S * 0.508, S * 0.34);
-        ctx.lineTo(S * 0.508, S * 0.68);
-        ctx.stroke();
-
-        const sliderY = S * 0.41;
-        ctx.strokeStyle = "#a0a0a0";
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.5, sliderY);
-        ctx.lineTo(S * 0.5, S * 0.68);
-        ctx.stroke();
-
-        ctx.strokeStyle = "#d8d8d8";
-        ctx.lineWidth = 2;
-        for (let y = sliderY + S * 0.01; y <= S * 0.68; y += 5) {
-          ctx.beginPath();
-          ctx.moveTo(S * 0.493, y);
-          ctx.lineTo(S * 0.5, y);
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.moveTo(S * 0.5, y + 2.5);
-          ctx.lineTo(S * 0.507, y + 2.5);
-          ctx.stroke();
-        }
-
-        ctx.strokeStyle = "#555555";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.5, S * 0.34);
-        ctx.lineTo(S * 0.5, S * 0.68);
-        ctx.stroke();
-
-        ctx.fillStyle = "#a0a0a0";
-        ctx.strokeStyle = "#666666";
-        ctx.lineWidth = 1;
-        drawRoundRect(S * 0.491, sliderY - S * 0.008, S * 0.018, S * 0.012, 1);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#2d2d2d";
-        ctx.strokeStyle = "#1a1a1a";
-        ctx.lineWidth = 1.5;
-        drawRoundRect(S * 0.48, sliderY, S * 0.04, S * 0.05, 1.5);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#1a1a1a";
-        ctx.fillRect(S * 0.495, sliderY + S * 0.008, S * 0.01, S * 0.034);
-
-        ctx.fillStyle = "#555555";
-        drawRoundRect(S * 0.492, sliderY + S * 0.015, S * 0.016, S * 0.018, 1);
-        ctx.fill();
-
-        ctx.fillStyle = "#333333";
-        ctx.strokeStyle = "#1a1a1a";
-        ctx.lineWidth = 1.5;
-        drawRoundRect(S * 0.487, sliderY + S * 0.042, S * 0.026, S * 0.065, 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.strokeStyle = "#555555";
-        ctx.lineWidth = 2;
-        drawRoundRect(S * 0.493, sliderY + S * 0.048, S * 0.014, S * 0.053, 1);
-        ctx.stroke();
-      } else {
-        [0.45, 0.57].forEach((yf) => {
-          drawRealisticButton(S * 0.5, S * yf, S * 0.02);
-        });
-      }
+      const sliderYVal = isCollarModel ? S * 0.52 : S * 0.42;
+      const buttonYFs = isCollarModel ? [0.53, 0.62] : [0.48, 0.58];
+      drawPlacketClosure(S * 0.34, S * 0.68, S * 0.08, S * 0.46, sliderYVal, buttonYFs, S * 0.024);
     } else if (colors.collarType === "Henley") {
-      // Only draw the collar band for the no-collar model
-      if (!isCollarModel) {
-        const hb = ctx.createLinearGradient(0, 0, 0, S * 0.14);
-        hb.addColorStop(0, lighten(trim, 40));
-        hb.addColorStop(1, darken(trim, 20));
-        ctx.strokeStyle = hb;
-        ctx.lineWidth = S * 0.07;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.arc(S / 2, 0, S * 0.38, 0.08, Math.PI - 0.08);
-        ctx.stroke();
-
-        ctx.strokeStyle = darken(trim, 50);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(S / 2, 0, S * 0.35, 0.1, Math.PI - 0.1);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(S / 2, 0, S * 0.37, 0.1, Math.PI - 0.1);
-        ctx.stroke();
-      }
-
-      const pg2 = ctx.createLinearGradient(S * 0.44, 0, S * 0.56, 0);
-      pg2.addColorStop(0, lighten(base, 20));
-      pg2.addColorStop(0.5, base);
-      pg2.addColorStop(1, darken(base, 15));
-      ctx.fillStyle = pg2;
-      drawPlacket(S * 0.44, S * 0.28, S * 0.12, S * 0.42, S * 0.06);
-      ctx.fill();
-      ctx.strokeStyle = darken(trim, 35);
-      ctx.lineWidth = 2;
-      drawPlacket(S * 0.44, S * 0.28, S * 0.12, S * 0.42, S * 0.06);
-      ctx.stroke();
-
-      if (colors.zipper) {
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.492, S * 0.28);
-        ctx.lineTo(S * 0.492, S * 0.7);
-        ctx.moveTo(S * 0.508, S * 0.28);
-        ctx.lineTo(S * 0.508, S * 0.7);
-        ctx.stroke();
-
-        const sliderY = S * 0.43;
-        ctx.strokeStyle = "#a0a0a0";
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.5, sliderY);
-        ctx.lineTo(S * 0.5, S * 0.7);
-        ctx.stroke();
-
-        ctx.strokeStyle = "#d8d8d8";
-        ctx.lineWidth = 2;
-        for (let y = sliderY + S * 0.01; y <= S * 0.7; y += 5) {
-          ctx.beginPath();
-          ctx.moveTo(S * 0.493, y);
-          ctx.lineTo(S * 0.5, y);
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.moveTo(S * 0.5, y + 2.5);
-          ctx.lineTo(S * 0.507, y + 2.5);
-          ctx.stroke();
-        }
-
-        ctx.strokeStyle = "#555555";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(S * 0.5, S * 0.28);
-        ctx.lineTo(S * 0.5, S * 0.7);
-        ctx.stroke();
-
-        ctx.fillStyle = "#a0a0a0";
-        ctx.strokeStyle = "#666666";
-        ctx.lineWidth = 1;
-        drawRoundRect(S * 0.491, sliderY - S * 0.008, S * 0.018, S * 0.012, 1);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#2d2d2d";
-        ctx.strokeStyle = "#1a1a1a";
-        ctx.lineWidth = 1.5;
-        drawRoundRect(S * 0.48, sliderY, S * 0.04, S * 0.05, 1.5);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#1a1a1a";
-        ctx.fillRect(S * 0.495, sliderY + S * 0.008, S * 0.01, S * 0.034);
-
-        ctx.fillStyle = "#555555";
-        drawRoundRect(S * 0.492, sliderY + S * 0.015, S * 0.016, S * 0.018, 1);
-        ctx.fill();
-
-        ctx.fillStyle = "#333333";
-        ctx.strokeStyle = "#1a1a1a";
-        ctx.lineWidth = 1.5;
-        drawRoundRect(S * 0.487, sliderY + S * 0.042, S * 0.026, S * 0.065, 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.strokeStyle = "#555555";
-        ctx.lineWidth = 2;
-        drawRoundRect(S * 0.493, sliderY + S * 0.048, S * 0.014, S * 0.053, 1);
-        ctx.stroke();
-      } else {
-        [0.48, 0.6].forEach((yf) => {
-          drawRealisticButton(S * 0.5, S * yf, S * 0.02);
-        });
-      }
+      const sliderYVal = isCollarModel ? S * 0.54 : S * 0.47;
+      const buttonYFs = isCollarModel ? [0.56, 0.65] : [0.51, 0.61];
+      drawPlacketClosure(S * 0.28, S * 0.70, S * 0.12, S * 0.44, sliderYVal, buttonYFs, S * 0.035);
     }
 
     const tex = new THREE.CanvasTexture(cv);
@@ -1874,9 +1970,17 @@ export function Jersey3D({
 
         {collarDecal && (
           <Decal
-            position={[0.0, 0.19 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), 0.118 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0)]}
+            position={
+              glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb"
+                ? [0.0, 0.125, 0.123]
+                : [0.0, 0.185, 0.118]
+            }
             rotation={[0.15, 0, 0]}
-            scale={[0.22, 0.22, 0.12]}
+            scale={
+              glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb"
+                ? [0.36, 0.36, 0.15]
+                : [0.22, 0.22, 0.12]
+            }
             renderOrder={30}
           >
             <meshStandardMaterial
@@ -1908,18 +2012,7 @@ export function Jersey3D({
           ))}
       </mesh>
 
-      {glbPath === "/models/shirt_baked.glb" && colors.collar && colors.collarType === "Polo" && (
-        <group>
-          <mesh castShadow receiveShadow position={[-0.038, 0.198, 0.045]} rotation={[0.35, -0.35, -0.4]}>
-            <boxGeometry args={[0.055, 0.004, 0.065]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-          <mesh castShadow receiveShadow position={[0.038, 0.198, 0.045]} rotation={[0.35, 0.35, 0.4]}>
-            <boxGeometry args={[0.055, 0.004, 0.065]} />
-            <meshStandardMaterial color={colors.designColor || colors.secondary || "#ffffff"} roughness={0.7} />
-          </mesh>
-        </group>
-      )}
+
 
       {(colors.sleeve === "Long" || colors.sleeve === "3/4") && (
         <group position={[0, glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0, glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0]}>
