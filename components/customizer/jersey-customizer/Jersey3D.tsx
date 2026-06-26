@@ -1560,6 +1560,8 @@ function LogoDecal({
     if (!img) return;
     const tex = new THREE.Texture(img);
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
     tex.anisotropy = 16;
@@ -1574,29 +1576,36 @@ function LogoDecal({
     const meshWidth = 0.54;
     const meshHeight = 0.7;
     const canvasSize = 1024;
-    const relativeZ = 0.155;
 
-    // Map image pixel size to 3D world space, preserving the original aspect ratio.
-    // Use meshWidth as the single reference so a square image stays square.
     const imgW = img.naturalWidth || img.width || 200;
     const imgH = img.naturalHeight || img.height || 200;
     const finalSizeX = (imgW * layer.scale / canvasSize) * meshWidth;
     const finalSizeY = (imgH * layer.scale / canvasSize) * meshWidth; // same base → no stretch
 
-    // Map canvas position (0–1024) to mesh world position
-    // Canvas center = 512,512 → mesh center = 0,0
+    // Map 2D visual editor position (0-1024) to relative X/Y coordinate (-0.5 to 0.5)
     const relativeX = (layer.x - canvasSize / 2) / canvasSize;
-    const relativeY = -(layer.y - canvasSize / 2) / canvasSize;   // 512 is true center
-    let posX = relativeX * meshWidth;    // no clamping — full freedom of movement
-    let posY = relativeY * meshHeight;   // use meshHeight for Y axis
-    let posZ = relativeZ;
-    let rotY = 0;
+    const relativeY = -(layer.y - canvasSize / 2) / canvasSize;
 
+    // Cylinder mapping radius (tuned to match shirt bounds in 3D space)
+    const Rx = 0.23;
+    const Rz = 0.155;
+
+    // Calculate cylinder angle (theta) based on layer.x and side
+    let theta = 0;
     if (layer.side === "Back") {
-      posX = -posX;
-      posZ = -relativeZ;
-      rotY = Math.PI;
+      // Back side continues the cylinder wrapping
+      theta = Math.PI + relativeX * Math.PI;
+    } else {
+      theta = relativeX * Math.PI;
     }
+
+    // Cylindrical surface position
+    let posX = Rx * Math.sin(theta);
+    let posY = relativeY * meshHeight;
+    let posZ = Rz * Math.cos(theta);
+
+    // Dynamic rotation matches surface normal of the cylinder
+    let rotY = theta;
 
     // Apply offset for collar model geometry scale/translation
     const isCollarModel = glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
@@ -1608,7 +1617,7 @@ function LogoDecal({
     return {
       position: [posX, posY, posZ] as [number, number, number],
       rotation: [0, rotY, -(layer.rotation * Math.PI) / 180] as [number, number, number],
-      scale: [finalSizeX, finalSizeY, 0.3] as [number, number, number],
+      scale: [finalSizeX, finalSizeY, 0.3] as [number, number, number], // 0.3 depth is safe from back duplication
     };
   }, [logoTexture, img, aspect, layer.x, layer.y, layer.scale, layer.rotation, layer.side, glbModel]);
 

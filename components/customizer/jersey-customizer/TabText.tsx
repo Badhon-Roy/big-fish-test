@@ -332,13 +332,13 @@ export function TabText() {
         </div>
 
         <div
-          className="relative w-[280px] h-[280px] rounded border border-zinc-200 shadow-inner mx-auto select-none"
+          className="relative w-[280px] h-[380px] rounded border border-zinc-200 shadow-inner mx-auto select-none overflow-hidden"
           style={{
             background: "linear-gradient(135deg, #1f2937 0%, #111827 100%)",
           }}
         >
-          {/* Silhouette backdrop */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+          {/* Silhouette backdrop (centered inside active 280x280 area) */}
+          <div className="absolute top-[50px] left-0 w-[280px] h-[280px] rounded-2xl overflow-hidden pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center opacity-10">
               <svg viewBox="0 0 100 100" className="w-48 h-48 fill-white">
                 <path d="M 30,15 L 70,15 L 85,25 L 80,45 L 70,40 L 70,85 L 30,85 L 30,40 L 20,45 L 15,25 Z" />
@@ -351,7 +351,8 @@ export function TabText() {
             {activeSide} Texture Map (1024x1024)
           </div>
 
-          <div className="absolute inset-0 rounded-2xl overflow-hidden">
+          {/* Content Container (centered vertically, allows overflow of control handles) */}
+          <div className="absolute top-[50px] left-0 w-[280px] h-[280px]">
             {textLayers
               .filter((layer) => layer.side === activeSide)
               .map((layer) => {
@@ -375,7 +376,8 @@ export function TabText() {
               })}
           </div>
 
-          <div className="absolute inset-0 pointer-events-none">
+          {/* Bounding Box & Handles Overlay */}
+          <div className="absolute top-[50px] left-0 w-[280px] h-[280px] pointer-events-none">
             {textLayers
               .filter((layer) => layer.side === activeSide && selectedLayerId === layer.id)
               .map((layer) => (

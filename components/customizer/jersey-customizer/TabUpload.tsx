@@ -276,25 +276,44 @@ export function TabUpload() {
     const layer = logoLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const startMouseX = e.clientX;
-    const startMouseY = e.clientY;
-    const startX = layer.x;
-    const startY = layer.y;
+    let lastMouseX = e.clientX;
+    let lastMouseY = e.clientY;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = (moveEvent.clientX - startMouseX) / editorScale;
-      const deltaY = (moveEvent.clientY - startMouseY) / editorScale;
+      const deltaX = (moveEvent.clientX - lastMouseX) / editorScale;
+      const deltaY = (moveEvent.clientY - lastMouseY) / editorScale;
+
+      lastMouseX = moveEvent.clientX;
+      lastMouseY = moveEvent.clientY;
 
       setLogoLayers((prev) =>
-        prev.map((l) =>
-          l.id === id
-            ? {
-                ...l,
-                x: startX + deltaX,
-                y: startY + deltaY,
-              }
-            : l,
-        ),
+        prev.map((l) => {
+          if (l.id !== id) return l;
+
+          let newX = l.x + deltaX;
+          let newY = l.y + deltaY;
+          let newSide = l.side;
+
+          // Seamless front/back side wrapping (logos only, skip for Wrap/BG images)
+          if (l.type !== "image") {
+            if (newX > 1024) {
+              newX = newX - 1024;
+              newSide = newSide === "Front" ? "Back" : "Front";
+              setCurrentView(newSide.toLowerCase());
+            } else if (newX < 0) {
+              newX = 1024 + newX;
+              newSide = newSide === "Front" ? "Back" : "Front";
+              setCurrentView(newSide.toLowerCase());
+            }
+          }
+
+          return {
+            ...l,
+            x: newX,
+            y: newY,
+            side: newSide,
+          };
+        }),
       );
     };
 
@@ -509,9 +528,9 @@ export function TabUpload() {
           Visual {uploadSubTab === "logo" ? "Logo" : "Image"} Editor ({activeSide} View)
         </label>
 
-        {/* Bounding Box Customizer Canvas area (280x280) */}
+        {/* Bounding Box Customizer Canvas area (taller container for handles visibility) */}
         <div
-          className="relative w-[280px] h-[280px] rounded border border-zinc-200 shadow-inner mx-auto select-none overflow-hidden"
+          className="relative w-[280px] h-[380px] rounded border border-zinc-200 shadow-inner mx-auto select-none overflow-hidden"
           style={{
             background: "linear-gradient(135deg, #1f2937 0%, #111827 100%)",
             cursor: isEraserMode && selectedLogoId ? ERASER_CURSOR : "default",
@@ -531,8 +550,8 @@ export function TabUpload() {
             }
           }}
         >
-          {/* Silhouette helper */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+          {/* Silhouette helper (centered inside active 280x280 area) */}
+          <div className="absolute top-[50px] left-0 w-[280px] h-[280px] rounded-2xl overflow-hidden pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center opacity-10">
               <svg viewBox="0 0 100 100" className="w-48 h-48 fill-white">
                 <path d="M 30,15 L 70,15 L 85,25 L 80,45 L 70,40 L 70,85 L 30,85 L 30,40 L 20,45 L 15,25 Z" />
@@ -546,8 +565,8 @@ export function TabUpload() {
             {activeSide} Texture Map (1024x1024)
           </div>
 
-          {/* Content Container */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden">
+          {/* Content Container (centered vertically, allows overflow of control handles) */}
+          <div className="absolute top-[50px] left-0 w-[280px] h-[280px]">
             {logoLayers
               .filter(
                 (layer) =>
@@ -581,7 +600,7 @@ export function TabUpload() {
           </div>
 
           {/* Bounding Box & Handles Overlay */}
-          <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[50px] left-0 w-[280px] h-[280px] pointer-events-none">
             {!isEraserMode &&
               logoLayers
                 .filter(
