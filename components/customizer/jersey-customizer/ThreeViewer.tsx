@@ -117,19 +117,18 @@ export function ThreeViewer({ threeRef, texturesRef }: ThreeViewerProps) {
         className="w-full h-full cursor-grab active:cursor-grabbing"
         gl={{
           antialias: true,
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 0.9,
+          toneMapping: THREE.NoToneMapping,
           preserveDrawingBuffer: true,
         }}
       >
         <ThreeGrabber threeRef={threeRef} />
         <color attach="background" args={["transparent" as any]} />
-        <ambientLight intensity={1.2} />
+        <ambientLight intensity={1.0} />
         <Environment preset="city" />
-        <directionalLight position={[1, 4, 5]} intensity={1.0} castShadow />
-        <directionalLight position={[-1, 3, -5]} intensity={1.0} />
-        <pointLight position={[-3, 1, 2]} intensity={0.5} />
-        <pointLight position={[3, 1, -2]} intensity={0.5} />
+        <directionalLight position={[1, 4, 5]} intensity={0.3} castShadow />
+        <directionalLight position={[-1, 3, -5]} intensity={0.2} />
+        <pointLight position={[-3, 1, 2]} intensity={0.2} />
+        <pointLight position={[3, 1, -2]} intensity={0.2} />
         <Center>
           <Jersey3D texturesRef={texturesRef} colors={colors} collar={state.collar} />
         </Center>

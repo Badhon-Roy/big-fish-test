@@ -1631,16 +1631,18 @@ function LogoDecal({
       renderOrder={40}
     >
       <meshStandardMaterial
+        color="#ffffff"
         map={logoTexture}
         transparent
         alphaTest={0.002}
         depthWrite={false}
         polygonOffset
         polygonOffsetFactor={-10}
-        roughness={roughness}
+        roughness={1.0}
+        metalness={0.0}
         normalMap={fabricConfig.normalMap || undefined}
         normalScale={fabricConfig.normalScale}
-        envMapIntensity={0.2}
+        envMapIntensity={0.0}
       />
     </Decal>
   );
@@ -1787,16 +1789,18 @@ function ImageDecal({
           renderOrder={5}
         >
           <meshStandardMaterial
+            color="#ffffff"
             map={imageTexture}
             transparent
             alphaTest={0.01}
             depthWrite={false}
             polygonOffset
             polygonOffsetFactor={-5}
-            roughness={roughness}
+            roughness={1.0}
+            metalness={0.0}
             normalMap={fabricConfig.normalMap || undefined}
             normalScale={fabricConfig.normalScale}
-            envMapIntensity={0.2}
+            envMapIntensity={0.0}
           />
         </Decal>
       )}
@@ -1812,16 +1816,18 @@ function ImageDecal({
           renderOrder={6}
         >
           <meshStandardMaterial
+            color="#ffffff"
             map={imageTexture}
             transparent
             alphaTest={0.01}
             depthWrite={false}
             polygonOffset
             polygonOffsetFactor={-5}
-            roughness={roughness}
+            roughness={1.0}
+            metalness={0.0}
             normalMap={fabricConfig.normalMap || undefined}
             normalScale={fabricConfig.normalScale}
-            envMapIntensity={0.2}
+            envMapIntensity={0.0}
           />
         </Decal>
       )}

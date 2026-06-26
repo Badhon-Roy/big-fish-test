@@ -47,7 +47,7 @@ export function CustomizerLayout() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      
+
       // Parse jersey model type
       const type = params.get("type");
       if (type === "collar") {
@@ -355,33 +355,29 @@ export function CustomizerLayout() {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-full shadow-lg border border-black/5 z-10">
           <button
             onClick={() => setCurrentView("front")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-              currentView === "front" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
-            }`}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${currentView === "front" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
+              }`}
           >
             Front
           </button>
           <button
             onClick={() => setCurrentView("back")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-              currentView === "back" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
-            }`}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${currentView === "back" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
+              }`}
           >
             Back
           </button>
           <button
             onClick={() => setCurrentView("sleeves")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-              currentView === "sleeves" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
-            }`}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${currentView === "sleeves" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
+              }`}
           >
             Sleeves
           </button>
           <button
             onClick={() => setCurrentView("360")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-              currentView === "360" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
-            }`}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${currentView === "360" ? "bg-zinc-900 text-white" : "hover:bg-zinc-100 text-zinc-600"
+              }`}
           >
             360° View
           </button>

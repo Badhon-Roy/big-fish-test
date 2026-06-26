@@ -394,7 +394,7 @@ export function TabUpload() {
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const curDist = Math.sqrt(
         Math.pow(moveEvent.clientX - centerX, 2) +
-          Math.pow(moveEvent.clientY - centerY, 2),
+        Math.pow(moveEvent.clientY - centerY, 2),
       );
       const newScale = Math.max(0.01, startScale * (curDist / startDist));
 
@@ -474,11 +474,10 @@ export function TabUpload() {
             setUploadSubTab("logo");
             setSelectedLogoId(null);
           }}
-          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-            uploadSubTab === "logo"
-              ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-900"
-          }`}
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${uploadSubTab === "logo"
+            ? "bg-white text-zinc-900 shadow-sm"
+            : "text-zinc-500 hover:text-zinc-900"
+            }`}
         >
           Logo
         </button>
@@ -488,11 +487,10 @@ export function TabUpload() {
             setUploadSubTab("image");
             setSelectedLogoId(null);
           }}
-          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-            uploadSubTab === "image"
-              ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-900"
-          }`}
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${uploadSubTab === "image"
+            ? "bg-white text-zinc-900 shadow-sm"
+            : "text-zinc-500 hover:text-zinc-900"
+            }`}
         >
           Image (Wrap/BG)
         </button>
@@ -507,20 +505,12 @@ export function TabUpload() {
               onClick={() => {
                 setCurrentView("front");
                 setDefaultImageSide("Front");
-                const selectedImageLayer = logoLayers.find((l) => l.id === selectedLogoId && l.type === "image");
-                if (selectedImageLayer) {
-                  setLogoLayers((prev) =>
-                    prev.map((l) => (l.id === selectedImageLayer.id ? { ...l, side: "Front" } : l))
-                  );
-                }
+                setSelectedLogoId(null);
               }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                (selectedLogoId && logoLayers.find((l) => l.id === selectedLogoId)?.type === "image"
-                  ? logoLayers.find((l) => l.id === selectedLogoId)?.side === "Front"
-                  : defaultImageSide === "Front")
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${defaultImageSide === "Front"
+                ? "bg-white text-zinc-900 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900"
+                }`}
             >
               Front Side
             </button>
@@ -529,20 +519,12 @@ export function TabUpload() {
               onClick={() => {
                 setCurrentView("back");
                 setDefaultImageSide("Back");
-                const selectedImageLayer = logoLayers.find((l) => l.id === selectedLogoId && l.type === "image");
-                if (selectedImageLayer) {
-                  setLogoLayers((prev) =>
-                    prev.map((l) => (l.id === selectedImageLayer.id ? { ...l, side: "Back" } : l))
-                  );
-                }
+                setSelectedLogoId(null);
               }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                (selectedLogoId && logoLayers.find((l) => l.id === selectedLogoId)?.type === "image"
-                  ? logoLayers.find((l) => l.id === selectedLogoId)?.side === "Back"
-                  : defaultImageSide === "Back")
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${defaultImageSide === "Back"
+                ? "bg-white text-zinc-900 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900"
+                }`}
             >
               Back Side
             </button>
@@ -550,20 +532,12 @@ export function TabUpload() {
               type="button"
               onClick={() => {
                 setDefaultImageSide("Both");
-                const selectedImageLayer = logoLayers.find((l) => l.id === selectedLogoId && l.type === "image");
-                if (selectedImageLayer) {
-                  setLogoLayers((prev) =>
-                    prev.map((l) => (l.id === selectedImageLayer.id ? { ...l, side: "Both" } : l))
-                  );
-                }
+                setSelectedLogoId(null);
               }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                (selectedLogoId && logoLayers.find((l) => l.id === selectedLogoId)?.type === "image"
-                  ? logoLayers.find((l) => l.id === selectedLogoId)?.side === "Both"
-                  : defaultImageSide === "Both")
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${defaultImageSide === "Both"
+                ? "bg-white text-zinc-900 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900"
+                }`}
             >
               Both Side
             </button>
@@ -573,22 +547,20 @@ export function TabUpload() {
             <button
               type="button"
               onClick={() => setCurrentView("front")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                activeSide === "Front"
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${activeSide === "Front"
+                ? "bg-white text-zinc-900 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900"
+                }`}
             >
               Front Side
             </button>
             <button
               type="button"
               onClick={() => setCurrentView("back")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-                activeSide === "Back"
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${activeSide === "Back"
+                ? "bg-white text-zinc-900 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900"
+                }`}
             >
               Back Side
             </button>
@@ -599,7 +571,7 @@ export function TabUpload() {
       {/* Visual Logo/Image Editor */}
       <div className="space-y-3">
         <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider block">
-          Visual {uploadSubTab === "logo" ? "Logo" : "Image"} Editor ({activeSide} View)
+          Visual {uploadSubTab === "logo" ? "Logo" : "Image"} Editor ({uploadSubTab === "logo" ? activeSide : defaultImageSide === "Both" ? "Both Sides" : defaultImageSide + " Side"} View)
         </label>
 
         {/* Bounding Box Customizer Canvas area (taller container for handles visibility) */}
@@ -636,7 +608,7 @@ export function TabUpload() {
 
           {/* Active side text label */}
           <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold text-zinc-500 tracking-widest uppercase pointer-events-none">
-            {activeSide} Texture Map (1024x1024)
+            {uploadSubTab === "logo" ? activeSide : defaultImageSide === "Both" ? "Both Sides" : defaultImageSide + " Side"} Texture Map (1024x1024)
           </div>
 
           {/* Content Container (centered vertically, allows overflow of control handles) */}
@@ -644,10 +616,9 @@ export function TabUpload() {
             {logoLayers
               .filter(
                 (layer) =>
-                  (layer.side === activeSide || layer.side === "Both") &&
-                  (uploadSubTab === "logo"
-                    ? layer.type === "logo" || !layer.type
-                    : layer.type === "image"),
+                  uploadSubTab === "logo"
+                    ? (layer.side === activeSide && (layer.type === "logo" || !layer.type))
+                    : (layer.side === defaultImageSide && layer.type === "image")
               )
               .map((layer) => {
                 const isSelected = selectedLogoId === layer.id;
@@ -679,11 +650,10 @@ export function TabUpload() {
               logoLayers
                 .filter(
                   (layer) =>
-                    (layer.side === activeSide || layer.side === "Both") &&
-                    selectedLogoId === layer.id &&
                     (uploadSubTab === "logo"
-                      ? layer.type === "logo" || !layer.type
-                      : layer.type === "image"),
+                      ? layer.side === activeSide && (layer.type === "logo" || !layer.type)
+                      : layer.side === defaultImageSide && layer.type === "image") &&
+                    selectedLogoId === layer.id
                 )
                 .map((layer) => {
                   return (
@@ -835,11 +805,10 @@ export function TabUpload() {
               </span>
               <button
                 onClick={() => setIsEraserMode(!isEraserMode)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
-                  isEraserMode
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${isEraserMode
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-300"
+                  }`}
                 title={isEraserMode ? "Click to lock artwork" : "Click to erase background"}
               >
                 <svg
@@ -1097,7 +1066,11 @@ export function TabUpload() {
       {/* Unified Active Layers List */}
       {(() => {
         const sideTextLayers = textLayers.filter((l) => l.side === activeSide);
-        const sideLogoLayers = logoLayers.filter((l) => l.side === activeSide || l.side === "Both");
+        const sideLogoLayers = logoLayers.filter((l) =>
+          uploadSubTab === "logo"
+            ? (l.side === activeSide && (l.type === "logo" || !l.type))
+            : (l.side === defaultImageSide && l.type === "image")
+        );
         const activeSideLayers = [
           ...sideTextLayers.map((l) => ({
             ...l,
@@ -1141,8 +1114,8 @@ export function TabUpload() {
                   const displayName = isText
                     ? `Text ("${(layer as any).text}")`
                     : (layer as any).type === "image"
-                    ? `Image (${layer.id.split("-").pop()})`
-                    : `Logo (${layer.id.split("-").pop()})`;
+                      ? `Image (${layer.id.split("-").pop()})`
+                      : `Logo (${layer.id.split("-").pop()})`;
 
                   return (
                     <div
@@ -1178,13 +1151,12 @@ export function TabUpload() {
                           setSelectedLayerId(null);
                         }
                       }}
-                      className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
-                        isSelected
-                          ? "border-red-500 bg-red-50/30 font-semibold"
-                          : dragOverIdx === index
+                      className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none ${isSelected
+                        ? "border-red-500 bg-red-50/30 font-semibold"
+                        : dragOverIdx === index
                           ? "border-dashed border-red-400 bg-zinc-50 scale-[0.98]"
                           : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
-                      } ${draggedIdx === index ? "opacity-45" : ""}`}
+                        } ${draggedIdx === index ? "opacity-45" : ""}`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         {/* Drag Handle */}
@@ -1281,11 +1253,10 @@ export function TabUpload() {
                         prev.map((l) => (l.id === selectedLayer.id ? { ...l, zOrder: "bottom" } : l)),
                       );
                     }}
-                    className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
-                      selectedLayer.zOrder !== "above-text"
-                        ? "bg-white text-zinc-900 shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-900"
-                    }`}
+                    className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${selectedLayer.zOrder !== "above-text"
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-900"
+                      }`}
                   >
                     Send to Back
                   </button>
@@ -1298,11 +1269,10 @@ export function TabUpload() {
                         ),
                       );
                     }}
-                    className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${
-                      selectedLayer.zOrder === "above-text"
-                        ? "bg-white text-zinc-900 shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-900"
-                    }`}
+                    className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all text-center cursor-pointer ${selectedLayer.zOrder === "above-text"
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-900"
+                      }`}
                   >
                     Bring to Front
                   </button>
@@ -1410,11 +1380,11 @@ export function TabUpload() {
                         prev.map((l) =>
                           l.id === selectedLayer.id
                             ? {
-                                ...l,
-                                x: p.x,
-                                y: p.y,
-                                side: targetSide,
-                              }
+                              ...l,
+                              x: p.x,
+                              y: p.y,
+                              side: targetSide,
+                            }
                             : l,
                         ),
                       );
