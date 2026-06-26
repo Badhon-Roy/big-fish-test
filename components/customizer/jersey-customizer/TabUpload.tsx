@@ -119,6 +119,8 @@ export function TabUpload() {
   const setUploadedImages = useCustomizerStore((s) => s.setUploadedImages);
   const setUploadSubTab = useCustomizerStore((s) => s.setUploadSubTab);
   const setCurrentView = useCustomizerStore((s) => s.setCurrentView);
+  const defaultImageSide = useCustomizerStore((s) => s.defaultImageSide);
+  const setDefaultImageSide = useCustomizerStore((s) => s.setDefaultImageSide);
 
   const handleAddLogoLayer = useCustomizerStore((s) => s.handleAddLogoLayer);
   const handleLogoCopy = useCustomizerStore((s) => s.handleLogoCopy);
@@ -498,28 +500,100 @@ export function TabUpload() {
 
       {/* Front/Back View Segmented Switcher */}
       <div className="flex bg-zinc-100 p-1 rounded-xl">
-        <button
-          type="button"
-          onClick={() => setCurrentView("front")}
-          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-            activeSide === "Front"
-              ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-900"
-          }`}
-        >
-          Front Side
-        </button>
-        <button
-          type="button"
-          onClick={() => setCurrentView("back")}
-          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
-            activeSide === "Back"
-              ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-900"
-          }`}
-        >
-          Back Side
-        </button>
+        {uploadSubTab === "image" ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView("front");
+                setDefaultImageSide("Front");
+                const selectedImageLayer = logoLayers.find((l) => l.id === selectedLogoId && l.type === "image");
+                if (selectedImageLayer) {
+                  setLogoLayers((prev) =>
+                    prev.map((l) => (l.id === selectedImageLayer.id ? { ...l, side: "Front" } : l))
+                  );
+                }
+              }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                (selectedLogoId && logoLayers.find((l) => l.id === selectedLogoId)?.type === "image"
+                  ? logoLayers.find((l) => l.id === selectedLogoId)?.side === "Front"
+                  : defaultImageSide === "Front")
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              Front Side
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView("back");
+                setDefaultImageSide("Back");
+                const selectedImageLayer = logoLayers.find((l) => l.id === selectedLogoId && l.type === "image");
+                if (selectedImageLayer) {
+                  setLogoLayers((prev) =>
+                    prev.map((l) => (l.id === selectedImageLayer.id ? { ...l, side: "Back" } : l))
+                  );
+                }
+              }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                (selectedLogoId && logoLayers.find((l) => l.id === selectedLogoId)?.type === "image"
+                  ? logoLayers.find((l) => l.id === selectedLogoId)?.side === "Back"
+                  : defaultImageSide === "Back")
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              Back Side
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDefaultImageSide("Both");
+                const selectedImageLayer = logoLayers.find((l) => l.id === selectedLogoId && l.type === "image");
+                if (selectedImageLayer) {
+                  setLogoLayers((prev) =>
+                    prev.map((l) => (l.id === selectedImageLayer.id ? { ...l, side: "Both" } : l))
+                  );
+                }
+              }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                (selectedLogoId && logoLayers.find((l) => l.id === selectedLogoId)?.type === "image"
+                  ? logoLayers.find((l) => l.id === selectedLogoId)?.side === "Both"
+                  : defaultImageSide === "Both")
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              Both Side
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setCurrentView("front")}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                activeSide === "Front"
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              Front Side
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentView("back")}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                activeSide === "Back"
+                  ? "bg-white text-zinc-900 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              Back Side
+            </button>
+          </>
+        )}
       </div>
 
       {/* Visual Logo/Image Editor */}
@@ -570,7 +644,7 @@ export function TabUpload() {
             {logoLayers
               .filter(
                 (layer) =>
-                  layer.side === activeSide &&
+                  (layer.side === activeSide || layer.side === "Both") &&
                   (uploadSubTab === "logo"
                     ? layer.type === "logo" || !layer.type
                     : layer.type === "image"),
@@ -605,7 +679,7 @@ export function TabUpload() {
               logoLayers
                 .filter(
                   (layer) =>
-                    layer.side === activeSide &&
+                    (layer.side === activeSide || layer.side === "Both") &&
                     selectedLogoId === layer.id &&
                     (uploadSubTab === "logo"
                       ? layer.type === "logo" || !layer.type
@@ -1023,7 +1097,7 @@ export function TabUpload() {
       {/* Unified Active Layers List */}
       {(() => {
         const sideTextLayers = textLayers.filter((l) => l.side === activeSide);
-        const sideLogoLayers = logoLayers.filter((l) => l.side === activeSide);
+        const sideLogoLayers = logoLayers.filter((l) => l.side === activeSide || l.side === "Both");
         const activeSideLayers = [
           ...sideTextLayers.map((l) => ({
             ...l,

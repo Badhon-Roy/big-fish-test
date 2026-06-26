@@ -39,7 +39,7 @@ export interface LogoLayer {
   y: number; // coordinate Y on canvas (0-1024)
   scale: number; // scale factor
   rotation: number; // rotation in degrees
-  side: "Front" | "Back";
+  side: "Front" | "Back" | "Both";
   baseSize: number; // base size (default 200px)
   opacity?: number; // opacity between 0.0 and 1.0 (default 1.0)
   eraserPaths?: Array<{

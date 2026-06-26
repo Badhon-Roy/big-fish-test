@@ -1767,35 +1767,65 @@ function ImageDecal({
   if (!imageTexture) return null;
 
   const isCollar = glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
-  const isFront = layer.side !== "Back";
+  const showFront = layer.side === "Front" || layer.side === "Both";
+  const showBack = layer.side === "Back" || layer.side === "Both";
 
   // Mirror patternFront/patternBack position expressions exactly:
   //   y: 0.0 + (isCollar ? -0.05 : 0.0)
   //   z: ±0.155 + (isCollar ? -0.02 : 0.0)
   return (
-    <Decal
-      position={[
-        0,
-        0.0 + (isCollar ? -0.05 : 0.0),
-        (isFront ? 0.155 : -0.155) + (isCollar ? -0.02 : 0.0),
-      ]}
-      rotation={[0, isFront ? 0 : Math.PI, 0]}
-      scale={[0.54, 0.7, 0.309]}
-      renderOrder={isFront ? 5 : 6}
-    >
-      <meshStandardMaterial
-        map={imageTexture}
-        transparent
-        alphaTest={0.01}
-        depthWrite={false}
-        polygonOffset
-        polygonOffsetFactor={-5}
-        roughness={roughness}
-        normalMap={fabricConfig.normalMap || undefined}
-        normalScale={fabricConfig.normalScale}
-        envMapIntensity={0.2}
-      />
-    </Decal>
+    <>
+      {showFront && (
+        <Decal
+          position={[
+            0,
+            0.0 + (isCollar ? -0.05 : 0.0),
+            0.155 + (isCollar ? -0.02 : 0.0),
+          ]}
+          rotation={[0, 0, 0]}
+          scale={[0.54, 0.7, 0.309]}
+          renderOrder={5}
+        >
+          <meshStandardMaterial
+            map={imageTexture}
+            transparent
+            alphaTest={0.01}
+            depthWrite={false}
+            polygonOffset
+            polygonOffsetFactor={-5}
+            roughness={roughness}
+            normalMap={fabricConfig.normalMap || undefined}
+            normalScale={fabricConfig.normalScale}
+            envMapIntensity={0.2}
+          />
+        </Decal>
+      )}
+      {showBack && (
+        <Decal
+          position={[
+            0,
+            0.0 + (isCollar ? -0.05 : 0.0),
+            -0.155 + (isCollar ? -0.02 : 0.0),
+          ]}
+          rotation={[0, Math.PI, 0]}
+          scale={[0.54, 0.7, 0.309]}
+          renderOrder={6}
+        >
+          <meshStandardMaterial
+            map={imageTexture}
+            transparent
+            alphaTest={0.01}
+            depthWrite={false}
+            polygonOffset
+            polygonOffsetFactor={-5}
+            roughness={roughness}
+            normalMap={fabricConfig.normalMap || undefined}
+            normalScale={fabricConfig.normalScale}
+            envMapIntensity={0.2}
+          />
+        </Decal>
+      )}
+    </>
   );
 }
 
@@ -1829,17 +1859,47 @@ export function Jersey3D({
     if (!geo.attributes.normal) {
       geo.computeVertexNormals();
     }
-    // Ensure UV coordinates exist
-    if (!geo.attributes.uv) {
-      const count = geo.attributes.position.count;
-      const uvs = new Float32Array(count * 2);
-      geo.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
-    }
 
     // Scale collar model to match no-collar T-Shirt model boundaries
     if (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb") {
       geo.scale(0.33, 0.33, 0.33);
       geo.translate(0, -0.05, 0.005);
+
+      // Generate UV coordinates procedurally using cylindrical projection since this GLB lacks UVs
+      const posAttr = geo.attributes.position;
+      const count = posAttr.count;
+      const uvs = new Float32Array(count * 2);
+
+      let minY = Infinity;
+      let maxY = -Infinity;
+      for (let i = 0; i < count; i++) {
+        const y = posAttr.getY(i);
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+      const height = maxY - minY || 1;
+
+      for (let i = 0; i < count; i++) {
+        const x = posAttr.getX(i);
+        const y = posAttr.getY(i);
+        const z = posAttr.getZ(i);
+
+        // Cylindrical mapping
+        const angle = Math.atan2(z, x); // -PI to PI
+        const u = (angle + Math.PI) / (2 * Math.PI);
+        const v = (y - minY) / height;
+
+        uvs[i * 2] = u;
+        uvs[i * 2 + 1] = v;
+      }
+      geo.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+    } else {
+      // Ensure UV coordinates exist
+      if (!geo.attributes.uv) {
+        const count = geo.attributes.position.count;
+        const uvs = new Float32Array(count * 2);
+        geo.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+      }
     }
 
     return geo;

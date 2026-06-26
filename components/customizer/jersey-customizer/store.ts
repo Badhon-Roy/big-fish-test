@@ -24,6 +24,7 @@ interface CustomizerStore {
   loadedPatterns: Record<string, HTMLImageElement>;
   selectedDesign: string;
   fontsLoaded: boolean;
+  defaultImageSide: "Front" | "Back" | "Both";
 
   // Actions
   updateState: (key: keyof CustomizerState, value: any) => void;
@@ -49,6 +50,7 @@ interface CustomizerStore {
   setLoadedPatterns: (patterns: Record<string, HTMLImageElement> | ((prev: Record<string, HTMLImageElement>) => Record<string, HTMLImageElement>)) => void;
   setSelectedDesign: (design: string) => void;
   setFontsLoaded: (loaded: boolean) => void;
+  setDefaultImageSide: (side: "Front" | "Back" | "Both") => void;
 
   // High-level Actions
   setLogoPositionPreset: (pos: string) => void;
@@ -133,6 +135,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
   loadedPatterns: {},
   selectedDesign: "throw",
   fontsLoaded: false,
+  defaultImageSide: "Front",
 
   // Actions
   updateState: (key, value) =>
@@ -172,6 +175,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
     set((s) => ({ loadedPatterns: resolveVal(patterns, s.loadedPatterns) })),
   setSelectedDesign: (design) => set({ selectedDesign: design }),
   setFontsLoaded: (loaded) => set({ fontsLoaded: loaded }),
+  setDefaultImageSide: (side) => set({ defaultImageSide: side }),
 
   // High-level Actions
   setLogoPositionPreset: (pos) => {
@@ -271,7 +275,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
         y: type === "image" ? 512 : 500,  // image: true center; logo: slightly above center
         scale: initialScale,
         rotation: 0,
-        side: get().activeSide,
+        side: type === "image" ? get().defaultImageSide : get().activeSide,
         baseSize: 200,
         opacity: 1.0,
         type,
