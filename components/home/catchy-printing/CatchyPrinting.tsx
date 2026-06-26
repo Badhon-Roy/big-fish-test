@@ -63,7 +63,7 @@ const CatchyPrinting = () => {
             
             {/* Center Pill Button */}
             <Link
-              href="/brand-new-design"
+              href="/jersey-customize"
               className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white text-[#031E39] font-bold text-xs md:text-sm tracking-wider uppercase px-8 py-3.5 rounded-full shadow-lg hover:bg-[#E94560] hover:text-white transition-all active:scale-95 duration-200"
             >
               Designer Jerseys
@@ -91,7 +91,7 @@ const CatchyPrinting = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               
               <Link
-                href="/collar-jersey-design"
+                href="/jersey-customize?type=collar"
                 className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white text-[#031E39] font-bold text-xs md:text-sm tracking-wider uppercase px-8 py-3.5 rounded-full shadow-lg hover:bg-[#E94560] hover:text-white transition-all active:scale-95 duration-200"
               >
                 Casual Classics

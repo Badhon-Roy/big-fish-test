@@ -79,7 +79,7 @@ const Navbar = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1.0, delay: 1.08, ease: [0.16, 1, 0.3, 1] }}
       >
-        <Link href="/brand-new-design" className="inline-block">
+        <Link href="/jersey-customize" className="inline-block">
           <CommonButton 
             buttonText="Start Customizing"
           />
