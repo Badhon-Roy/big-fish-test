@@ -1666,13 +1666,13 @@ function ImageDecal({
     //   (layer.x, layer.y) is the image centre, scale is a multiplier on
     //   the image's natural dimensions, rotation is in degrees.
     const canvas = document.createElement("canvas");
-    canvas.width  = 1024;
+    canvas.width = 1024;
     canvas.height = 1024;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const imgW    = img.naturalWidth  || img.width  || 200;
-    const imgH    = img.naturalHeight || img.height || 200;
+    const imgW = img.naturalWidth || img.width || 200;
+    const imgH = img.naturalHeight || img.height || 200;
     const opacity = typeof layer.opacity === "number" ? layer.opacity : 1.0;
 
     // ── Scale decoupling + aspect ratio correction ────────────────────────────
@@ -1692,11 +1692,11 @@ function ImageDecal({
     // User scales down ½: drawScale = ½×coverScale → partial fill (expected) ✅
     // Proportions       : image always appears with its natural aspect ratio ✅
     const meshDecalAspectRatio = 0.54 / 0.7;           // ≈ 0.7714
-    const effectiveW   = 1024 * meshDecalAspectRatio;  // ≈ 790 px effective horizontal space
+    const effectiveW = 1024 * meshDecalAspectRatio;  // ≈ 790 px effective horizontal space
     const containScale = Math.min(1024 / imgW, 1024 / imgH) || 1;  // visual editor display scale
-    const coverScale   = Math.max(effectiveW / imgW, 1024 / imgH) || 1; // fill both axes correctly
-    const scaleFactor  = layer.scale / containScale;
-    const drawScale    = coverScale * scaleFactor;
+    const coverScale = Math.max(effectiveW / imgW, 1024 / imgH) || 1; // fill both axes correctly
+    const scaleFactor = layer.scale / containScale;
+    const drawScale = coverScale * scaleFactor;
 
     ctx.clearRect(0, 0, 1024, 1024);
     ctx.save();
@@ -1710,13 +1710,13 @@ function ImageDecal({
     // Handle eraser paths the same way the visual editor does
     if ((layer as any).eraserPaths && (layer as any).eraserPaths.length > 0) {
       const tmp = document.createElement("canvas");
-      tmp.width  = imgW;
+      tmp.width = imgW;
       tmp.height = imgH;
       const tCtx = tmp.getContext("2d");
       if (tCtx) {
         tCtx.drawImage(img, 0, 0, imgW, imgH);
         tCtx.globalCompositeOperation = "destination-out";
-        tCtx.lineCap  = "round";
+        tCtx.lineCap = "round";
         tCtx.lineJoin = "round";
         tCtx.strokeStyle = "rgba(0,0,0,1)";
         (layer as any).eraserPaths.forEach((path: any) => {
@@ -1758,7 +1758,7 @@ function ImageDecal({
   if (!imageTexture) return null;
 
   const isCollar = glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
-  const isFront  = layer.side !== "Back";
+  const isFront = layer.side !== "Back";
 
   // Mirror patternFront/patternBack position expressions exactly:
   //   y: 0.0 + (isCollar ? -0.05 : 0.0)
