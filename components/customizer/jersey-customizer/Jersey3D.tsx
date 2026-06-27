@@ -867,27 +867,21 @@ function useJerseyDecals(state: any) {
       switch (dp) {
         case "strike":
           ctx.beginPath();
-          ctx.moveTo(60 * sc, 10 * sc);
-          ctx.lineTo(80 * sc, 10 * sc);
-          ctx.lineTo(50 * sc, 90 * sc);
-          ctx.lineTo(30 * sc, 90 * sc);
+          ctx.moveTo(20 * sc, 10 * sc);
+          ctx.lineTo(40 * sc, 10 * sc);
+          ctx.lineTo(75 * sc, 90 * sc);
+          ctx.lineTo(55 * sc, 90 * sc);
           ctx.closePath();
           ctx.fill();
           break;
         case "save":
-          ctx.fillRect(0, 0, 45 * sc, size);
+          ctx.fillRect(0, 0, 50 * sc, size);
           break;
         case "fastbreak":
           ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(30 * sc, 0);
-          ctx.lineTo(0, 50 * sc);
-          ctx.closePath();
-          ctx.fill();
-          ctx.beginPath();
-          ctx.moveTo(100 * sc, 50 * sc);
-          ctx.lineTo(100 * sc, 100 * sc);
-          ctx.lineTo(70 * sc, 100 * sc);
+          ctx.moveTo(45 * sc, 0);
+          ctx.lineTo(100 * sc, 0);
+          ctx.lineTo(100 * sc, 70 * sc);
           ctx.closePath();
           ctx.fill();
           break;
@@ -905,13 +899,8 @@ function useJerseyDecals(state: any) {
           ctx.fill();
           break;
         case "city":
-          ctx.lineWidth = 4 * sc;
-          [25, 50, 75].forEach((y) => {
-            ctx.beginPath();
-            ctx.moveTo(0, y * sc);
-            ctx.lineTo(size, y * sc);
-            ctx.stroke();
-          });
+          ctx.fillRect(0, 30 * sc, size, 10 * sc);
+          ctx.fillRect(0, 50 * sc, size, 10 * sc);
           break;
         case "pure":
           ctx.beginPath();
@@ -932,7 +921,7 @@ function useJerseyDecals(state: any) {
         case "vivo":
           ctx.beginPath();
           ctx.moveTo(60 * sc, 100 * sc);
-          ctx.lineTo(100 * sc, 0);
+          ctx.lineTo(100 * sc, 60 * sc);
           ctx.lineTo(100 * sc, 100 * sc);
           ctx.closePath();
           ctx.fill();
@@ -970,8 +959,7 @@ function useJerseyDecals(state: any) {
         case "animal":
           ctx.beginPath();
           ctx.moveTo(0, 0);
-          ctx.quadraticCurveTo(25 * sc, 40 * sc, 50 * sc, 10 * sc);
-          ctx.quadraticCurveTo(75 * sc, 40 * sc, 100 * sc, 0);
+          ctx.lineTo(100 * sc, 0);
           ctx.lineTo(100 * sc, 50 * sc);
           ctx.quadraticCurveTo(75 * sc, 80 * sc, 50 * sc, 55 * sc);
           ctx.quadraticCurveTo(25 * sc, 80 * sc, 0, 50 * sc);
@@ -980,21 +968,18 @@ function useJerseyDecals(state: any) {
           break;
         case "avatar":
           ctx.beginPath();
-          ctx.moveTo(0, 100 * sc);
-          ctx.lineTo(45 * sc, 0);
-          ctx.lineTo(55 * sc, 0);
-          ctx.lineTo(0, 100 * sc);
+          ctx.moveTo(55 * sc, 0);
+          ctx.lineTo(67 * sc, 0);
+          ctx.lineTo(22 * sc, 100 * sc);
+          ctx.lineTo(10 * sc, 100 * sc);
           ctx.closePath();
           ctx.fill();
           break;
         case "league":
           ctx.fillRect(0, 0, 50 * sc, size);
-          ctx.globalAlpha = 0.3;
-          ctx.fillStyle = pri;
-          ctx.fillRect(50 * sc, 0, 50 * sc, size);
           break;
         case "magic": {
-          const grad = ctx.createRadialGradient(50 * sc, 40 * sc, 0, 50 * sc, 40 * sc, 80 * sc);
+          const grad = ctx.createLinearGradient(0, 0, 0, 70 * sc);
           grad.addColorStop(0, sec);
           grad.addColorStop(1, "transparent");
           ctx.fillStyle = grad;
@@ -1006,9 +991,9 @@ function useJerseyDecals(state: any) {
           break;
         case "rush":
           ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(0, 100 * sc);
+          ctx.moveTo(0, 60 * sc);
           ctx.lineTo(40 * sc, 100 * sc);
+          ctx.lineTo(0, 100 * sc);
           ctx.closePath();
           ctx.fill();
           break;
@@ -1016,7 +1001,568 @@ function useJerseyDecals(state: any) {
           ctx.beginPath();
           ctx.moveTo(0, 0);
           ctx.lineTo(100 * sc, 0);
-          ctx.lineTo(100 * sc, 100 * sc);
+          ctx.lineTo(0, 100 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "apex":
+          // Shoulder Caps
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(32 * sc, 0);
+          ctx.lineTo(0, 28 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(size, 0);
+          ctx.lineTo(68 * sc, 0);
+          ctx.lineTo(size, 28 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Main V Chevron
+          ctx.beginPath();
+          ctx.moveTo(0, 33 * sc);
+          ctx.lineTo(50 * sc, 53 * sc);
+          ctx.lineTo(size, 33 * sc);
+          ctx.lineTo(size, 45 * sc);
+          ctx.lineTo(50 * sc, 65 * sc);
+          ctx.lineTo(0, 45 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Shadow Chevrons
+          ctx.save();
+          ctx.globalAlpha = 0.2;
+          ctx.beginPath();
+          ctx.moveTo(0, 47 * sc);
+          ctx.lineTo(50 * sc, 67 * sc);
+          ctx.lineTo(size, 47 * sc);
+          ctx.lineTo(size, 57 * sc);
+          ctx.lineTo(50 * sc, 77 * sc);
+          ctx.lineTo(0, 57 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.globalAlpha = 0.1;
+          ctx.beginPath();
+          ctx.moveTo(0, 59 * sc);
+          ctx.lineTo(50 * sc, 79 * sc);
+          ctx.lineTo(size, 59 * sc);
+          ctx.lineTo(size, 69 * sc);
+          ctx.lineTo(50 * sc, 89 * sc);
+          ctx.lineTo(0, 69 * sc);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+          break;
+        case "bolt":
+          ctx.fillRect(0, 0, size, size);
+          ctx.fillStyle = pri;
+          // Shoulder/armhole blue slashes
+          ctx.beginPath();
+          ctx.moveTo(0, 14 * sc);
+          ctx.lineTo(18 * sc, 10 * sc);
+          ctx.lineTo(0, 24 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(size, 14 * sc);
+          ctx.lineTo(82 * sc, 10 * sc);
+          ctx.lineTo(size, 24 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Giant lightning bolt
+          ctx.beginPath();
+          ctx.moveTo(75 * sc, 12 * sc);
+          ctx.lineTo(36 * sc, 52 * sc);
+          ctx.lineTo(45 * sc, 52 * sc);
+          ctx.lineTo(32 * sc, 90 * sc);
+          ctx.lineTo(64 * sc, 46 * sc);
+          ctx.lineTo(55 * sc, 46 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "edge":
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(50 * sc, 0);
+          ctx.lineTo(50 * sc, 10 * sc);
+          ctx.lineTo(46 * sc, 10 * sc);
+          ctx.lineTo(46 * sc, 20 * sc);
+          ctx.lineTo(50 * sc, 20 * sc);
+          ctx.lineTo(50 * sc, 30 * sc);
+          ctx.lineTo(46 * sc, 30 * sc);
+          ctx.lineTo(46 * sc, 40 * sc);
+          ctx.lineTo(50 * sc, 40 * sc);
+          ctx.lineTo(50 * sc, 50 * sc);
+          ctx.lineTo(46 * sc, 50 * sc);
+          ctx.lineTo(46 * sc, 60 * sc);
+          ctx.lineTo(50 * sc, 60 * sc);
+          ctx.lineTo(50 * sc, 70 * sc);
+          ctx.lineTo(46 * sc, 70 * sc);
+          ctx.lineTo(46 * sc, 80 * sc);
+          ctx.lineTo(50 * sc, 80 * sc);
+          ctx.lineTo(50 * sc, 90 * sc);
+          ctx.lineTo(46 * sc, 90 * sc);
+          ctx.lineTo(46 * sc, 100 * sc);
+          ctx.lineTo(0, size);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "fusion":
+          // Solid backing on the right
+          ctx.beginPath();
+          ctx.moveTo(66 * sc, 0);
+          ctx.lineTo(size, 0);
+          ctx.lineTo(size, size);
+          ctx.lineTo(76 * sc, size);
+          ctx.closePath();
+          ctx.fill();
+
+          // Diagonal halftone grid
+          for (let x = 32; x <= 80; x += 3.3) {
+            for (let y = 0; y <= 100; y += 3.3) {
+              const dist = x - (45 - y * 0.15);
+              if (dist > 0) {
+                const r = Math.min(2.2, dist * 0.11) * sc;
+                ctx.beginPath();
+                ctx.arc(x * sc, y * sc, r, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+          break;
+        case "horizon":
+          for (let y = 98; y >= 30; y -= 3) {
+            const thickness = (y - 25) * 0.04 * sc;
+            ctx.lineWidth = thickness;
+            ctx.beginPath();
+            ctx.moveTo(0, y * sc);
+            ctx.lineTo(size, y * sc);
+            ctx.stroke();
+          }
+          break;
+        case "matrix":
+          for (let x = 4; x <= 96; x += 4) {
+            for (let y = 96; y >= 40; y -= 4) {
+              const val = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+              const rand = val - Math.floor(val);
+              if (rand < (y - 35) / 65) {
+                const sz = 3.5 * ((y - 35) / 65) * (0.5 + 0.5 * rand) * sc;
+                ctx.fillRect((x - sz / (2 * sc)) * sc, (y - sz / (2 * sc)) * sc, sz, sz);
+              }
+            }
+          }
+          break;
+        case "nova":
+          ctx.fillStyle = sec;
+          // Band 1: x + y between 82 and 86
+          ctx.beginPath();
+          ctx.moveTo(0, 82 * sc);
+          ctx.lineTo(82 * sc, 0);
+          ctx.lineTo(86 * sc, 0);
+          ctx.lineTo(0, 86 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Band 2: x + y between 96 and 100
+          ctx.beginPath();
+          ctx.moveTo(0, 96 * sc);
+          ctx.lineTo(96 * sc, 0);
+          ctx.lineTo(size, 0);
+          ctx.lineTo(0, size);
+          ctx.closePath();
+          ctx.fill();
+
+          // Band 3: x + y between 110 and 114
+          ctx.beginPath();
+          ctx.moveTo(10 * sc, size);
+          ctx.lineTo(size, 10 * sc);
+          ctx.lineTo(size, 14 * sc);
+          ctx.lineTo(14 * sc, size);
+          ctx.closePath();
+          ctx.fill();
+
+          // Corner triangle: x + y >= 124
+          ctx.beginPath();
+          ctx.moveTo(24 * sc, size);
+          ctx.lineTo(size, 24 * sc);
+          ctx.lineTo(size, size);
+          ctx.closePath();
+          ctx.fill();
+
+          // Halftone dots border on the blue chest side
+          [
+            { c: 78, r: 1.6 },
+            { c: 74, r: 1.1 },
+            { c: 70, r: 0.7 },
+            { c: 66, r: 0.4 }
+          ].forEach(({ c, r }) => {
+            for (let t = 0; t <= c; t += 4.5) {
+              const x = t;
+              const y = c - t;
+              if (y >= 0 && y <= 100) {
+                ctx.beginPath();
+                ctx.arc(x * sc, y * sc, r * sc, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          });
+          break;
+        case "pulse":
+          ctx.fillStyle = sec;
+          ctx.fillRect(0, 0, size, size);
+
+          ctx.fillStyle = pri;
+          for (let x = 28; x <= 72; x += 1.8) {
+            const dx = Math.abs(x - 50);
+            const env = dx > 15 ? Math.max(0, 1 - (dx - 15) / 7.0) : 1.0;
+            const h = env * 80 * Math.pow(0.955, dx) * (0.6 + 0.4 * Math.abs(Math.cos(dx * 0.08)));
+            const w = 1.0;
+            ctx.beginPath();
+            ctx.moveTo((x - w) * sc, size);
+            ctx.lineTo((x + w) * sc, size);
+            ctx.lineTo(x * sc, (100 - h) * sc);
+            ctx.closePath();
+            ctx.fill();
+          }
+          break;
+        case "summit":
+          ctx.fillStyle = sec;
+
+          // Main peak with solid bottom base
+          ctx.beginPath();
+          ctx.moveTo(0, 85 * sc);
+          ctx.lineTo(15 * sc, 85 * sc);
+          ctx.lineTo(25 * sc, 78 * sc);
+          ctx.lineTo(23 * sc, 80 * sc);
+          ctx.lineTo(35 * sc, 71 * sc);
+          ctx.lineTo(33 * sc, 73 * sc);
+          ctx.lineTo(50 * sc, 60 * sc);
+          ctx.lineTo(67 * sc, 73 * sc);
+          ctx.lineTo(65 * sc, 71 * sc);
+          ctx.lineTo(77 * sc, 80 * sc);
+          ctx.lineTo(75 * sc, 78 * sc);
+          ctx.lineTo(85 * sc, 85 * sc);
+          ctx.lineTo(size, 85 * sc);
+          ctx.lineTo(size, size);
+          ctx.lineTo(0, size);
+          ctx.closePath();
+          ctx.fill();
+
+          // Hollow chevron peak 2
+          ctx.beginPath();
+          ctx.moveTo(20 * sc, 78 * sc);
+          ctx.lineTo(32 * sc, 65 * sc);
+          ctx.lineTo(30 * sc, 67 * sc);
+          ctx.lineTo(42 * sc, 54 * sc);
+          ctx.lineTo(40 * sc, 56 * sc);
+          ctx.lineTo(50 * sc, 49 * sc);
+          ctx.lineTo(60 * sc, 56 * sc);
+          ctx.lineTo(58 * sc, 54 * sc);
+          ctx.lineTo(68 * sc, 67 * sc);
+          ctx.lineTo(66 * sc, 65 * sc);
+          ctx.lineTo(80 * sc, 78 * sc);
+          ctx.lineTo(80 * sc, 82 * sc);
+          ctx.lineTo(66 * sc, 71 * sc);
+          ctx.lineTo(68 * sc, 69 * sc);
+          ctx.lineTo(58 * sc, 60 * sc);
+          ctx.lineTo(60 * sc, 58 * sc);
+          ctx.lineTo(50 * sc, 54 * sc);
+          ctx.lineTo(40 * sc, 58 * sc);
+          ctx.lineTo(42 * sc, 60 * sc);
+          ctx.lineTo(32 * sc, 69 * sc);
+          ctx.lineTo(30 * sc, 71 * sc);
+          ctx.lineTo(20 * sc, 82 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Hollow chevron peak 3
+          ctx.beginPath();
+          ctx.moveTo(25 * sc, 70 * sc);
+          ctx.lineTo(36 * sc, 58 * sc);
+          ctx.lineTo(34 * sc, 60 * sc);
+          ctx.lineTo(50 * sc, 42 * sc);
+          ctx.lineTo(66 * sc, 60 * sc);
+          ctx.lineTo(64 * sc, 58 * sc);
+          ctx.lineTo(75 * sc, 70 * sc);
+          ctx.lineTo(75 * sc, 74 * sc);
+          ctx.lineTo(64 * sc, 62 * sc);
+          ctx.lineTo(66 * sc, 60 * sc);
+          ctx.lineTo(50 * sc, 47 * sc);
+          ctx.lineTo(34 * sc, 60 * sc);
+          ctx.lineTo(36 * sc, 62 * sc);
+          ctx.lineTo(25 * sc, 74 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Loose rock shards
+          [
+            [12, 83, 18, 78, 15, 85],
+            [28, 64, 32, 58, 30, 67],
+            [88, 83, 82, 78, 85, 85],
+            [72, 64, 68, 58, 70, 67],
+            [48, 51, 52, 51, 50, 54]
+          ].forEach(([x1, y1, x2, y2, x3, y3]) => {
+            ctx.beginPath();
+            ctx.moveTo(x1 * sc, y1 * sc);
+            ctx.lineTo(x2 * sc, y2 * sc);
+            ctx.lineTo(x3 * sc, y3 * sc);
+            ctx.closePath();
+            ctx.fill();
+          });
+          break;
+        case "tempo":
+          ctx.fillStyle = sec;
+          ctx.strokeStyle = sec;
+          ctx.lineCap = "butt";
+
+          // Draw the 8 lines
+          [
+            [58, 0.6],
+            [64, 1.0],
+            [70, 1.6],
+            [76, 2.4],
+            [83, 3.6],
+            [91, 5.2],
+            [100, 7.5],
+            [110, 11.0]
+          ].forEach(([c, w]) => {
+            ctx.lineWidth = w * sc;
+            ctx.beginPath();
+            ctx.moveTo(0, c * sc);
+            ctx.lineTo(size, (c - 40) * sc);
+            ctx.stroke();
+          });
+
+          // Draw solid corner polygon
+          ctx.beginPath();
+          ctx.moveTo(45 * sc, size);
+          ctx.lineTo(size, 78 * sc);
+          ctx.lineTo(size, size);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "titan":
+          ctx.fillStyle = sec;
+          ctx.fillRect(0, 0, size, size);
+
+          ctx.fillStyle = pri;
+          // Center stripe
+          ctx.fillRect(45 * sc, 0, 10 * sc, size);
+
+          // Left side stripe
+          ctx.beginPath();
+          ctx.moveTo(41 * sc, 0);
+          ctx.lineTo(43 * sc, 0);
+          ctx.lineTo(43 * sc, 60 * sc);
+          ctx.lineTo(41 * sc, 64 * sc);
+          ctx.lineTo(41 * sc, size);
+          ctx.lineTo(37 * sc, size);
+          ctx.lineTo(37 * sc, 64 * sc);
+          ctx.lineTo(41 * sc, 60 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Right side stripe
+          ctx.beginPath();
+          ctx.moveTo(57 * sc, 0);
+          ctx.lineTo(59 * sc, 0);
+          ctx.lineTo(59 * sc, 60 * sc);
+          ctx.lineTo(63 * sc, 64 * sc);
+          ctx.lineTo(63 * sc, size);
+          ctx.lineTo(59 * sc, size);
+          ctx.lineTo(59 * sc, 64 * sc);
+          ctx.lineTo(57 * sc, 60 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          // Left/right side accent lines
+          ctx.save();
+          ctx.strokeStyle = pri;
+          ctx.lineWidth = 0.8 * sc;
+          ctx.globalAlpha = 0.6;
+          ctx.beginPath();
+          ctx.moveTo(37 * sc, 35 * sc);
+          ctx.lineTo(37 * sc, 58 * sc);
+          ctx.moveTo(63 * sc, 35 * sc);
+          ctx.lineTo(63 * sc, 58 * sc);
+          ctx.stroke();
+          ctx.restore();
+
+          // Shoulder stripes
+          ctx.beginPath();
+          ctx.moveTo(0, 10 * sc);
+          ctx.lineTo(24 * sc, 0);
+          ctx.lineTo(32 * sc, 0);
+          ctx.lineTo(0, 16 * sc);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(size, 10 * sc);
+          ctx.lineTo(76 * sc, 0);
+          ctx.lineTo(68 * sc, 0);
+          ctx.lineTo(size, 16 * sc);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "zenith":
+          {
+            const grad = ctx.createLinearGradient(0, 10 * sc, 0, 80 * sc);
+            grad.addColorStop(0, sec);
+            grad.addColorStop(1, "transparent");
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 2 * sc;
+            ctx.lineCap = "round";
+            for (let x = 28; x <= 72; x += 4) {
+              const dx = Math.min(x - 28, 72 - x);
+              ctx.globalAlpha = dx < 8 ? (0.2 + (dx / 8) * 0.8) : 1.0;
+              ctx.beginPath();
+              ctx.moveTo(x * sc, 10 * sc);
+              ctx.lineTo(x * sc, 80 * sc);
+              ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+          }
+          break;
+        case "ignite": {
+          // Primary background
+          ctx.fillStyle = pri;
+          ctx.fillRect(0, 0, size, size);
+
+          // Helper: 2 quadratic curves, all x strictly 30..70
+          const drawQ = (x0: number, cx1: number, cy1: number, px: number, py: number, cx2: number, cy2: number, x1: number) => {
+            ctx.beginPath();
+            ctx.moveTo(x0 * sc, size);
+            ctx.quadraticCurveTo(cx1 * sc, cy1 * sc, px * sc, py * sc);
+            ctx.quadraticCurveTo(cx2 * sc, cy2 * sc, x1 * sc, size);
+            ctx.closePath();
+            ctx.fill();
+          };
+
+          // Background flames (semi-transparent)
+          ctx.fillStyle = sec;
+          ctx.save();
+          ctx.globalAlpha = 0.45;
+          drawQ(30, 32, 82, 33, 72, 34, 82, 36);
+          drawQ(37, 41, 75, 44, 58, 48, 75, 51);
+          drawQ(50, 54, 74, 57, 57, 61, 74, 64);
+          drawQ(64, 66, 82, 67, 72, 68, 82, 70);
+          ctx.restore();
+
+          // Foreground flames (solid)
+          ctx.fillStyle = sec;
+          drawQ(30, 31, 92, 32, 88, 33, 92, 34);
+          drawQ(34, 36, 85, 38, 76, 40, 85, 42);
+          drawQ(40, 42, 80, 44, 65, 47, 80, 49);
+          drawQ(47, 49, 88, 50, 83, 51, 88, 53);
+          drawQ(52, 55, 79, 58, 63, 62, 79, 65);
+          drawQ(62, 64, 85, 65, 77, 67, 85, 68);
+          drawQ(67, 68, 92, 69, 88, 69, 92, 70);
+          break;
+        }
+        case "kinetic":
+          ctx.beginPath();
+          ctx.moveTo(0, 60 * sc);
+          ctx.lineTo(0, 80 * sc);
+          ctx.lineTo(80 * sc, 0);
+          ctx.lineTo(60 * sc, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(20 * sc, size);
+          ctx.lineTo(35 * sc, size);
+          ctx.lineTo(size, 35 * sc);
+          ctx.lineTo(size, 20 * sc);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(0, 25 * sc);
+          ctx.lineTo(0, 40 * sc);
+          ctx.lineTo(40 * sc, 0);
+          ctx.lineTo(25 * sc, 0);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        case "legacy":
+          ctx.fillRect(0, 0, 50 * sc, 50 * sc);
+          ctx.fillRect(50 * sc, 50 * sc, 50 * sc, 50 * sc);
+          break;
+        case "momentum":
+          ctx.beginPath();
+          ctx.moveTo(0, 50 * sc);
+          ctx.lineTo(0, 65 * sc);
+          ctx.lineTo(65 * sc, 0);
+          ctx.lineTo(50 * sc, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.lineWidth = 3 * sc;
+          ctx.beginPath();
+          ctx.moveTo(0, 31 * sc);
+          ctx.lineTo(31 * sc, 0);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(16 * sc, size);
+          ctx.lineTo(size, 16 * sc);
+          ctx.stroke();
+          break;
+        case "obsidian":
+          ctx.save();
+          ctx.fillStyle = sec;
+          ctx.fillRect(0, 0, size, size);
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+          ctx.lineWidth = 6 * sc;
+          for (let i = 0; i < 5; i++) {
+            const y = 5 + i * 15;
+            ctx.beginPath();
+            ctx.moveTo(-10 * sc, y * sc);
+            ctx.lineTo(50 * sc, (y + 20) * sc);
+            ctx.lineTo(110 * sc, y * sc);
+            ctx.stroke();
+          }
+          ctx.restore();
+          break;
+        case "phantom":
+          {
+            const blobs = [
+              { cx: 25, cy: 30, r: 15 },
+              { cx: 75, cy: 45, r: 18 },
+              { cx: 45, cy: 75, r: 22 },
+              { cx: 30, cy: 65, r: 12 },
+              { cx: 80, cy: 20, r: 14 },
+              { cx: 15, cy: 80, r: 10 },
+              { cx: 60, cy: 15, r: 16 },
+              { cx: 90, cy: 85, r: 12 },
+              { cx: 40, cy: 35, r: 10 },
+              { cx: 55, cy: 50, r: 14 },
+            ];
+            ctx.save();
+            ctx.fillStyle = sec;
+            ctx.globalAlpha = 0.5;
+            blobs.forEach((b) => {
+              ctx.beginPath();
+              ctx.arc(b.cx * sc, b.cy * sc, b.r * sc, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            [[20, 45, 3], [35, 20, 2], [70, 65, 4], [50, 90, 3], [85, 40, 2]].forEach(([cx, cy, r]) => {
+              ctx.beginPath();
+              ctx.arc(cx * sc, cy * sc, r * sc, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            ctx.restore();
+          }
+          break;
+        case "stride":
+          ctx.beginPath();
+          ctx.moveTo(60 * sc, 10 * sc);
+          ctx.lineTo(80 * sc, 10 * sc);
+          ctx.lineTo(50 * sc, 90 * sc);
+          ctx.lineTo(30 * sc, 90 * sc);
           ctx.closePath();
           ctx.fill();
           break;
