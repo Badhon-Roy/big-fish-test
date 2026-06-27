@@ -70,7 +70,7 @@ export function TabDesigns() {
             onClick={() => setSelectedDesign(d.id)}
             className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all ${
               selectedDesign === d.id
-                ? "bg-red-50 ring-2 ring-red-500"
+                ? "bg-blue-50 ring-2 ring-blue-500"
                 : "hover:bg-zinc-50"
             }`}
           >
@@ -88,7 +88,7 @@ export function TabDesigns() {
             </div>
             <span
               className={`text-[9px] font-bold leading-tight text-center ${
-                selectedDesign === d.id ? "text-red-600" : "text-zinc-500"
+                selectedDesign === d.id ? "text-blue-600" : "text-zinc-500"
               }`}
             >
               {d.label}
