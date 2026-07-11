@@ -1,9 +1,13 @@
 "use client";
 
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import CommonButton from "@/common/CommonButton";
+import { JerseyStyleModal } from "@/components/customizer/JerseyStyleModal";
 
 const CTA = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <section className="relative w-full bg-[#FAFCFF] py-24 md:py-32 flex flex-col items-center justify-center overflow-hidden border-t border-[#E8EFF9]">
       
@@ -96,12 +100,15 @@ const CTA = () => {
           className="pt-4 flex justify-center"
         >
           <CommonButton
+            onClick={() => setIsModalOpen(true)}
             buttonText="Start Your Design"
             className="px-10 py-4"
           />
         </motion.div>
       </div>
 
+      {/* Jersey Style Selection Modal */}
+      <JerseyStyleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 };

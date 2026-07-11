@@ -13,6 +13,11 @@ import { useCustomizerStore } from "./store";
 import { Jersey3D } from "./Jersey3D";
 import { JERSEY_DESIGNS } from "./types";
 
+// Enable global Three.js loader cache for fast file re-use
+if (typeof window !== "undefined") {
+  THREE.Cache.enabled = true;
+}
+
 function ThreeGrabber({ threeRef }) {
   const { gl, scene, camera } = useThree();
   useEffect(() => {

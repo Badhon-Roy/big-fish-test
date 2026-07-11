@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Save, Share2, Download } from "lucide-react";
 import * as THREE from "three";
@@ -42,6 +43,7 @@ export function CustomizerLayout() {
   const setIsEraserMode = useCustomizerStore((s) => s.setIsEraserMode);
   const updateStateBulk = useCustomizerStore((s) => s.updateStateBulk);
   const setSelectedDesign = useCustomizerStore((s) => s.setSelectedDesign);
+  const router = useRouter();
 
   // Load and apply search parameters on page mount
   useEffect(() => {
@@ -50,6 +52,11 @@ export function CustomizerLayout() {
 
       // Parse jersey model type
       const type = params.get("type");
+      if (type !== "collar" && type !== "no-collar") {
+        router.replace("/?select-style=true");
+        return;
+      }
+
       if (type === "collar") {
         updateStateBulk({
           glbModel: "/models/collar_jersey.glb",
@@ -76,7 +83,7 @@ export function CustomizerLayout() {
         }
       }
     }
-  }, [updateStateBulk, setSelectedDesign]);
+  }, [updateStateBulk, setSelectedDesign, router]);
 
   const threeRef = useRef(null);
   const texturesRef = useRef({ front: null, back: null, patternFront: null, patternBack: null });
