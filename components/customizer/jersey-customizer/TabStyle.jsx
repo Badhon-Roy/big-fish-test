@@ -3,11 +3,7 @@
 import React from "react";
 import { useCustomizerStore } from "./store";
 
-interface TabStyleProps {
-  showModelSelector?: boolean;
-}
-
-export function TabStyle({ showModelSelector = false }: TabStyleProps) {
+export function TabStyle({ showModelSelector = false }) {
   const state = useCustomizerStore((s) => s.state);
   const updateState = useCustomizerStore((s) => s.updateState);
 

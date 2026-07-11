@@ -78,18 +78,8 @@ export function CustomizerLayout() {
     }
   }, [updateStateBulk, setSelectedDesign]);
 
-  const threeRef = useRef<{
-    gl: THREE.WebGLRenderer;
-    scene: THREE.Scene;
-    camera: THREE.Camera;
-  } | null>(null);
-
-  const texturesRef = useRef<{
-    front: THREE.CanvasTexture | null;
-    back: THREE.CanvasTexture | null;
-    patternFront?: THREE.CanvasTexture | null;
-    patternBack?: THREE.CanvasTexture | null;
-  }>({ front: null, back: null, patternFront: null, patternBack: null });
+  const threeRef = useRef(null);
+  const texturesRef = useRef({ front: null, back: null, patternFront: null, patternBack: null });
 
   // Web Font Loader to load premium fonts asynchronously
   useEffect(() => {
@@ -163,7 +153,7 @@ export function CustomizerLayout() {
   }, [selectedLogoId, setIsEraserMode]);
 
   const handleExport = () => {
-    const triggerLocalDownload = (dataUrl: string, fileName: string) => {
+    const triggerLocalDownload = (dataUrl, fileName) => {
       try {
         const link = document.createElement("a");
         link.href = dataUrl;
@@ -193,7 +183,7 @@ export function CustomizerLayout() {
           const { gl, scene, camera } = threeRef.current;
           
           // Save original camera settings
-          const persCamera = camera as THREE.PerspectiveCamera;
+          const persCamera = camera;
           const originalPosition = persCamera.position.clone();
           const originalQuaternion = persCamera.quaternion.clone();
           const originalFov = persCamera.fov;
@@ -257,7 +247,7 @@ export function CustomizerLayout() {
         if (exportCtx) {
           // 1. Draw base pattern/background color if pattern exists
           if (activePatternTexture && activePatternTexture.image) {
-            exportCtx.drawImage(activePatternTexture.image as HTMLCanvasElement, 0, 0);
+            exportCtx.drawImage(activePatternTexture.image, 0, 0);
           } else {
             // Fallback: fill with active side primary color
             const fallbackColor =
@@ -302,10 +292,10 @@ export function CustomizerLayout() {
                 tCtx.lineCap = "round";
                 tCtx.lineJoin = "round";
                 tCtx.strokeStyle = "rgba(0,0,0,1)";
-                layer.eraserPaths.forEach((path: any) => {
+                layer.eraserPaths.forEach((path) => {
                   tCtx.lineWidth = path.size;
                   tCtx.beginPath();
-                  path.points.forEach((pt: any, i: number) => {
+                  path.points.forEach((pt, i) => {
                     if (i === 0) tCtx.moveTo(pt.x, pt.y);
                     else tCtx.lineTo(pt.x, pt.y);
                   });
@@ -323,7 +313,7 @@ export function CustomizerLayout() {
 
           // 3. Draw active text decals (activeDecalTexture) if they exist
           if (activeDecalTexture && activeDecalTexture.image) {
-            exportCtx.drawImage(activeDecalTexture.image as HTMLCanvasElement, 0, 0);
+            exportCtx.drawImage(activeDecalTexture.image, 0, 0);
           }
 
           // 4. Draw active logo decals (type === "logo" or undefined)
@@ -357,10 +347,10 @@ export function CustomizerLayout() {
                 tCtx.lineCap = "round";
                 tCtx.lineJoin = "round";
                 tCtx.strokeStyle = "rgba(0,0,0,1)";
-                layer.eraserPaths.forEach((path: any) => {
+                layer.eraserPaths.forEach((path) => {
                   tCtx.lineWidth = path.size;
                   tCtx.beginPath();
-                  path.points.forEach((pt: any, i: number) => {
+                  path.points.forEach((pt, i) => {
                     if (i === 0) tCtx.moveTo(pt.x, pt.y);
                     else tCtx.lineTo(pt.x, pt.y);
                   });

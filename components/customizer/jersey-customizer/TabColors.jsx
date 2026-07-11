@@ -15,7 +15,7 @@ export function TabColors() {
       ? state.primaryFront || state.primary
       : state.primary;
 
-  const handleColorChange = (c: string) => {
+  const handleColorChange = (c) => {
     if (side === "Both") {
       useCustomizerStore.setState((s) => ({
         state: {

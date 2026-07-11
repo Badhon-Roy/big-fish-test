@@ -1,72 +1,9 @@
 import { create } from "zustand";
-import { CustomizerState, TextLayer, LogoLayer } from "./types";
 
-interface CustomizerStore {
-  state: CustomizerState;
-  textLayers: TextLayer[];
-  logoLayers: LogoLayer[];
-  qty: number;
-  activeTab: string;
-  activeSide: "Front" | "Back";
-  currentView: string;
-  uploadedLogos: string[];
-  uploadedImages: string[];
-  uploadSubTab: "logo" | "image";
-  selectedLayerId: string | null;
-  selectedLogoId: string | null;
-  loadedLogoImages: Record<string, HTMLImageElement>;
-  isEraserMode: boolean;
-  eraserBrushSize: number;
-  layersOrder: string[];
-  draggedIdx: number | null;
-  dragOverIdx: number | null;
-  activePatternSide: "Front" | "Back";
-  loadedPatterns: Record<string, HTMLImageElement>;
-  selectedDesign: string;
-  fontsLoaded: boolean;
-  defaultImageSide: "Front" | "Back" | "Both";
-
-  // Actions
-  updateState: (key: keyof CustomizerState, value: any) => void;
-  updateStateBulk: (updates: Partial<CustomizerState>) => void;
-  setTextLayers: (layers: TextLayer[] | ((prev: TextLayer[]) => TextLayer[])) => void;
-  setLogoLayers: (layers: LogoLayer[] | ((prev: LogoLayer[]) => LogoLayer[])) => void;
-  setQty: (qty: number | ((prev: number) => number)) => void;
-  setActiveTab: (tab: string) => void;
-  setActiveSide: (side: "Front" | "Back") => void;
-  setCurrentView: (view: string) => void;
-  setUploadedLogos: (logos: string[] | ((prev: string[]) => string[])) => void;
-  setUploadedImages: (images: string[] | ((prev: string[]) => string[])) => void;
-  setUploadSubTab: (subTab: "logo" | "image") => void;
-  setSelectedLayerId: (id: string | null) => void;
-  setSelectedLogoId: (id: string | null) => void;
-  setLoadedLogoImages: (images: Record<string, HTMLImageElement> | ((prev: Record<string, HTMLImageElement>) => Record<string, HTMLImageElement>)) => void;
-  setIsEraserMode: (isEraser: boolean) => void;
-  setEraserBrushSize: (size: number) => void;
-  setLayersOrder: (order: string[] | ((prev: string[]) => string[])) => void;
-  setDraggedIdx: (idx: number | null) => void;
-  setDragOverIdx: (idx: number | null) => void;
-  setActivePatternSide: (side: "Front" | "Back") => void;
-  setLoadedPatterns: (patterns: Record<string, HTMLImageElement> | ((prev: Record<string, HTMLImageElement>) => Record<string, HTMLImageElement>)) => void;
-  setSelectedDesign: (design: string) => void;
-  setFontsLoaded: (loaded: boolean) => void;
-  setDefaultImageSide: (side: "Front" | "Back" | "Both") => void;
-
-  // High-level Actions
-  setLogoPositionPreset: (pos: string) => void;
-  handleAddLogoLayer: (src: string, type?: "logo" | "image") => void;
-  handleLogoCopy: (id: string) => void;
-  handleLogoDelete: (id: string) => void;
-  handleCopy: (id: string) => void;
-  handleDelete: (id: string) => void;
-  handleAddCustomText: () => void;
-  reorderLayers: (fromUIIndex: number, toUIIndex: number) => void;
-}
-
-const resolveVal = (arg: any, prev: any) =>
+const resolveVal = (arg, prev) =>
   typeof arg === "function" ? arg(prev) : arg;
 
-export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
+export const useCustomizerStore = create((set, get) => ({
   state: {
     glbModel: "/models/shirt_baked.glb",
     primary: "#2196F3",
@@ -259,7 +196,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
       // For Wrap/BG images: contain-fit within the 1024×1024 canvas so all
       // four corner handles are visible in the visual editor on first upload.
       // The user can then scale up to fill. For logo layers: 200px reference size.
-      let initialScale: number;
+      let initialScale;
       if (type === "image") {
         initialScale = Math.min(1024 / imgWidth, 1024 / imgHeight);
       } else {
@@ -268,7 +205,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
       }
 
       const newId = `custom-logo-${Date.now()}`;
-      const newLayer: LogoLayer = {
+      const newLayer = {
         id: newId,
         src,
         x: 512,
@@ -295,7 +232,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
     const layer = get().logoLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const newLayer: LogoLayer = {
+    const newLayer = {
       ...layer,
       id: `${layer.id}-copy-${Date.now()}`,
       x: Math.min(1024, layer.x + 40),
@@ -320,7 +257,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
     const layer = get().textLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const newLayer: TextLayer = {
+    const newLayer = {
       ...layer,
       id: `${layer.id}-copy-${Date.now()}`,
       x: Math.min(1024, layer.x + 40),
@@ -342,7 +279,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
 
   handleAddCustomText: () => {
     const newId = `custom-text-${Date.now()}`;
-    const newLayer: TextLayer = {
+    const newLayer = {
       id: newId,
       text: "CUSTOM TEXT",
       x: 512,
@@ -384,7 +321,7 @@ export const useCustomizerStore = create<CustomizerStore>((set, get) => ({
     const sortedActiveSideLayers = [...activeSideLayers].sort((a, b) => {
       const idxA = layersOrder.indexOf(a.id);
       const idxB = layersOrder.indexOf(b.id);
-      const getPriority = (l: any) => {
+      const getPriority = (l) => {
         if (l.layerType === "text") return 1;
         if (l.type === "image") {
           return l.zOrder === "above-text" ? 2 : 0;

@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { useCustomizerStore } from "./store";
-import { LogoLayer } from "./types";
-import { Image as ImageIcon, Copy, Trash2, GripVertical } from "lucide-react";
+import { Image, Copy, Trash2, GripVertical } from "lucide-react";
 
 const ERASER_CURSOR = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 20H7L3 16c-1-1-1-3 0-4L12 3c1-1 3-1 4 0l5 5c1 1 1 3 0 4l-5 5z' fill='%23fca5a5'/><path d='M12 3l4 4'/></svg>") 3 17, auto`;
 
@@ -15,12 +14,8 @@ function LogoCanvasPreview({
   layer,
   editorScale,
   preloadedImage,
-}: {
-  layer: LogoLayer;
-  editorScale: number;
-  preloadedImage?: HTMLImageElement;
 }) {
-  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = React.useRef(null);
 
   const imgWidth = preloadedImage?.naturalWidth || preloadedImage?.width || 200;
   const imgHeight =
@@ -37,7 +32,7 @@ function LogoCanvasPreview({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const draw = (img: HTMLImageElement) => {
+    const draw = (img) => {
       ctx.clearRect(0, 0, drawWidth, drawHeight);
       ctx.save();
 
@@ -143,14 +138,14 @@ export function TabUpload() {
   }, [setUploadedLogos, setUploadedImages]);
 
   const handleLogoUpload = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    uploadType: "logo" | "image" = "logo",
+    e,
+    uploadType = "logo",
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
+      const dataUrl = event.target?.result;
       handleAddLogoLayer(dataUrl, uploadType);
       if (uploadType === "image") {
         setUploadedImages((prev) => {
@@ -175,23 +170,23 @@ export function TabUpload() {
     reader.readAsDataURL(file);
   };
 
-  const handleEraserStart = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleEraserStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     const selectedLayer = logoLayers.find((l) => l.id === selectedLogoId);
     if (!selectedLayer) return;
 
-    const container = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const container = (e.currentTarget).getBoundingClientRect();
 
-    const getCoords = (evt: MouseEvent | TouchEvent) => {
+    const getCoords = (evt) => {
       if ("touches" in evt && evt.touches.length > 0) {
         return {
           clientX: evt.touches[0].clientX,
           clientY: evt.touches[0].clientY,
         };
       }
-      const me = evt as MouseEvent;
+      const me = evt;
       return { clientX: me.clientX, clientY: me.clientY };
     };
 
@@ -199,7 +194,7 @@ export function TabUpload() {
     const startMouseX = initCoords.clientX;
     const startMouseY = initCoords.clientY;
 
-    const getLocalPoint = (clientX: number, clientY: number) => {
+    const getLocalPoint = (clientX, clientY) => {
       const logoCenterX = container.left + selectedLayer.x * editorScale;
       const logoCenterY = container.top + selectedLayer.y * editorScale;
 
@@ -235,7 +230,7 @@ export function TabUpload() {
       ),
     );
 
-    const handleMove = (moveEvt: MouseEvent | TouchEvent) => {
+    const handleMove = (moveEvt) => {
       const { clientX, clientY } = getCoords(moveEvt);
       const pt = getLocalPoint(clientX, clientY);
 
@@ -270,7 +265,7 @@ export function TabUpload() {
     window.addEventListener("touchend", handleEnd);
   };
 
-  const handleLogoDragStart = (e: React.MouseEvent, id: string) => {
+  const handleLogoDragStart = (e, id) => {
     e.preventDefault();
     setSelectedLogoId(id);
     setSelectedLayerId(null);
@@ -281,7 +276,7 @@ export function TabUpload() {
     let lastMouseX = e.clientX;
     let lastMouseY = e.clientY;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMouseMove = (moveEvent) => {
       const deltaX = (moveEvent.clientX - lastMouseX) / editorScale;
       const deltaY = (moveEvent.clientY - lastMouseY) / editorScale;
 
@@ -328,14 +323,14 @@ export function TabUpload() {
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleLogoRotateStart = (e: React.MouseEvent, id: string) => {
+  const handleLogoRotateStart = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
 
     const layer = logoLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const target = (e.currentTarget as HTMLElement).parentElement
+    const target = (e.currentTarget).parentElement
       ?.parentElement;
     if (!target) return;
     const rect = target.getBoundingClientRect();
@@ -347,7 +342,7 @@ export function TabUpload() {
     const startAngle = Math.atan2(startMouseY - centerY, startMouseX - centerX);
     const startRotation = layer.rotation;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMouseMove = (moveEvent) => {
       const currentAngle = Math.atan2(
         moveEvent.clientY - centerY,
         moveEvent.clientX - centerX,
@@ -370,14 +365,14 @@ export function TabUpload() {
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleLogoScaleStart = (e: React.MouseEvent, id: string) => {
+  const handleLogoScaleStart = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
 
     const layer = logoLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const target = (e.currentTarget as HTMLElement).parentElement
+    const target = (e.currentTarget).parentElement
       ?.parentElement;
     if (!target) return;
     const rect = target.getBoundingClientRect();
@@ -391,7 +386,7 @@ export function TabUpload() {
     );
     const startScale = layer.scale;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMouseMove = (moveEvent) => {
       const curDist = Math.sqrt(
         Math.pow(moveEvent.clientX - centerX, 2) +
         Math.pow(moveEvent.clientY - centerY, 2),
@@ -413,9 +408,9 @@ export function TabUpload() {
   };
 
   const renderLogoLayer = (
-    layer: LogoLayer,
+    layer,
     isHidden = false,
-    children?: React.ReactNode,
+    children,
   ) => {
     const img = loadedLogoImages[layer.src];
     const imgWidth = img ? img.naturalWidth || img.width || 200 : 200;
@@ -1074,18 +1069,18 @@ export function TabUpload() {
         const activeSideLayers = [
           ...sideTextLayers.map((l) => ({
             ...l,
-            layerType: "text" as const,
+            layerType: "text",
           })),
           ...sideLogoLayers.map((l) => ({
             ...l,
-            layerType: "logo" as const,
+            layerType: "logo",
           })),
         ];
 
         const sortedActiveSideLayers = [...activeSideLayers].sort((a, b) => {
           const idxA = layersOrder.indexOf(a.id);
           const idxB = layersOrder.indexOf(b.id);
-          const getPriority = (l: any) => {
+          const getPriority = (l) => {
             if (l.layerType === "text") return 1;
             if (l.type === "image") {
               return l.zOrder === "above-text" ? 2 : 0;
@@ -1112,8 +1107,8 @@ export function TabUpload() {
                   const isText = layer.layerType === "text";
                   const isSelected = isText ? selectedLayerId === layer.id : selectedLogoId === layer.id;
                   const displayName = isText
-                    ? `Text ("${(layer as any).text}")`
-                    : (layer as any).type === "image"
+                    ? `Text ("${(layer).text}")`
+                    : (layer).type === "image"
                       ? `Image (${layer.id.split("-").pop()})`
                       : `Logo (${layer.id.split("-").pop()})`;
 
@@ -1170,7 +1165,7 @@ export function TabUpload() {
                             <span className="text-xs font-bold text-zinc-500">T</span>
                           ) : (
                             <img
-                              src={(layer as any).src}
+                              src={(layer).src}
                               alt="Layer badge"
                               className="w-full h-full object-contain"
                             />
@@ -1311,7 +1306,7 @@ export function TabUpload() {
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-bold text-zinc-800">
                 <span>{isLogoTab ? "Logo" : "Image"} Rotation</span>
-                <span className="text-zinc-500">{Math.round(selectedLayer.rotation)}°</span>
+                <span className="text-zinc-500">{Math.round(selectedLayer.rotation)}Ãƒâ€šÃ‚Â°</span>
               </div>
               <input
                 type="range"
@@ -1405,3 +1400,7 @@ export function TabUpload() {
 }
 
 export default TabUpload;
+
+
+
+

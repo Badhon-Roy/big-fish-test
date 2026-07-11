@@ -13,15 +13,7 @@ import { useCustomizerStore } from "./store";
 import { Jersey3D } from "./Jersey3D";
 import { JERSEY_DESIGNS } from "./types";
 
-function ThreeGrabber({
-  threeRef,
-}: {
-  threeRef: React.MutableRefObject<{
-    gl: THREE.WebGLRenderer;
-    scene: THREE.Scene;
-    camera: THREE.Camera;
-  } | null>;
-}) {
+function ThreeGrabber({ threeRef }) {
   const { gl, scene, camera } = useThree();
   useEffect(() => {
     threeRef.current = { gl, scene, camera };
@@ -32,8 +24,8 @@ function ThreeGrabber({
   return null;
 }
 
-function ViewHandler({ currentView }: { currentView: string }) {
-  const controlsRef = useRef<any>(null);
+function ViewHandler({ currentView }) {
+  const controlsRef = useRef(null);
   const { camera } = useThree();
 
   useEffect(() => {
@@ -71,21 +63,7 @@ function ViewHandler({ currentView }: { currentView: string }) {
   );
 }
 
-interface ThreeViewerProps {
-  threeRef: React.MutableRefObject<{
-    gl: THREE.WebGLRenderer;
-    scene: THREE.Scene;
-    camera: THREE.Camera;
-  } | null>;
-  texturesRef: React.MutableRefObject<{
-    front: THREE.CanvasTexture | null;
-    back: THREE.CanvasTexture | null;
-    patternFront?: THREE.CanvasTexture | null;
-    patternBack?: THREE.CanvasTexture | null;
-  }>;
-}
-
-export function ThreeViewer({ threeRef, texturesRef }: ThreeViewerProps) {
+export function ThreeViewer({ threeRef, texturesRef }) {
   const state = useCustomizerStore((s) => s.state);
   const textLayers = useCustomizerStore((s) => s.textLayers);
   const logoLayers = useCustomizerStore((s) => s.logoLayers);
@@ -134,7 +112,7 @@ export function ThreeViewer({ threeRef, texturesRef }: ThreeViewerProps) {
         }}
       >
         <ThreeGrabber threeRef={threeRef} />
-        <color attach="background" args={["transparent" as any]} />
+        <color attach="background" args={["transparent"]} />
         <ambientLight intensity={1.0} />
         <Environment preset="city" />
         <directionalLight position={[1, 4, 5]} intensity={0.3} castShadow />

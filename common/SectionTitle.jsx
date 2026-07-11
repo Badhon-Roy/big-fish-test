@@ -1,5 +1,5 @@
 //SectionTitle
-const SectionTitle = ({ title, className = "" }: { title: string; className?: string }) => {
+const SectionTitle = ({ title, className = "" }) => {
   return (
     <h2
       className={`text-black text-center text-[32px] sm:text-[40px] md:text-[48px] lg:text-[55px] font-semibold ${className}`}

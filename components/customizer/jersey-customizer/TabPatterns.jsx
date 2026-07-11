@@ -3,7 +3,7 @@
 import React from "react";
 import { useCustomizerStore } from "./store";
 
-const PATTERN_DEFAULT_COLORS: Record<string, { bg: string; design: string }> = {
+const PATTERN_DEFAULT_COLORS = {
   "/assets/images/patterns/pattern_1.png": { bg: "#FFFFFF", design: "#d73099" },
   "/assets/images/patterns/pattern_2.png": { bg: "#FFFFFF", design: "#5A6B7C" },
   "/assets/images/patterns/pattern_3.png": { bg: "#FFFFFF", design: "#0F7643" },
@@ -11,13 +11,7 @@ const PATTERN_DEFAULT_COLORS: Record<string, { bg: string; design: string }> = {
   "/assets/images/patterns/pattern_5.png": { bg: "#FFFFFF", design: "#E52E2E" },
 };
 
-function Toggle({
-  value,
-  onChange,
-}: {
-  value: boolean;
-  onChange: (v: boolean) => void;
-}) {
+function Toggle({ value, onChange }) {
   return (
     <button
       onClick={() => onChange(!value)}

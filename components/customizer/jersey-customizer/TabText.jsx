@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useRef } from "react";
 import {
@@ -7,7 +7,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useCustomizerStore } from "./store";
-import { TextLayer, getFontFamily, getFontWeight, getFontStyle } from "./types";
+import { getFontFamily, getFontWeight, getFontStyle } from "./types";
 
 export function TabText() {
   const activeSide = useCustomizerStore((s) => s.activeSide);
@@ -27,7 +27,7 @@ export function TabText() {
   const canvasSize = 1024;
   const editorScale = editorWidth / canvasSize; // 0.2734
 
-  const handleDragStart = (e: React.MouseEvent, id: string) => {
+  const handleDragStart = (e, id) => {
     e.preventDefault();
     setSelectedLayerId(id);
 
@@ -39,7 +39,7 @@ export function TabText() {
     const startX = layer.x;
     const startY = layer.y;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMouseMove = (moveEvent) => {
       const deltaX = (moveEvent.clientX - startMouseX) / editorScale;
       const deltaY = (moveEvent.clientY - startMouseY) / editorScale;
 
@@ -65,14 +65,14 @@ export function TabText() {
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleRotateStart = (e: React.MouseEvent, id: string) => {
+  const handleRotateStart = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
 
     const layer = textLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const target = (e.currentTarget as HTMLElement).parentElement?.parentElement;
+    const target = (e.currentTarget).parentElement?.parentElement;
     if (!target) return;
     const rect = target.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -83,7 +83,7 @@ export function TabText() {
     const startAngle = Math.atan2(startMouseY - centerY, startMouseX - centerX);
     const startRotation = layer.rotation;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMouseMove = (moveEvent) => {
       const currentAngle = Math.atan2(
         moveEvent.clientY - centerY,
         moveEvent.clientX - centerX
@@ -106,14 +106,14 @@ export function TabText() {
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleScaleStart = (e: React.MouseEvent, id: string) => {
+  const handleScaleStart = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
 
     const layer = textLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const target = (e.currentTarget as HTMLElement).parentElement?.parentElement;
+    const target = (e.currentTarget).parentElement?.parentElement;
     if (!target) return;
     const rect = target.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -126,7 +126,7 @@ export function TabText() {
     );
     const startScale = layer.scale;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMouseMove = (moveEvent) => {
       const curDist = Math.sqrt(
         Math.pow(moveEvent.clientX - centerX, 2) +
           Math.pow(moveEvent.clientY - centerY, 2)
@@ -147,14 +147,14 @@ export function TabText() {
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const renderTextLayer = (layer: TextLayer, isHidden = false, children?: React.ReactNode) => {
+  const renderTextLayer = (layer, isHidden = false, children) => {
     const isOutline = layer.font === "Outline";
     const letterSpacing = layer.letterSpacing || 0;
     const lineSpacing = layer.lineSpacing || 1.15;
     const curveVal = layer.curveRadius || 0;
     const fontSize = layer.textSize * layer.scale * editorScale;
 
-    const baseStyle: React.CSSProperties = {
+    const baseStyle = {
       position: "relative",
       padding: "6px 10px",
       fontFamily: getFontFamily(layer.font),
@@ -571,7 +571,7 @@ export function TabText() {
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-bold text-zinc-800">
               <span>Arc/Curve Angle</span>
-              <span className="text-zinc-500">{(selectedLayer.curveRadius || 0)}°</span>
+              <span className="text-zinc-500">{(selectedLayer.curveRadius || 0)}Ã‚Â°</span>
             </div>
             <input
               type="range"
@@ -811,3 +811,6 @@ export function TabText() {
   );
 }
 export default TabText;
+
+
+

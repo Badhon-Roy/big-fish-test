@@ -1,9 +1,6 @@
 const CommonButton = ({
   buttonText,
   className = "",
-}: {
-  buttonText: string;
-  className?: string;
 }) => {
   return (
     <button

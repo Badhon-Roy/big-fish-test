@@ -1,20 +1,13 @@
 "use client";
 
-import React, { JSX } from "react";
-
-interface JerseySVGProps {
-  primary?: string;
-  secondary?: string;
-  pattern?: string;
-  selected?: boolean;
-}
+import React from "react";
 
 export function JerseySVG({
   primary = "#2196F3",
   secondary = "#1A1A2E",
   pattern = "plain",
   selected = false,
-}: JerseySVGProps) {
+}) {
   // Helper for Fusion dots
   const fusionDots = [];
   // Solid backing on the right
@@ -62,7 +55,7 @@ export function JerseySVG({
   }
 
   // Helper for Nova dots
-  const novaDots: JSX.Element[] = [];
+  const novaDots = [];
   const novaRows = [
     { c: 78, r: 1.6 },
     { c: 74, r: 1.1 },
@@ -110,7 +103,7 @@ export function JerseySVG({
   }
 
   // Helper for Pulse lines
-  const pulseLines: JSX.Element[] = [];
+  const pulseLines = [];
   for (let x = 28; x <= 72; x += 1.8) {
     const dx = Math.abs(x - 50);
     const env = dx > 15 ? Math.max(0, 1 - (dx - 15) / 7.0) : 1.0;
@@ -181,7 +174,7 @@ export function JerseySVG({
     { cx: 85, cy: 40, r: 2 },
   ];
 
-  const patterns: Record<string, JSX.Element> = {
+  const patterns = {
     plain: <></>,
     strike: (
       <>
@@ -374,70 +367,14 @@ export function JerseySVG({
     tempo: (
       <>
         {/* Graduated diagonal stripes */}
-        <line
-          x1="0"
-          y1="58"
-          x2="100"
-          y2="18"
-          stroke={secondary}
-          strokeWidth="0.6"
-        />
-        <line
-          x1="0"
-          y1="64"
-          x2="100"
-          y2="24"
-          stroke={secondary}
-          strokeWidth="1.0"
-        />
-        <line
-          x1="0"
-          y1="70"
-          x2="100"
-          y2="30"
-          stroke={secondary}
-          strokeWidth="1.6"
-        />
-        <line
-          x1="0"
-          y1="76"
-          x2="100"
-          y2="36"
-          stroke={secondary}
-          strokeWidth="2.4"
-        />
-        <line
-          x1="0"
-          y1="83"
-          x2="100"
-          y2="43"
-          stroke={secondary}
-          strokeWidth="3.6"
-        />
-        <line
-          x1="0"
-          y1="91"
-          x2="100"
-          y2="51"
-          stroke={secondary}
-          strokeWidth="5.2"
-        />
-        <line
-          x1="0"
-          y1="100"
-          x2="100"
-          y2="60"
-          stroke={secondary}
-          strokeWidth="7.5"
-        />
-        <line
-          x1="0"
-          y1="110"
-          x2="100"
-          y2="70"
-          stroke={secondary}
-          strokeWidth="11.0"
-        />
+        <line x1="0" y1="58" x2="100" y2="18" stroke={secondary} strokeWidth="0.6" />
+        <line x1="0" y1="64" x2="100" y2="24" stroke={secondary} strokeWidth="1.0" />
+        <line x1="0" y1="70" x2="100" y2="30" stroke={secondary} strokeWidth="1.6" />
+        <line x1="0" y1="76" x2="100" y2="36" stroke={secondary} strokeWidth="2.4" />
+        <line x1="0" y1="83" x2="100" y2="43" stroke={secondary} strokeWidth="3.6" />
+        <line x1="0" y1="91" x2="100" y2="51" stroke={secondary} strokeWidth="5.2" />
+        <line x1="0" y1="100" x2="100" y2="60" stroke={secondary} strokeWidth="7.5" />
+        <line x1="0" y1="110" x2="100" y2="70" stroke={secondary} strokeWidth="11.0" />
         {/* Solid corner panel */}
         <polygon points="45,100 100,78 100,100" fill={secondary} />
       </>
@@ -458,24 +395,8 @@ export function JerseySVG({
           fill={primary}
         />
         {/* Left/right side accent lines */}
-        <line
-          x1="37"
-          y1="35"
-          x2="37"
-          y2="58"
-          stroke={primary}
-          strokeWidth="0.8"
-          opacity="0.6"
-        />
-        <line
-          x1="63"
-          y1="35"
-          x2="63"
-          y2="58"
-          stroke={primary}
-          strokeWidth="0.8"
-          opacity="0.6"
-        />
+        <line x1="37" y1="35" x2="37" y2="58" stroke={primary} strokeWidth="0.8" opacity="0.6" />
+        <line x1="63" y1="35" x2="63" y2="58" stroke={primary} strokeWidth="0.8" opacity="0.6" />
         {/* Shoulder stripes */}
         <polygon points="0,10 24,0 32,0 0,16" fill={primary} />
         <polygon points="100,10 76,0 68,0 100,16" fill={primary} />
@@ -497,26 +418,10 @@ export function JerseySVG({
         <rect x="0" y="0" width="100" height="100" fill={primary} />
 
         {/* Background flames - all x strictly 30..70 */}
-        <path
-          d="M 30,100 Q 32,82 33,72 Q 34,82 36,100 Z"
-          fill={secondary}
-          opacity="0.45"
-        />
-        <path
-          d="M 37,100 Q 41,75 44,58 Q 48,75 51,100 Z"
-          fill={secondary}
-          opacity="0.45"
-        />
-        <path
-          d="M 50,100 Q 54,74 57,57 Q 61,74 64,100 Z"
-          fill={secondary}
-          opacity="0.45"
-        />
-        <path
-          d="M 64,100 Q 66,82 67,72 Q 68,82 70,100 Z"
-          fill={secondary}
-          opacity="0.45"
-        />
+        <path d="M 30,100 Q 32,82 33,72 Q 34,82 36,100 Z" fill={secondary} opacity="0.45" />
+        <path d="M 37,100 Q 41,75 44,58 Q 48,75 51,100 Z" fill={secondary} opacity="0.45" />
+        <path d="M 50,100 Q 54,74 57,57 Q 61,74 64,100 Z" fill={secondary} opacity="0.45" />
+        <path d="M 64,100 Q 66,82 67,72 Q 68,82 70,100 Z" fill={secondary} opacity="0.45" />
 
         {/* Foreground flames - all x strictly 30..70 */}
         <path d="M 30,100 Q 31,92 32,88 Q 33,92 34,100 Z" fill={secondary} />
@@ -544,46 +449,18 @@ export function JerseySVG({
     momentum: (
       <>
         <polygon points="0,50 0,65 65,0 50,0" fill={secondary} />
-        <line
-          x1="0"
-          y1="31"
-          x2="31"
-          y2="0"
-          stroke={secondary}
-          strokeWidth="3"
-        />
-        <line
-          x1="16"
-          y1="100"
-          x2="100"
-          y2="16"
-          stroke={secondary}
-          strokeWidth="3"
-        />
+        <line x1="0" y1="31" x2="31" y2="0" stroke={secondary} strokeWidth="3" />
+        <line x1="16" y1="100" x2="100" y2="16" stroke={secondary} strokeWidth="3" />
       </>
     ),
     obsidian: <>{obsidianChevrons}</>,
     phantom: (
       <>
         {phantomSplatterBlobs.map((b, i) => (
-          <circle
-            key={i}
-            cx={b.cx}
-            cy={b.cy}
-            r={b.r}
-            fill={secondary}
-            opacity="0.5"
-          />
+          <circle key={i} cx={b.cx} cy={b.cy} r={b.r} fill={secondary} opacity="0.5" />
         ))}
         {phantomSplatterExtra.map((b, i) => (
-          <circle
-            key={`ex-${i}`}
-            cx={b.cx}
-            cy={b.cy}
-            r={b.r}
-            fill={secondary}
-            opacity="0.5"
-          />
+          <circle key={`ex-${i}`} cx={b.cx} cy={b.cy} r={b.r} fill={secondary} opacity="0.5" />
         ))}
       </>
     ),

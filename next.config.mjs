@@ -1,7 +1,5 @@
-import type { NextConfig } from "next";
-
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     qualities: [75, 95, 100],
     remotePatterns: [

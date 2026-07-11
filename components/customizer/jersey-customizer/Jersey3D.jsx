@@ -3,9 +3,9 @@
 import React, { useMemo, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useGLTF, Decal } from "@react-three/drei";
-import { CustomizerState, JERSEY_DESIGNS, getFontFamily, LogoLayer } from "./types";
+import { JERSEY_DESIGNS, getFontFamily } from "./types";
 
-// ─── Normal Map Generators ──────────────────────────────────────────────────
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Normal Map Generators ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 function createMeshNormalMap() {
   const size = 128;
   const canvas = document.createElement("canvas");
@@ -92,8 +92,8 @@ function createFlexNormalMap() {
   return texture;
 }
 
-// ─── Style Decals Hook ──────────────────────────────────────────────────────
-function useStyleDecals(colors: any) {
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Style Decals Hook ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+function useStyleDecals(colors) {
   return useMemo(() => {
     if (!colors?.collar || !colors?.collarType || colors.collarType === "None")
       return { collarDecal: null };
@@ -124,20 +124,20 @@ function useStyleDecals(colors: any) {
     const placketBase = colors.primaryFront || colors.primary || "#2196F3";
     const trim = colors.designColor || colors.secondary || "#1A1A2E";
 
-    const hexRgb = (h: string) => {
+    const hexRgb = (h) => {
       const c = parseInt(h.replace("#", ""), 16);
       return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
     };
-    const lighten = (h: string, amt: number) => {
+    const lighten = (h, amt) => {
       const [r, g, b] = hexRgb(h);
       return `rgba(${Math.min(255, r + amt)},${Math.min(255, g + amt)},${Math.min(255, b + amt)},1)`;
     };
-    const darken = (h: string, amt: number) => {
+    const darken = (h, amt) => {
       const [r, g, b] = hexRgb(h);
       return `rgba(${Math.max(0, r - amt)},${Math.max(0, g - amt)},${Math.max(0, b - amt)},1)`;
     };
 
-    const drawRoundRect = (x: number, y: number, w: number, h: number, r: number) => {
+    const drawRoundRect = (x, y, w, h, r) => {
       ctx.beginPath();
       ctx.moveTo(x + r, y);
       ctx.lineTo(x + w - r, y);
@@ -151,7 +151,7 @@ function useStyleDecals(colors: any) {
       ctx.closePath();
     };
 
-    const drawPlacket = (x: number, y: number, w: number, h: number, r: number) => {
+    const drawPlacket = (x, y, w, h, r) => {
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x + w, y);
@@ -162,7 +162,7 @@ function useStyleDecals(colors: any) {
       ctx.closePath();
     };
 
-    const drawButtonhole = (cx: number, cy: number, length: number) => {
+    const drawButtonhole = (cx, cy, length) => {
       ctx.save();
       // Draw inner slit
       ctx.strokeStyle = "#1a1a1a";
@@ -185,7 +185,7 @@ function useStyleDecals(colors: any) {
       ctx.restore();
     };
 
-    const drawRealisticButton = (cx: number, cy: number, r: number) => {
+    const drawRealisticButton = (cx, cy, r) => {
       ctx.save();
       ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
       ctx.shadowBlur = 4;
@@ -253,13 +253,13 @@ function useStyleDecals(colors: any) {
     };
 
     const drawPlacketClosure = (
-      topY: number,
-      botY: number,
-      width: number,
-      leftX: number,
-      sliderY: number,
-      buttonYFs: number[],
-      curveOffset: number
+      topY,
+      botY,
+      width,
+      leftX,
+      sliderY,
+      buttonYFs,
+      curveOffset
     ) => {
       const R = isCollarModel ? 0.61 : 1.0;
 
@@ -356,13 +356,13 @@ function useStyleDecals(colors: any) {
 
       if (colors.zipper) {
         // --- ZIPPER SHAPE ---
-        const getLeftTapeX = (y: number) => {
+        const getLeftTapeX = (y) => {
           if (y >= sY) return S * 0.4925;
           const t = (sY - y) / (sY - yTop);
           return S * 0.4925 - t * t * cOffset;
         };
 
-        const getRightTapeX = (y: number) => {
+        const getRightTapeX = (y) => {
           if (y >= sY) return S * 0.5075;
           const t = (sY - y) / (sY - yTop);
           return S * 0.5075 + t * t * cOffset;
@@ -571,7 +571,7 @@ function useStyleDecals(colors: any) {
         ctx.stroke();
       }
     } else if (colors.collarType === "V-Neck") {
-      const makeVLeg = (x1: number, y1: number, x2: number, y2: number) => {
+      const makeVLeg = (x1, y1, x2, y2) => {
         const lg = ctx.createLinearGradient(x1, y1, x2, y2);
         lg.addColorStop(0, lighten(trim, 35));
         lg.addColorStop(0.45, trim);
@@ -612,21 +612,21 @@ function useStyleDecals(colors: any) {
   ]);
 }
 
-// ─── Jersey Decals Hook ─────────────────────────────────────────────────────
-function useJerseyDecals(state: any) {
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Jersey Decals Hook ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+function useJerseyDecals(state) {
   return useMemo(() => {
     const size = 1024;
-    const canvasSize = 2048; // 2× render resolution for HD sharpness
+    const canvasSize = 2048; // 2ÃƒÆ’Ã¢â‚¬â€ render resolution for HD sharpness
     const textColor = state.secondary || "#ffffff";
 
-    const makeCanvas = (drawFn: (ctx: CanvasRenderingContext2D) => void) => {
+    const makeCanvas = (drawFn) => {
       const cv = document.createElement("canvas");
       cv.width = canvasSize;
       cv.height = canvasSize;
       const ctx = cv.getContext("2d");
       if (!ctx) return null;
 
-      // Scale up 2× so all coordinate math (0–1024) stays unchanged
+      // Scale up 2ÃƒÆ’Ã¢â‚¬â€ so all coordinate math (0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“1024) stays unchanged
       ctx.scale(2, 2);
 
       ctx.fillStyle = textColor;
@@ -653,7 +653,7 @@ function useJerseyDecals(state: any) {
       return texture;
     };
 
-    const drawLayerOnCtx = (ctx: CanvasRenderingContext2D, layer: any) => {
+    const drawLayerOnCtx = (ctx, layer) => {
       const img = state.loadedLogoImages[layer.src];
       if (!img) return;
       ctx.save();
@@ -684,10 +684,10 @@ function useJerseyDecals(state: any) {
           tempCtx.lineCap = "round";
           tempCtx.lineJoin = "round";
           tempCtx.strokeStyle = "rgba(0,0,0,1)";
-          layer.eraserPaths.forEach((path: any) => {
+          layer.eraserPaths.forEach((path) => {
             tempCtx.lineWidth = path.size;
             tempCtx.beginPath();
-            path.points.forEach((pt: any, idx: number) => {
+            path.points.forEach((pt, idx) => {
               if (idx === 0) {
                 tempCtx.moveTo(pt.x, pt.y);
               } else {
@@ -706,7 +706,7 @@ function useJerseyDecals(state: any) {
       ctx.restore();
     };
 
-    const getFontString = (sizeStr: any, fontStyle: string, defaultSize: number) => {
+    const getFontString = (sizeStr, fontStyle, defaultSize) => {
       const sz = sizeStr || defaultSize;
       if (fontStyle === "Italic") return `italic 900 ${sz}px Impact, sans-serif`;
       if (fontStyle === "Script") return `bold ${sz}px "Brush Script MT", cursive`;
@@ -721,27 +721,19 @@ function useJerseyDecals(state: any) {
     };
 
     const drawTextWithSpacing = (
-      ctx: CanvasRenderingContext2D,
-      text: string,
-      x: number,
-      y: number,
-      fontStyle: string,
-      textSize: number,
-      color: string,
-      isOutline: boolean,
-      outlineColor: string,
-      letterSpacingVal: number,
-      lineSpacingVal: number,
-      curveRadiusVal: number,
-      shadowEnabled?: boolean,
-      shadowColor?: string,
-      shadowBlur?: number,
-      shadowOffsetX?: number,
-      shadowOffsetY?: number,
-      outlineEnabled?: boolean,
-      customOutlineColor?: string,
-      outlineWidth?: number,
-    ) => {
+      ctx,
+      text,
+      x,
+      y,
+      fontStyle,
+      textSize,
+      color,
+      isOutline,
+      outlineColor,
+      letterSpacingVal,
+      lineSpacingVal,
+      curveRadiusVal,
+                                                    ) => {
       ctx.save();
       ctx.translate(x, y);
 
@@ -855,7 +847,7 @@ function useJerseyDecals(state: any) {
       ctx.restore();
     };
 
-    const drawPattern = (ctx: CanvasRenderingContext2D) => {
+    const drawPattern = (ctx) => {
       const dp = state.designPattern;
       if (!dp || dp === "plain") return;
       const sc = size / 100;
@@ -1436,7 +1428,7 @@ function useJerseyDecals(state: any) {
           ctx.fillRect(0, 0, size, size);
 
           // Helper: 2 quadratic curves, all x strictly 30..70
-          const drawQ = (x0: number, cx1: number, cy1: number, px: number, py: number, cx2: number, cy2: number, x1: number) => {
+          const drawQ = (x0, cx1, cy1, px, py, cx2, cy2, x1) => {
             ctx.beginPath();
             ctx.moveTo(x0 * sc, size);
             ctx.quadraticCurveTo(cx1 * sc, cy1 * sc, px * sc, py * sc);
@@ -1573,9 +1565,9 @@ function useJerseyDecals(state: any) {
     };
 
     const drawFabricPattern = (
-      ctx: CanvasRenderingContext2D,
-      patternName: string,
-      isFront: boolean,
+      ctx,
+      patternName,
+      isFront,
     ) => {
       if (!patternName || patternName === "None") return;
       const loadedImg = state.loadedPatterns?.[patternName];
@@ -1598,7 +1590,7 @@ function useJerseyDecals(state: any) {
           ? state.fabricPatternBgFront
           : state.fabricPatternBgBack;
 
-        const hexToRgb = (hex: string) => {
+        const hexToRgb = (hex) => {
           const cleanHex = hex.replace("#", "");
           const num = parseInt(cleanHex, 16);
           return {
@@ -1657,7 +1649,7 @@ function useJerseyDecals(state: any) {
       }
     };
 
-    const drawSublimatedPattern = (ctx: CanvasRenderingContext2D, patternName: string, color: string, isBackSide: boolean) => {
+    const drawSublimatedPattern = (ctx, patternName, color, isBackSide) => {
       if (!patternName || patternName === "None") return;
       ctx.save();
 
@@ -1671,7 +1663,7 @@ function useJerseyDecals(state: any) {
       };
 
       if (patternName === "Street Shard") {
-        const drawShard = (x: number, y: number, rSize: number, col: string) => {
+        const drawShard = (x, y, rSize, col) => {
           ctx.fillStyle = col;
           ctx.beginPath();
           ctx.moveTo(x + (random() - 0.5) * rSize, y + (random() - 0.5) * rSize);
@@ -1843,7 +1835,7 @@ function useJerseyDecals(state: any) {
         ctx.fillRect(0, 0, size * 0.38, size);
         ctx.fillRect(size * 0.62, 0, size * 0.38, size);
 
-        const drawGrungeTriangles = (areaX: number, areaW: number, count: number, seedOffset: number) => {
+        const drawGrungeTriangles = (areaX, areaW, count, seedOffset) => {
           for (let i = 0; i < count; i++) {
             const r1 = random();
             const r2 = random();
@@ -1892,18 +1884,18 @@ function useJerseyDecals(state: any) {
     // Front Texture
     const front = makeCanvas((ctx) => {
       const side = "Front";
-      const sideTextLayers = state.textLayers.filter((l: any) => l.side === side);
-      const sideLogoLayers = state.logoLayers.filter((l: any) => l.side === side);
+      const sideTextLayers = state.textLayers.filter((l) => l.side === side);
+      const sideLogoLayers = state.logoLayers.filter((l) => l.side === side);
 
       const activeSideLayers = [
-        ...sideTextLayers.map((l: any) => ({ ...l, layerType: "text" })),
-        ...sideLogoLayers.map((l: any) => ({ ...l, layerType: "logo" })),
+        ...sideTextLayers.map((l) => ({ ...l, layerType: "text" })),
+        ...sideLogoLayers.map((l) => ({ ...l, layerType: "logo" })),
       ];
 
       const sortedLayers = [...activeSideLayers].sort((a, b) => {
         const idxA = state.layersOrder.indexOf(a.id);
         const idxB = state.layersOrder.indexOf(b.id);
-        const getPriority = (l: any) => {
+        const getPriority = (l) => {
           if (l.layerType === "text") return 1;
           if (l.type === "image") {
             return l.zOrder === "above-text" ? 2 : 0;
@@ -1947,18 +1939,18 @@ function useJerseyDecals(state: any) {
     // Back Texture
     const back = makeCanvas((ctx) => {
       const side = "Back";
-      const sideTextLayers = state.textLayers.filter((l: any) => l.side === side);
-      const sideLogoLayers = state.logoLayers.filter((l: any) => l.side === side);
+      const sideTextLayers = state.textLayers.filter((l) => l.side === side);
+      const sideLogoLayers = state.logoLayers.filter((l) => l.side === side);
 
       const activeSideLayers = [
-        ...sideTextLayers.map((l: any) => ({ ...l, layerType: "text" })),
-        ...sideLogoLayers.map((l: any) => ({ ...l, layerType: "logo" })),
+        ...sideTextLayers.map((l) => ({ ...l, layerType: "text" })),
+        ...sideLogoLayers.map((l) => ({ ...l, layerType: "logo" })),
       ];
 
       const sortedLayers = [...activeSideLayers].sort((a, b) => {
         const idxA = state.layersOrder.indexOf(a.id);
         const idxB = state.layersOrder.indexOf(b.id);
-        const getPriority = (l: any) => {
+        const getPriority = (l) => {
           if (l.layerType === "text") return 1;
           if (l.type === "image") {
             return l.zOrder === "above-text" ? 2 : 0;
@@ -2084,22 +2076,16 @@ function useJerseyDecals(state: any) {
   ]);
 }
 
-// ─── Logo Decal Component ──────────────────────────────────────────────────
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Logo Decal Component ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 function LogoDecal({
   layer,
   loadedLogoImages,
   roughness,
   fabricConfig,
   glbModel,
-}: {
-  layer: LogoLayer;
-  loadedLogoImages: Record<string, HTMLImageElement>;
-  roughness: number;
-  fabricConfig: any;
-  glbModel: string;
 }) {
   const img = loadedLogoImages[layer.src];
-  const [logoTexture, setLogoTexture] = useState<THREE.Texture | null>(null);
+  const [logoTexture, setLogoTexture] = useState(null);
   const [aspect, setAspect] = useState(1.0);
 
   useEffect(() => {
@@ -2126,7 +2112,7 @@ function LogoDecal({
     const imgW = img.naturalWidth || img.width || 200;
     const imgH = img.naturalHeight || img.height || 200;
     const finalSizeX = (imgW * layer.scale / canvasSize) * meshWidth;
-    const finalSizeY = (imgH * layer.scale / canvasSize) * meshWidth; // same base → no stretch
+    const finalSizeY = (imgH * layer.scale / canvasSize) * meshWidth; // same base ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ no stretch
 
     // Map 2D visual editor position (0-1024) to relative X/Y coordinate (-0.5 to 0.5)
     const relativeX = (layer.x - canvasSize / 2) / canvasSize;
@@ -2161,9 +2147,9 @@ function LogoDecal({
     }
 
     return {
-      position: [posX, posY, posZ] as [number, number, number],
-      rotation: [0, rotY, -(layer.rotation * Math.PI) / 180] as [number, number, number],
-      scale: [finalSizeX, finalSizeY, 0.3] as [number, number, number], // 0.3 depth is safe from back duplication
+      position: [posX, posY, posZ],
+      rotation: [0, rotY, -(layer.rotation * Math.PI) / 180],
+      scale: [finalSizeX, finalSizeY, 0.3], // 0.3 depth is safe from back duplication
     };
   }, [logoTexture, img, aspect, layer.x, layer.y, layer.scale, layer.rotation, layer.side, glbModel]);
 
@@ -2194,10 +2180,10 @@ function LogoDecal({
   );
 }
 
-// ─── Image (Wrap/BG) Decal Component ─────────────────────────────────────────
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Image (Wrap/BG) Decal Component ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 // Projects uploaded Wrap/BG images as full-body decals matching patternFront/Back.
 // The image is redrawn on an off-screen canvas whenever the user changes
-// position, scale, rotation or opacity — so the 3D jersey stays in sync with
+// position, scale, rotation or opacity ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â so the 3D jersey stays in sync with
 // the visual editor in real time.
 function ImageDecal({
   layer,
@@ -2205,20 +2191,14 @@ function ImageDecal({
   roughness,
   fabricConfig,
   glbModel,
-}: {
-  layer: LogoLayer;
-  loadedLogoImages: Record<string, HTMLImageElement>;
-  roughness: number;
-  fabricConfig: any;
-  glbModel: string;
 }) {
   const img = loadedLogoImages[layer.src];
-  const [imageTexture, setImageTexture] = useState<THREE.CanvasTexture | null>(null);
+  const [imageTexture, setImageTexture] = useState(null);
 
   useEffect(() => {
     if (!img) return;
 
-    // ── Draw the image onto an off-screen 1024×1024 canvas ──────────────────
+    // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Draw the image onto an off-screen 1024ÃƒÆ’Ã¢â‚¬â€1024 canvas ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
     // The canvas coordinate system matches the visual editor exactly:
     //   (layer.x, layer.y) is the image centre, scale is a multiplier on
     //   the image's natural dimensions, rotation is in degrees.
@@ -2232,24 +2212,24 @@ function ImageDecal({
     const imgH = img.naturalHeight || img.height || 200;
     const opacity = typeof layer.opacity === "number" ? layer.opacity : 1.0;
 
-    // ── Scale decoupling + aspect ratio correction ────────────────────────────
-    // The decal box is 0.54 wide × 0.7 tall. A 1024×1024 square canvas
+    // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Scale decoupling + aspect ratio correction ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+    // The decal box is 0.54 wide ÃƒÆ’Ã¢â‚¬â€ 0.7 tall. A 1024ÃƒÆ’Ã¢â‚¬â€1024 square canvas
     // projected onto this non-square decal STRETCHES content vertically by
-    // 0.7/0.54 ≈ 1.3×. We pre-compensate by drawing the image WIDER on the
+    // 0.7/0.54 ÃƒÂ¢Ã¢â‚¬Â°Ã‹â€  1.3ÃƒÆ’Ã¢â‚¬â€. We pre-compensate by drawing the image WIDER on the
     // canvas by the same factor: scaleX = drawScale / meshDecalAspectRatio.
     // The decal then compresses it back to the correct proportions on the jersey.
     //
-    // Effective horizontal canvas space = 1024 × (0.54/0.7) ≈ 790 px.
+    // Effective horizontal canvas space = 1024 ÃƒÆ’Ã¢â‚¬â€ (0.54/0.7) ÃƒÂ¢Ã¢â‚¬Â°Ã‹â€  790 px.
     // coverScale uses this effective width so that both axes fill together.
     //
-    // drawScale = (layer.scale / containScale) × coverScale
+    // drawScale = (layer.scale / containScale) ÃƒÆ’Ã¢â‚¬â€ coverScale
     //
-    // At initial upload : layer.scale = containScale → drawScale = coverScale → full fill ✅
-    // User scales up 2× : drawScale = 2×coverScale → still fills ✅
-    // User scales down ½: drawScale = ½×coverScale → partial fill (expected) ✅
-    // Proportions       : image always appears with its natural aspect ratio ✅
-    const meshDecalAspectRatio = 0.54 / 0.7;           // ≈ 0.7714
-    const effectiveW = 1024 * meshDecalAspectRatio;  // ≈ 790 px effective horizontal space
+    // At initial upload : layer.scale = containScale ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ drawScale = coverScale ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ full fill ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦
+    // User scales up 2ÃƒÆ’Ã¢â‚¬â€ : drawScale = 2ÃƒÆ’Ã¢â‚¬â€coverScale ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ still fills ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦
+    // User scales down Ãƒâ€šÃ‚Â½: drawScale = Ãƒâ€šÃ‚Â½ÃƒÆ’Ã¢â‚¬â€coverScale ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ partial fill (expected) ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦
+    // Proportions       : image always appears with its natural aspect ratio ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦
+    const meshDecalAspectRatio = 0.54 / 0.7;           // ÃƒÂ¢Ã¢â‚¬Â°Ã‹â€  0.7714
+    const effectiveW = 1024 * meshDecalAspectRatio;  // ÃƒÂ¢Ã¢â‚¬Â°Ã‹â€  790 px effective horizontal space
     const containScale = Math.min(1024 / imgW, 1024 / imgH) || 1;  // visual editor display scale
     const coverScale = Math.max(effectiveW / imgW, 1024 / imgH) || 1; // fill both axes correctly
     const scaleFactor = layer.scale / containScale;
@@ -2265,7 +2245,7 @@ function ImageDecal({
     ctx.scale(drawScale / meshDecalAspectRatio, drawScale); // wider X pre-compensates decal's horizontal compression
 
     // Handle eraser paths the same way the visual editor does
-    if ((layer as any).eraserPaths && (layer as any).eraserPaths.length > 0) {
+    if ((layer).eraserPaths && (layer).eraserPaths.length > 0) {
       const tmp = document.createElement("canvas");
       tmp.width = imgW;
       tmp.height = imgH;
@@ -2276,10 +2256,10 @@ function ImageDecal({
         tCtx.lineCap = "round";
         tCtx.lineJoin = "round";
         tCtx.strokeStyle = "rgba(0,0,0,1)";
-        (layer as any).eraserPaths.forEach((path: any) => {
+        (layer).eraserPaths.forEach((path) => {
           tCtx.lineWidth = path.size;
           tCtx.beginPath();
-          path.points.forEach((pt: any, i: number) => {
+          path.points.forEach((pt, i) => {
             if (i === 0) tCtx.moveTo(pt.x, pt.y);
             else tCtx.lineTo(pt.x, pt.y);
           });
@@ -2294,7 +2274,7 @@ function ImageDecal({
     }
     ctx.restore();
 
-    // ── Create a CanvasTexture from the rendered canvas ──────────────────────
+    // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Create a CanvasTexture from the rendered canvas ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.wrapS = THREE.ClampToEdgeWrapping;
@@ -2310,7 +2290,7 @@ function ImageDecal({
     });
 
     return () => { tex.dispose(); };
-  }, [img, layer.src, layer.x, layer.y, layer.scale, layer.rotation, layer.opacity, (layer as any).eraserPaths]);
+  }, [img, layer.src, layer.x, layer.y, layer.scale, layer.rotation, layer.opacity, (layer).eraserPaths]);
 
   if (!imageTexture) return null;
 
@@ -2320,7 +2300,7 @@ function ImageDecal({
 
   // Mirror patternFront/patternBack position expressions exactly:
   //   y: 0.0 + (isCollar ? -0.05 : 0.0)
-  //   z: ±0.155 + (isCollar ? -0.02 : 0.0)
+  //   z: Ãƒâ€šÃ‚Â±0.155 + (isCollar ? -0.02 : 0.0)
   return (
     <>
       {showFront && (
@@ -2381,26 +2361,17 @@ function ImageDecal({
   );
 }
 
-// ─── Main Jersey3D Component ───────────────────────────────────────────────
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Main Jersey3D Component ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 export function Jersey3D({
   colors,
   collar,
   texturesRef,
-}: {
-  colors: any;
-  collar: boolean;
-  texturesRef?: React.MutableRefObject<{
-    front: THREE.CanvasTexture | null;
-    back: THREE.CanvasTexture | null;
-    patternFront?: THREE.CanvasTexture | null;
-    patternBack?: THREE.CanvasTexture | null;
-  }>;
 }) {
   const glbPath = colors.glbModel || "/models/shirt_baked.glb";
-  const { nodes } = useGLTF(glbPath) as any;
+  const { nodes } = useGLTF(glbPath);
 
   // Find the mesh geometry dynamically from nodes to support multiple apparel models
-  const meshNode = nodes.T_Shirt_male || nodes.mesh_node || Object.values(nodes).find((n: any) => n.isMesh || n.type === "Mesh");
+  const meshNode = nodes.T_Shirt_male || nodes.mesh_node || Object.values(nodes).find((n) => n.isMesh || n.type === "Mesh");
 
   // Create a scaled clone of the geometry so both models share the exact same scale, coordinates, and positions
   const shirtGeometry = useMemo(() => {
@@ -2466,7 +2437,7 @@ export function Jersey3D({
   }, [front, back, patternFront, patternBack, texturesRef]);
 
   const { collarDecal } = useStyleDecals(colors);
-  const [logoTexture, setLogoTexture] = useState<THREE.Texture | null>(null);
+  const [logoTexture, setLogoTexture] = useState(null);
   const [logoAspect, setLogoAspect] = useState(1);
 
   useEffect(() => {
@@ -2564,9 +2535,9 @@ export function Jersey3D({
     }
 
     return {
-      position: [posX, posY, posZ] as [number, number, number],
-      rotation: [0, rotY, 0] as [number, number, number],
-      scale: [scaleX, scaleY, 0.2] as [number, number, number],
+      position: [posX, posY, posZ],
+      rotation: [0, rotY, 0],
+      scale: [scaleX, scaleY, 0.2],
     };
   }, [logoTexture, logoAspect, colors.logoPosition, colors.logoSize, glbPath]);
 
@@ -2773,8 +2744,8 @@ export function Jersey3D({
         )}
 
         {(colors.logoLayers || [])
-          .filter((l: any) => l.type === "logo" || !l.type)
-          .map((layer: any) => (
+          .filter((l) => l.type === "logo" || !l.type)
+          .map((layer) => (
             <LogoDecal
               key={layer.id}
               layer={layer}
@@ -2785,10 +2756,10 @@ export function Jersey3D({
             />
           ))}
 
-        {/* Wrap/BG uploads — full-body decals identical in size to patternFront/patternBack */}
+        {/* Wrap/BG uploads ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â full-body decals identical in size to patternFront/patternBack */}
         {(colors.logoLayers || [])
-          .filter((l: any) => l.type === "image")
-          .map((layer: any) => (
+          .filter((l) => l.type === "image")
+          .map((layer) => (
             <ImageDecal
               key={layer.id}
               layer={layer}
@@ -2840,3 +2811,8 @@ export function Jersey3D({
 }
 useGLTF.preload("/models/shirt_baked.glb");
 useGLTF.preload("/models/collar_jersey.glb");
+
+
+
+
+

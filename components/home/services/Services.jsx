@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion} from "framer-motion";
+import { motion } from "framer-motion";
 import SectionSubTitle from "@/common/SectionSubTitle";
 import SectionTitle from "@/common/SectionTitle";
 import SectionDescription from "@/common/SectionDescription";
@@ -11,8 +11,6 @@ import configuratorImg from "@/assets/images/Configurator.png";
 import superDesignImg from "@/assets/images/Super-design.png";
 
 const Services = () => {
-
-
   const cards = [
     {
       id: "configurator",

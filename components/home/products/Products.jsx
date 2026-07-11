@@ -184,6 +184,7 @@ const Products = () => {
           justify-content: center !important;
           align-items: center !important;
           gap: 8px !important;
+          margin-top: 24px;
         }
         .custom-swiper-pagination .swiper-pagination-bullet {
           width: 8px;

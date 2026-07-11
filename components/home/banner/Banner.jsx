@@ -48,7 +48,7 @@ const Banner = () => {
   }, [jerseys.length]);
 
   // Compute layout styles dynamically based on the active index
-  const getJerseyStyle = (index: number) => {
+  const getJerseyStyle = (index) => {
     const diff = (index - activeIndex + jerseys.length) % jerseys.length;
 
     if (diff === 0) {
