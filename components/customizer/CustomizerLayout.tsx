@@ -52,7 +52,7 @@ export function CustomizerLayout() {
       const type = params.get("type");
       if (type === "collar") {
         updateStateBulk({
-          glbModel: "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
+          glbModel: "/models/collar_jersey.glb",
           collar: true,
           collarType: "Polo",
         });

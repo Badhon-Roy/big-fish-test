@@ -2154,7 +2154,7 @@ function LogoDecal({
     let rotY = theta;
 
     // Apply offset for collar model geometry scale/translation
-    const isCollarModel = glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+    const isCollarModel = glbModel === "/models/collar_jersey.glb";
     if (isCollarModel) {
       posY += -0.05;
       posZ += 0.005;
@@ -2314,7 +2314,7 @@ function ImageDecal({
 
   if (!imageTexture) return null;
 
-  const isCollar = glbModel === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+  const isCollar = glbModel === "/models/collar_jersey.glb";
   const showFront = layer.side === "Front" || layer.side === "Both";
   const showBack = layer.side === "Back" || layer.side === "Both";
 
@@ -2413,7 +2413,7 @@ export function Jersey3D({
     }
 
     // Scale collar model to match no-collar T-Shirt model boundaries
-    if (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb") {
+    if (glbPath === "/models/collar_jersey.glb") {
       geo.scale(0.33, 0.33, 0.33);
       geo.translate(0, -0.05, 0.005);
 
@@ -2557,7 +2557,7 @@ export function Jersey3D({
     }
 
     // Apply offset for collar model geometry scale/translation
-    const isCollarModel = glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb";
+    const isCollarModel = glbPath === "/models/collar_jersey.glb";
     if (isCollarModel) {
       posY += -0.05;
       posZ += 0.005;
@@ -2637,7 +2637,7 @@ export function Jersey3D({
       >
         {patternFront && (
           <Decal
-            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), 0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.02 : 0.0)]}
+            position={[0, 0.0 + (glbPath === "/models/collar_jersey.glb" ? -0.05 : 0.0), 0.155 + (glbPath === "/models/collar_jersey.glb" ? -0.02 : 0.0)]}
             rotation={[0, 0, 0]}
             scale={[0.54, 0.7, 0.309]}
             renderOrder={1}
@@ -2658,7 +2658,7 @@ export function Jersey3D({
         )}
         {patternBack && (
           <Decal
-            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), -0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.02 : 0.0)]}
+            position={[0, 0.0 + (glbPath === "/models/collar_jersey.glb" ? -0.05 : 0.0), -0.155 + (glbPath === "/models/collar_jersey.glb" ? -0.02 : 0.0)]}
             rotation={[0, Math.PI, 0]}
             scale={[0.54, 0.7, 0.309]}
             renderOrder={1}
@@ -2680,7 +2680,7 @@ export function Jersey3D({
 
         {front && (
           <Decal
-            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), 0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.02 : 0.0)]}
+            position={[0, 0.0 + (glbPath === "/models/collar_jersey.glb" ? -0.05 : 0.0), 0.155 + (glbPath === "/models/collar_jersey.glb" ? -0.02 : 0.0)]}
             rotation={[0, 0, 0]}
             scale={[0.54, 0.7, 0.309]}
             renderOrder={10}
@@ -2701,7 +2701,7 @@ export function Jersey3D({
         )}
         {back && (
           <Decal
-            position={[0, 0.0 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0), -0.155 + (glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.02 : 0.0)]}
+            position={[0, 0.0 + (glbPath === "/models/collar_jersey.glb" ? -0.05 : 0.0), -0.155 + (glbPath === "/models/collar_jersey.glb" ? -0.02 : 0.0)]}
             rotation={[0, Math.PI, 0]}
             scale={[0.54, 0.7, 0.309]}
             renderOrder={10}
@@ -2745,13 +2745,13 @@ export function Jersey3D({
         {collarDecal && (
           <Decal
             position={
-              glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb"
+              glbPath === "/models/collar_jersey.glb"
                 ? [0.0, 0.125, 0.123]
                 : [0.0, 0.185, 0.118]
             }
             rotation={[0.15, 0, 0]}
             scale={
-              glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb"
+              glbPath === "/models/collar_jersey.glb"
                 ? [0.36, 0.36, 0.15]
                 : [0.22, 0.22, 0.12]
             }
@@ -2803,7 +2803,7 @@ export function Jersey3D({
 
 
       {(colors.sleeve === "Long" || colors.sleeve === "3/4") && (
-        <group position={[0, glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? -0.05 : 0.0, glbPath === "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb" ? 0.005 : 0.0]}>
+        <group position={[0, glbPath === "/models/collar_jersey.glb" ? -0.05 : 0.0, glbPath === "/models/collar_jersey.glb" ? 0.005 : 0.0]}>
           <mesh castShadow receiveShadow position={[sleeveCX, sleeveCY, -0.01]} rotation={[0, 0, -SLEEVE_ROT_Z]}>
             <cylinderGeometry args={[0.042, colors.sleeve === "Long" ? 0.028 : 0.034, sleeveLen, 32]} />
             <meshStandardMaterial
@@ -2839,4 +2839,4 @@ export function Jersey3D({
   );
 }
 useGLTF.preload("/models/shirt_baked.glb");
-useGLTF.preload("/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb");
+useGLTF.preload("/models/collar_jersey.glb");

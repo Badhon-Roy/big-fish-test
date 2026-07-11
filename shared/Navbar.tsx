@@ -12,7 +12,6 @@ const Navbar = () => {
   const pathname = usePathname();
   const menuItems = [
     { name: "Home", href: "/" },
-    { name: "Designs", href: "/designs" },
     { name: "How it Works", href: "/how-it-works" },
     { name: "Products", href: "/products" },
     { name: "Contact Us", href: "/contact" },

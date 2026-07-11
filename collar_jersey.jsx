@@ -7,7 +7,7 @@ import React from 'react'
 import { useGLTF } from '@react-three/drei'
 
 export function Model(props) {
-  const { nodes, materials } = useGLTF('/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb')
+  const { nodes, materials } = useGLTF('/models/collar_jersey.glb')
   return (
     <group {...props} dispose={null}>
       <mesh geometry={nodes.mesh_node.geometry} material={nodes.mesh_node.material} />
@@ -15,4 +15,4 @@ export function Model(props) {
   )
 }
 
-useGLTF.preload('/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb')
+useGLTF.preload('/models/collar_jersey.glb')

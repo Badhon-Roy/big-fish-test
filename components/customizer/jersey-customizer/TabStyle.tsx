@@ -18,43 +18,7 @@ export function TabStyle({ showModelSelector = false }: TabStyleProps) {
     },
     {
       name: "Jersey (Collar)",
-      path: "/Meshy_AI_Extract_only_the_sky__0616035345_generate_collar_jersey.glb",
-    },
-    {
-      name: "Minimalist Hoodie",
-      path: "/Meshy_AI_Minimalist_White_Hood_0616043506_generate.glb",
-    },
-    {
-      name: "Realistic Tank Top",
-      path: "/Meshy_AI_Create_a_realistic_ta_0616041531_generate.glb",
-    },
-    {
-      name: "Custom Sports Jersey",
-      path: "/Meshy_AI_Create_an_exact_3D_sp_0615105857_generate.glb",
-    },
-    {
-      name: "Sports Polo Jersey",
-      path: "/Meshy_AI_Realistic_sports_polo_0615102145_generate.glb",
-    },
-    {
-      name: "Beige Puffer Jacket",
-      path: "/Meshy_AI_Beige_Puffer_Jacket_3_0615102128_image_to_3d_texture.glb",
-    },
-    {
-      name: "Perfectly Taut Fabric",
-      path: "/Meshy_AI_Perfectly_taut_fabric_0620060735_generate.glb",
-    },
-    {
-      name: "White Shopping Bag",
-      path: "/Meshy_AI_White_Shopping_Bag_0620054631_generate.glb",
-    },
-    {
-      name: "Monogram Paper Bag",
-      path: "/Meshy_AI_Monogram_Paper_Bag_0620135026_generate.glb",
-    },
-    {
-      name: "White Sneaker",
-      path: "/Meshy_AI_White_Sneaker_3D_0620143413_image-to-3d-texture.glb",
+      path: "/models/collar_jersey.glb",
     },
   ];
 
