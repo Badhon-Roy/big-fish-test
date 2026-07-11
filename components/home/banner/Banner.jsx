@@ -103,7 +103,7 @@ const Banner = () => {
   };
 
   return (
-    <section className="relative w-full h-screen min-h-[600px] flex flex-col justify-between overflow-hidden select-none">
+    <section id="home" className="relative w-full h-screen min-h-[600px] flex flex-col justify-between overflow-hidden select-none">
       
       {/* Base solid background color layer (z-0) */}
       <div className="absolute inset-0 bg-[#f1f3f5] z-0" />

@@ -38,7 +38,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="relative w-full bg-[#FFFFFF] py-20 md:py-28 overflow-hidden">
+    <section id="how-it-works" className="relative w-full bg-[#FFFFFF] py-20 md:py-28 overflow-hidden">
       {/* Header Container */}
       <div className="container mx-auto px-6 text-center mb-16 md:mb-24">
         <motion.div

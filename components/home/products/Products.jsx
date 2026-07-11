@@ -22,17 +22,15 @@ import jersey5 from "@/assets/images/jersey-5.png";
 
 const Products = () => {
   const products = [
-    { id: 1, src: jersey5, name: "Gold Accents Black Jersey" },
+    { id: 1, src: jersey2, name: "Neon Lightning Black Jersey" },
     { id: 2, src: jersey4, name: "Lion Print White Polo" },
-    { id: 3, src: jersey3, name: "Wave Style Black Polo" },
-    { id: 4, src: jersey5, name: "Sleek Yellow Stripe Polo" },
-    { id: 5, src: jersey1, name: "Purple Gradient Polo" },
-    { id: 6, src: jersey2, name: "Neon Lightning Black Jersey" },
-    { id: 7, src: jersey5, name: "Gold Accents Black Jersey Alternate" },
+    { id: 3, src: jersey5, name: "Gold Accents Black Jersey" },
+    { id: 4, src: jersey1, name: "Purple Gradient Polo" },
+    { id: 5, src: jersey3, name: "Wave Style Black Polo" },
   ];
 
   return (
-    <section className="relative w-full bg-[#ECF0F6] py-16 overflow-hidden">
+    <section id="products" className="relative w-full bg-[#ECF0F6] py-16 overflow-hidden">
       {/* Header Container */}
       <div className=" mx-auto px-6 text-center mb-10 md:mb-14">
         <motion.div

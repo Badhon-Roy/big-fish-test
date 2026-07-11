@@ -15,12 +15,20 @@ function Toggle({ value, onChange }) {
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative w-10 h-6 rounded-full transition-colors duration-300 cursor-pointer ${value ? "bg-zinc-900" : "bg-zinc-300"
-        }`}
+      className={`relative rounded-full transition-colors duration-300 cursor-pointer p-0 border-0 outline-none focus:outline-none flex items-center ${
+        value ? "bg-zinc-900" : "bg-zinc-200"
+      }`}
+      style={{ width: "44px", height: "24px" }}
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${value ? "translate-x-4" : "translate-x-0"
-          }`}
+        className="absolute bg-white rounded-full shadow-md transition-transform duration-300"
+        style={{
+          width: "20px",
+          height: "20px",
+          top: "2px",
+          left: "2px",
+          transform: value ? "translateX(13px)" : "translateX(0)",
+        }}
       />
     </button>
   );

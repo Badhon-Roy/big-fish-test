@@ -4,7 +4,7 @@ import logoImg from "@/assets/images/logo.png";
 
 const Footer = () => {
   return (
-    <footer className="w-full bg-[#01182B] text-white pt-16 pb-8 md:pt-20 md:pb-10 overflow-hidden relative z-10 border-t border-white/5">
+    <footer id="contact" className="w-full bg-[#01182B] text-white pt-16 pb-8 md:pt-20 md:pb-10 overflow-hidden relative z-10 border-t border-white/5">
       
       {/* Footer Main Content Grid */}
       <div className="container mx-auto px-6 md:px-12 lg:px-16">
@@ -85,11 +85,10 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               {[
-                { name: "How it Works", href: "/how-it-works" },
-                { name: "Products", href: "/products" },
-                { name: "About Us", href: "/about" },
-                { name: "FAQ", href: "/faq" },
-                { name: "Contact Us", href: "/contact" }
+                { name: "How it Works", href: "/#how-it-works" },
+                { name: "Products", href: "/#products" },
+                { name: "FAQ", href: "/#contact" },
+                { name: "Contact Us", href: "/#contact" }
               ].map((link) => (
                 <li key={link.name}>
                   <Link 
