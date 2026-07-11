@@ -120,6 +120,7 @@ const Banner = () => {
           alt="Slanted background"
           fill
           priority
+          sizes="100vw"
           quality={100}
           className="object-cover object-center pointer-events-none"
         />
@@ -231,6 +232,7 @@ const Banner = () => {
                   alt={jersey.name}
                   fill
                   priority
+                  sizes="(max-width: 640px) 68vw, (max-width: 768px) 50vw, 34vw"
                   quality={95}
                   className="object-contain pointer-events-none"
                 />

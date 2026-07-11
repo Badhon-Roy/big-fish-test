@@ -98,6 +98,7 @@ You can use our Configurator or request a Super Design, the result will be excep
                     alt={card.title}
                     fill
                     priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     quality={95}
                     className="object-contain"
                   />

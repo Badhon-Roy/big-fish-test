@@ -3,7 +3,12 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Environment, ContactShadows, Center } from "@react-three/drei";
+import {
+  OrbitControls,
+  Environment,
+  ContactShadows,
+  Center,
+} from "@react-three/drei";
 import { useCustomizerStore } from "./store";
 import { Jersey3D } from "./Jersey3D";
 import { JERSEY_DESIGNS } from "./types";
@@ -91,7 +96,8 @@ export function ThreeViewer({ threeRef, texturesRef }: ThreeViewerProps) {
   const designPattern = useCustomizerStore((s) => s.selectedDesign);
 
   const colors = useMemo(() => {
-    const currentPattern = JERSEY_DESIGNS.find((d) => d.id === designPattern)?.pattern ?? "plain";
+    const currentPattern =
+      JERSEY_DESIGNS.find((d) => d.id === designPattern)?.pattern ?? "plain";
     return {
       ...state,
       designPattern: currentPattern,
@@ -101,9 +107,15 @@ export function ThreeViewer({ threeRef, texturesRef }: ThreeViewerProps) {
       loadedLogoImages,
       layersOrder,
     };
-  }, [state, textLayers, logoLayers, loadedLogoImages, layersOrder, loadedPatterns, designPattern]);
-
-
+  }, [
+    state,
+    textLayers,
+    logoLayers,
+    loadedLogoImages,
+    layersOrder,
+    loadedPatterns,
+    designPattern,
+  ]);
 
   return (
     <div
@@ -130,9 +142,18 @@ export function ThreeViewer({ threeRef, texturesRef }: ThreeViewerProps) {
         <pointLight position={[-3, 1, 2]} intensity={0.2} />
         <pointLight position={[3, 1, -2]} intensity={0.2} />
         <Center>
-          <Jersey3D texturesRef={texturesRef} colors={colors} collar={state.collar} />
+          <Jersey3D
+            texturesRef={texturesRef}
+            colors={colors}
+            collar={state.collar}
+          />
         </Center>
-        <ContactShadows position={[0, -1.5, 0]} opacity={0.3} scale={8} blur={3} />
+        <ContactShadows
+          position={[0, -1.5, 0]}
+          opacity={0.3}
+          scale={8}
+          blur={3}
+        />
         <ViewHandler currentView={currentView} />
       </Canvas>
     </div>
