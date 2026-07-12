@@ -92,6 +92,7 @@ export function TabUpload() {
   const textLayers = useCustomizerStore((s) => s.textLayers);
   const selectedLogoId = useCustomizerStore((s) => s.selectedLogoId);
   const selectedLayerId = useCustomizerStore((s) => s.selectedLayerId);
+  const selectedLayerIds = useCustomizerStore((s) => s.selectedLayerIds || []);
   const loadedLogoImages = useCustomizerStore((s) => s.loadedLogoImages);
   const isEraserMode = useCustomizerStore((s) => s.isEraserMode);
   const eraserBrushSize = useCustomizerStore((s) => s.eraserBrushSize);
@@ -102,8 +103,9 @@ export function TabUpload() {
   const uploadSubTab = useCustomizerStore((s) => s.uploadSubTab);
   const uploadedLogos = useCustomizerStore((s) => s.uploadedLogos);
   const uploadedImages = useCustomizerStore((s) => s.uploadedImages);
-
+ 
   const setLogoLayers = useCustomizerStore((s) => s.setLogoLayers);
+  const setTextLayers = useCustomizerStore((s) => s.setTextLayers);
   const setSelectedLogoId = useCustomizerStore((s) => s.setSelectedLogoId);
   const setSelectedLayerId = useCustomizerStore((s) => s.setSelectedLayerId);
   const setIsEraserMode = useCustomizerStore((s) => s.setIsEraserMode);
@@ -123,6 +125,9 @@ export function TabUpload() {
   const handleCopy = useCustomizerStore((s) => s.handleCopy);
   const handleDelete = useCustomizerStore((s) => s.handleDelete);
   const reorderLayers = useCustomizerStore((s) => s.reorderLayers);
+
+  const [activeGuides, setActiveGuides] = React.useState({ vertical: null, horizontal: null });
+  const [isDragging, setIsDragging] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -267,54 +272,210 @@ export function TabUpload() {
 
   const handleLogoDragStart = (e, id) => {
     e.preventDefault();
-    setSelectedLogoId(id);
-    setSelectedLayerId(null);
+
+    // Check if clicked layer is already part of the active selection
+    const { selectedLayerIds: currentSelection } = useCustomizerStore.getState();
+    const isSelected = currentSelection.includes(id);
+
+    // If not, select only this layer
+    if (!isSelected) {
+      setSelectedLogoId(id);
+      setSelectedLayerId(null);
+    }
+
+    setIsDragging(true);
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+
+    // Capture starting positions of all layers in the selection
+    const activeSelection = !isSelected ? [id] : currentSelection;
+    const startPositions = {};
+
+    activeSelection.forEach((layerId) => {
+      const logoL = logoLayers.find((l) => l.id === layerId);
+      if (logoL) {
+        startPositions[layerId] = { x: logoL.x, y: logoL.y, side: logoL.side, type: "logo" };
+      } else {
+        const textL = textLayers.find((l) => l.id === layerId);
+        if (textL) {
+          startPositions[layerId] = { x: textL.x, y: textL.y, type: "text" };
+        }
+      }
+    });
 
     const layer = logoLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    let lastMouseX = e.clientX;
-    let lastMouseY = e.clientY;
+    let currentSide = startPositions[id].side;
+
+    const img = loadedLogoImages[layer.src];
+    const imgWidth = img?.naturalWidth || img?.width || 200;
+    const imgHeight = img?.naturalHeight || img?.height || 200;
+    const width = imgWidth * (layer.scale || 1.0);
+    const height = imgHeight * (layer.scale || 1.0);
 
     const handleMouseMove = (moveEvent) => {
-      const deltaX = (moveEvent.clientX - lastMouseX) / editorScale;
-      const deltaY = (moveEvent.clientY - lastMouseY) / editorScale;
+      const deltaX = (moveEvent.clientX - startMouseX) / editorScale;
+      const deltaY = (moveEvent.clientY - startMouseY) / editorScale;
 
-      lastMouseX = moveEvent.clientX;
-      lastMouseY = moveEvent.clientY;
+      // Unsnapped coordinate of the main dragged layer
+      let unsnappedTargetX = startPositions[id].x + deltaX;
+      let unsnappedTargetY = startPositions[id].y + deltaY;
+
+      // Seamless front/back side wrapping for the main logo layer
+      if (layer.type !== "image") {
+        if (unsnappedTargetX > 1024) {
+          unsnappedTargetX -= 1024;
+          currentSide = currentSide === "Front" ? "Back" : "Front";
+          setCurrentView(currentSide.toLowerCase());
+        } else if (unsnappedTargetX < 0) {
+          unsnappedTargetX += 1024;
+          currentSide = currentSide === "Front" ? "Back" : "Front";
+          setCurrentView(currentSide.toLowerCase());
+        }
+      }
+
+      let targetX = unsnappedTargetX;
+      let targetY = unsnappedTargetY;
+
+      const targetLeft = targetX - width / 2;
+      const targetRight = targetX + width / 2;
+      const targetTop = targetY - height / 2;
+      const targetBottom = targetY + height / 2;
+
+      let verticalGuide = null;
+      let horizontalGuide = null;
+      const snapThreshold = 25; // canvas pixels
+
+      // Snapping left/right edges or center
+      if (Math.abs(targetLeft - 150) < snapThreshold) {
+        targetX = 150 + width / 2;
+        verticalGuide = { coordinate: 150, label: "Left Border" };
+      } else if (Math.abs(targetRight - 874) < snapThreshold) {
+        targetX = 874 - width / 2;
+        verticalGuide = { coordinate: 874, label: "Right Border" };
+      } else if (Math.abs(targetX - 512) < snapThreshold) {
+        targetX = 512;
+        verticalGuide = { coordinate: 512, label: "Center" };
+      }
+
+      // Snapping top/bottom edges or center
+      if (Math.abs(targetTop - 150) < snapThreshold) {
+        targetY = 150 + height / 2;
+        horizontalGuide = { coordinate: 150, label: "Top Border" };
+      } else if (Math.abs(targetBottom - 874) < snapThreshold) {
+        targetY = 874 - height / 2;
+        horizontalGuide = { coordinate: 874, label: "Bottom Border" };
+      } else if (Math.abs(targetY - 512) < snapThreshold) {
+        targetY = 512;
+        horizontalGuide = { coordinate: 512, label: "Center" };
+      }
+
+      // Snap to other logo layers on the same side if not already snapped
+      if (verticalGuide === null) {
+        const otherLogos = logoLayers.filter((l) => l.id !== id && l.side === currentSide);
+        for (const other of otherLogos) {
+          if (Math.abs(targetX - other.x) < snapThreshold) {
+            targetX = other.x;
+            verticalGuide = { coordinate: other.x, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      if (horizontalGuide === null) {
+        const otherLogos = logoLayers.filter((l) => l.id !== id && l.side === currentSide);
+        for (const other of otherLogos) {
+          if (Math.abs(targetY - other.y) < snapThreshold) {
+            targetY = other.y;
+            horizontalGuide = { coordinate: other.y, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      // Snap to text layers on the same side if not already snapped
+      if (verticalGuide === null) {
+        const otherTexts = textLayers.filter((l) => l.side === currentSide);
+        for (const other of otherTexts) {
+          if (Math.abs(targetX - other.x) < snapThreshold) {
+            targetX = other.x;
+            verticalGuide = { coordinate: other.x, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      if (horizontalGuide === null) {
+        const otherTexts = textLayers.filter((l) => l.side === currentSide);
+        for (const other of otherTexts) {
+          if (Math.abs(targetY - other.y) < snapThreshold) {
+            targetY = other.y;
+            horizontalGuide = { coordinate: other.y, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      setActiveGuides({ vertical: verticalGuide, horizontal: horizontalGuide });
+
+      // Clicked layer snapped delta
+      const finalDeltaX = targetX - startPositions[id].x;
+      const finalDeltaY = targetY - startPositions[id].y;
 
       setLogoLayers((prev) =>
         prev.map((l) => {
-          if (l.id !== id) return l;
-
-          let newX = l.x + deltaX;
-          let newY = l.y + deltaY;
-          let newSide = l.side;
-
-          // Seamless front/back side wrapping (logos only, skip for Wrap/BG images)
-          if (l.type !== "image") {
-            if (newX > 1024) {
-              newX = newX - 1024;
-              newSide = newSide === "Front" ? "Back" : "Front";
-              setCurrentView(newSide.toLowerCase());
-            } else if (newX < 0) {
-              newX = 1024 + newX;
-              newSide = newSide === "Front" ? "Back" : "Front";
-              setCurrentView(newSide.toLowerCase());
+          if (startPositions[l.id] && startPositions[l.id].type === "logo") {
+            const startPos = startPositions[l.id];
+            
+            // If it is the dragged item itself, apply wrapping
+            let newX = startPos.x + finalDeltaX;
+            let newSide = l.side;
+            
+            if (l.id === id) {
+              newX = targetX;
+              newSide = currentSide;
+            } else if (l.type !== "image") {
+              // Apply wrapping to other non-image logo layers in selection
+              if (newX > 1024) {
+                newX -= 1024;
+                newSide = l.side === "Front" ? "Back" : "Front";
+              } else if (newX < 0) {
+                newX += 1024;
+                newSide = l.side === "Front" ? "Back" : "Front";
+              }
             }
-          }
 
-          return {
-            ...l,
-            x: newX,
-            y: newY,
-            side: newSide,
-          };
+            return {
+              ...l,
+              x: Math.max(0, Math.min(1024, newX)),
+              y: Math.max(0, Math.min(1024, startPos.y + finalDeltaY)),
+              side: newSide,
+            };
+          }
+          return l;
         }),
+      );
+
+      setTextLayers((prev) =>
+        prev.map((l) => {
+          if (startPositions[l.id] && startPositions[l.id].type === "text") {
+            const startPos = startPositions[l.id];
+            return {
+              ...l,
+              x: Math.max(0, Math.min(1024, startPos.x + finalDeltaX)),
+              y: Math.max(0, Math.min(1024, startPos.y + finalDeltaY)),
+            };
+          }
+          return l;
+        })
       );
     };
 
     const handleMouseUp = () => {
+      setIsDragging(false);
+      setActiveGuides({ vertical: null, horizontal: null });
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
@@ -598,7 +759,7 @@ export function TabUpload() {
                 <path d="M 30,15 L 70,15 L 85,25 L 80,45 L 70,40 L 70,85 L 30,85 L 30,40 L 20,45 L 15,25 Z" />
               </svg>
             </div>
-            <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:20px_20px]" />
+            <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-size-[20px_20px]" />
           </div>
 
           {/* Active side text label */}
@@ -608,6 +769,48 @@ export function TabUpload() {
 
           {/* Content Container (centered vertically, allows overflow of control handles) */}
           <div className="absolute top-[50px] left-0 w-[280px] h-[280px]">
+            {/* Safe Area Box */}
+            {isDragging && (
+              <div
+                className="absolute border border-dashed border-[#6366f1]/45 rounded-2xl pointer-events-none z-20"
+                style={{
+                  left: `${150 * editorScale}px`,
+                  top: `${150 * editorScale}px`,
+                  width: `${(874 - 150) * editorScale}px`,
+                  height: `${(874 - 150) * editorScale}px`,
+                }}
+              >
+                {/* Safe Area Label Badge */}
+                <div
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#6366f1] text-white text-[8px] font-bold px-2.5 py-0.5 rounded-full shadow-md uppercase tracking-widest scale-90 whitespace-nowrap"
+                  style={{ zIndex: 30 }}
+                >
+                  Safe Area
+                </div>
+              </div>
+            )}
+
+            {/* Visual Guide Lines */}
+            {activeGuides.vertical !== null && (
+              <div
+                className="absolute top-0 bottom-0 border-l border-dashed border-[#6366f1] pointer-events-none z-30 transition-opacity duration-150"
+                style={{ left: `${activeGuides.vertical.coordinate * editorScale}px` }}
+              >
+                <span className="absolute top-2 left-0 -translate-x-1/2 bg-[#6366f1] text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow uppercase tracking-wider scale-90 whitespace-nowrap">
+                  {activeGuides.vertical.label}
+                </span>
+              </div>
+            )}
+            {activeGuides.horizontal !== null && (
+              <div
+                className="absolute left-0 right-0 border-t border-dashed border-[#6366f1] pointer-events-none z-30 transition-opacity duration-150"
+                style={{ top: `${activeGuides.horizontal.coordinate * editorScale}px` }}
+              >
+                <span className="absolute left-2 top-0 -translate-y-1/2 bg-[#6366f1] text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow uppercase tracking-wider scale-90 whitespace-nowrap">
+                  {activeGuides.horizontal.label}
+                </span>
+              </div>
+            )}
             {logoLayers
               .filter(
                 (layer) =>
@@ -616,7 +819,8 @@ export function TabUpload() {
                     : (layer.side === defaultImageSide && layer.type === "image")
               )
               .map((layer) => {
-                const isSelected = selectedLogoId === layer.id;
+                const isPrimarySelected = selectedLogoId === layer.id;
+                const isSelected = isPrimarySelected || (selectedLayerIds && selectedLayerIds.includes(layer.id));
                 return (
                   <div
                     key={layer.id}
@@ -626,7 +830,7 @@ export function TabUpload() {
                       top: layer.y * editorScale,
                       transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
                       cursor: isEraserMode ? ERASER_CURSOR : "move",
-                      zIndex: isSelected ? 40 : 10,
+                      zIndex: isPrimarySelected ? 40 : isSelected ? 35 : 10,
                     }}
                     onMouseDown={(e) => {
                       if (isEraserMode) return;
@@ -634,6 +838,13 @@ export function TabUpload() {
                     }}
                   >
                     {renderLogoLayer(layer, false)}
+                    {/* Render dashed outline for selected layers that are not primary */}
+                    {isSelected && !isPrimarySelected && (
+                      <div 
+                        className="absolute inset-0 border border-dashed border-red-500 pointer-events-none" 
+                        style={{ margin: "-2px" }}
+                      />
+                    )}
                   </div>
                 );
               })}

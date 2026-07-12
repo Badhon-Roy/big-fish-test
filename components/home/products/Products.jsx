@@ -89,13 +89,13 @@ const Products = () => {
               spaceBetween: 36,
             },
           }}
-          className="products-swiper !pb-8"
+          className="products-swiper pb-8!"
         >
           {products.map((product) => (
             <SwiperSlide key={product.id} className="h-auto">
               <div
                 style={{ borderRadius: "24px" }}
-                className="relative flex flex-col items-center justify-center p-6 md:p-8 aspect-[3/4] transition-all duration-300 bg-transparent border border-transparent hover:bg-[#DDE2EB] hover:border-[#BFC8D7] hover:shadow-sm cursor-pointer group"
+                className="relative flex flex-col items-center justify-center p-6 md:p-8 aspect-3/4 transition-all duration-300 bg-transparent border border-transparent hover:bg-[#DDE2EB] hover:border-[#BFC8D7] hover:shadow-sm cursor-pointer group"
               >
                 {/* 3D Oval Floating Shadow (Stays grounded, shrinks and blurs on hover) */}
                 <svg

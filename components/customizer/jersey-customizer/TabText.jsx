@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useRef } from "react";
 import {
@@ -12,16 +12,22 @@ import { getFontFamily, getFontWeight, getFontStyle } from "./types";
 export function TabText() {
   const activeSide = useCustomizerStore((s) => s.activeSide);
   const textLayers = useCustomizerStore((s) => s.textLayers);
+  const logoLayers = useCustomizerStore((s) => s.logoLayers);
   const selectedLayerId = useCustomizerStore((s) => s.selectedLayerId);
+  const selectedLayerIds = useCustomizerStore((s) => s.selectedLayerIds || []);
   const currentView = useCustomizerStore((s) => s.currentView);
 
   const updateState = useCustomizerStore((s) => s.updateState);
   const setTextLayers = useCustomizerStore((s) => s.setTextLayers);
+  const setLogoLayers = useCustomizerStore((s) => s.setLogoLayers);
   const setSelectedLayerId = useCustomizerStore((s) => s.setSelectedLayerId);
   const setCurrentView = useCustomizerStore((s) => s.setCurrentView);
   const handleCopy = useCustomizerStore((s) => s.handleCopy);
   const handleDelete = useCustomizerStore((s) => s.handleDelete);
   const handleAddCustomText = useCustomizerStore((s) => s.handleAddCustomText);
+
+  const [activeGuides, setActiveGuides] = React.useState({ vertical: null, horizontal: null });
+  const [isDragging, setIsDragging] = React.useState(false);
 
   const editorWidth = 280;
   const canvasSize = 1024;
@@ -29,34 +35,189 @@ export function TabText() {
 
   const handleDragStart = (e, id) => {
     e.preventDefault();
-    setSelectedLayerId(id);
+
+    // Check if the clicked layer is already part of the active selection
+    const { selectedLayerIds: currentSelection } = useCustomizerStore.getState();
+    const isSelected = currentSelection.includes(id);
+
+    // If not selected, make it the only selected layer
+    if (!isSelected) {
+      setSelectedLayerId(id);
+    }
+
+    setIsDragging(true);
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+
+    // Capture starting positions of all layers in the selection
+    const activeSelection = !isSelected ? [id] : currentSelection;
+    const startPositions = {};
+
+    activeSelection.forEach((layerId) => {
+      const textL = textLayers.find((l) => l.id === layerId);
+      if (textL) {
+        startPositions[layerId] = { x: textL.x, y: textL.y, type: "text" };
+      } else {
+        const logoL = logoLayers.find((l) => l.id === layerId);
+        if (logoL) {
+          startPositions[layerId] = { x: logoL.x, y: logoL.y, type: "logo" };
+        }
+      }
+    });
 
     const layer = textLayers.find((l) => l.id === id);
     if (!layer) return;
 
-    const startMouseX = e.clientX;
-    const startMouseY = e.clientY;
-    const startX = layer.x;
-    const startY = layer.y;
+    const startX = startPositions[id].x;
+    const startY = startPositions[id].y;
+
+    const getTextSizeInCanvasUnits = (l) => {
+      const lines = l.text.split("\n");
+      const baseFontSize = l.textSize * (l.scale || 1.0);
+      const letterSpacing = l.letterSpacing || 0;
+      const lineSpacing = l.lineSpacing || 1.15;
+
+      const lineTotalWidths = lines.map((line) => {
+        const chars = Array.from(line);
+        const charWidths = chars.map((c) => {
+          if (c === "I" || c === "i" || c === "l" || c === "1" || c === " ") return baseFontSize * 0.25;
+          if (c === "M" || c === "W" || c === "m" || c === "w") return baseFontSize * 0.8;
+          return baseFontSize * 0.55;
+        });
+        return charWidths.reduce((a, b) => a + b, 0) + (chars.length - 1) * letterSpacing;
+      });
+
+      const width = Math.max(...lineTotalWidths);
+      const height = lines.length * baseFontSize * lineSpacing;
+      return { width, height };
+    };
+
+    const { width, height } = getTextSizeInCanvasUnits(layer);
 
     const handleMouseMove = (moveEvent) => {
       const deltaX = (moveEvent.clientX - startMouseX) / editorScale;
       const deltaY = (moveEvent.clientY - startMouseY) / editorScale;
 
+      let targetX = startX + deltaX;
+      let targetY = startY + deltaY;
+
+      const targetLeft = targetX - width / 2;
+      const targetRight = targetX + width / 2;
+      const targetTop = targetY - height / 2;
+      const targetBottom = targetY + height / 2;
+
+      let verticalGuide = null;
+      let horizontalGuide = null;
+      const snapThreshold = 25; // canvas pixels
+
+      // Snapping left/right edges or center
+      if (Math.abs(targetLeft - 150) < snapThreshold) {
+        targetX = 150 + width / 2;
+        verticalGuide = { coordinate: 150, label: "Left Border" };
+      } else if (Math.abs(targetRight - 874) < snapThreshold) {
+        targetX = 874 - width / 2;
+        verticalGuide = { coordinate: 874, label: "Right Border" };
+      } else if (Math.abs(targetX - 512) < snapThreshold) {
+        targetX = 512;
+        verticalGuide = { coordinate: 512, label: "Center" };
+      }
+
+      // Snapping top/bottom edges or center
+      if (Math.abs(targetTop - 150) < snapThreshold) {
+        targetY = 150 + height / 2;
+        horizontalGuide = { coordinate: 150, label: "Top Border" };
+      } else if (Math.abs(targetBottom - 874) < snapThreshold) {
+        targetY = 874 - height / 2;
+        horizontalGuide = { coordinate: 874, label: "Bottom Border" };
+      } else if (Math.abs(targetY - 512) < snapThreshold) {
+        targetY = 512;
+        horizontalGuide = { coordinate: 512, label: "Center" };
+      }
+
+      // Snap to other text layers if not already snapped
+      if (verticalGuide === null) {
+        const otherTexts = textLayers.filter((l) => l.id !== id && l.side === activeSide);
+        for (const other of otherTexts) {
+          if (Math.abs(targetX - other.x) < snapThreshold) {
+            targetX = other.x;
+            verticalGuide = { coordinate: other.x, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      if (horizontalGuide === null) {
+        const otherTexts = textLayers.filter((l) => l.id !== id && l.side === activeSide);
+        for (const other of otherTexts) {
+          if (Math.abs(targetY - other.y) < snapThreshold) {
+            targetY = other.y;
+            horizontalGuide = { coordinate: other.y, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      // Snap to logo layers if not already snapped
+      if (verticalGuide === null) {
+        const otherLogos = logoLayers.filter((l) => l.side === activeSide);
+        for (const other of otherLogos) {
+          if (Math.abs(targetX - other.x) < snapThreshold) {
+            targetX = other.x;
+            verticalGuide = { coordinate: other.x, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      if (horizontalGuide === null) {
+        const otherLogos = logoLayers.filter((l) => l.side === activeSide);
+        for (const other of otherLogos) {
+          if (Math.abs(targetY - other.y) < snapThreshold) {
+            targetY = other.y;
+            horizontalGuide = { coordinate: other.y, label: "Align" };
+            break;
+          }
+        }
+      }
+
+      setActiveGuides({ vertical: verticalGuide, horizontal: horizontalGuide });
+
+      const finalDeltaX = targetX - startX;
+      const finalDeltaY = targetY - startY;
+
       setTextLayers((prev) =>
-        prev.map((l) =>
-          l.id === id
-            ? {
-                ...l,
-                x: Math.max(0, Math.min(1024, startX + deltaX)),
-                y: Math.max(0, Math.min(1024, startY + deltaY)),
-              }
-            : l
-        )
+        prev.map((l) => {
+          if (startPositions[l.id] && startPositions[l.id].type === "text") {
+            const startPos = startPositions[l.id];
+            return {
+              ...l,
+              x: Math.max(0, Math.min(1024, startPos.x + finalDeltaX)),
+              y: Math.max(0, Math.min(1024, startPos.y + finalDeltaY)),
+            };
+          }
+          return l;
+        })
+      );
+
+      setLogoLayers((prev) =>
+        prev.map((l) => {
+          if (startPositions[l.id] && startPositions[l.id].type === "logo") {
+            const startPos = startPositions[l.id];
+            return {
+              ...l,
+              x: Math.max(0, Math.min(1024, startPos.x + finalDeltaX)),
+              y: Math.max(0, Math.min(1024, startPos.y + finalDeltaY)),
+            };
+          }
+          return l;
+        })
       );
     };
 
     const handleMouseUp = () => {
+      setIsDragging(false);
+      setActiveGuides({ vertical: null, horizontal: null });
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
@@ -353,10 +514,53 @@ export function TabText() {
 
           {/* Content Container (centered vertically, allows overflow of control handles) */}
           <div className="absolute top-[50px] left-0 w-[280px] h-[280px]">
+            {/* Safe Area Box */}
+            {isDragging && (
+              <div
+                className="absolute border border-dashed border-[#6366f1]/45 rounded-2xl pointer-events-none z-20"
+                style={{
+                  left: `${150 * editorScale}px`,
+                  top: `${150 * editorScale}px`,
+                  width: `${(874 - 150) * editorScale}px`,
+                  height: `${(874 - 150) * editorScale}px`,
+                }}
+              >
+                {/* Safe Area Label Badge */}
+                <div
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#6366f1] text-white text-[8px] font-bold px-2.5 py-0.5 rounded-full shadow-md uppercase tracking-widest scale-90 whitespace-nowrap"
+                  style={{ zIndex: 30 }}
+                >
+                  Safe Area
+                </div>
+              </div>
+            )}
+
+            {/* Visual Guide Lines */}
+            {activeGuides.vertical !== null && (
+              <div
+                className="absolute top-0 bottom-0 border-l border-dashed border-[#6366f1] pointer-events-none z-30 transition-opacity duration-150"
+                style={{ left: `${activeGuides.vertical.coordinate * editorScale}px` }}
+              >
+                <span className="absolute top-2 left-0 -translate-x-1/2 bg-[#6366f1] text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow uppercase tracking-wider scale-90 whitespace-nowrap">
+                  {activeGuides.vertical.label}
+                </span>
+              </div>
+            )}
+            {activeGuides.horizontal !== null && (
+              <div
+                className="absolute left-0 right-0 border-t border-dashed border-[#6366f1] pointer-events-none z-30 transition-opacity duration-150"
+                style={{ top: `${activeGuides.horizontal.coordinate * editorScale}px` }}
+              >
+                <span className="absolute left-2 top-0 -translate-y-1/2 bg-[#6366f1] text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow uppercase tracking-wider scale-90 whitespace-nowrap">
+                  {activeGuides.horizontal.label}
+                </span>
+              </div>
+            )}
             {textLayers
               .filter((layer) => layer.side === activeSide)
               .map((layer) => {
-                const isSelected = selectedLayerId === layer.id;
+                const isPrimarySelected = selectedLayerId === layer.id;
+                const isSelected = isPrimarySelected || (selectedLayerIds && selectedLayerIds.includes(layer.id));
                 return (
                   <div
                     key={layer.id}
@@ -366,11 +570,18 @@ export function TabText() {
                       top: layer.y * editorScale,
                       transform: `translate(-50%, -50%) rotate(${layer.rotation}deg)`,
                       cursor: "move",
-                      zIndex: isSelected ? 40 : 10,
+                      zIndex: isPrimarySelected ? 40 : isSelected ? 35 : 10,
                     }}
                     onMouseDown={(e) => handleDragStart(e, layer.id)}
                   >
                     {renderTextLayer(layer, false)}
+                    {/* Render dashed outline for selected layers that are not primary */}
+                    {isSelected && !isPrimarySelected && (
+                      <div 
+                        className="absolute inset-0 border border-dashed border-red-500 pointer-events-none" 
+                        style={{ margin: "-2px" }}
+                      />
+                    )}
                   </div>
                 );
               })}
