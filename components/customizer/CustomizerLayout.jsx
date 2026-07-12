@@ -43,6 +43,16 @@ export function CustomizerLayout() {
   const setIsEraserMode = useCustomizerStore((s) => s.setIsEraserMode);
   const updateStateBulk = useCustomizerStore((s) => s.updateStateBulk);
   const setSelectedDesign = useCustomizerStore((s) => s.setSelectedDesign);
+  
+  const undo = useCustomizerStore((s) => s.undo);
+  const redo = useCustomizerStore((s) => s.redo);
+  const copySelectedLayers = useCustomizerStore((s) => s.copySelectedLayers);
+  const pasteLayers = useCustomizerStore((s) => s.pasteLayers);
+  const duplicateSelectedLayers = useCustomizerStore((s) => s.duplicateSelectedLayers);
+  const deleteSelectedLayers = useCustomizerStore((s) => s.deleteSelectedLayers);
+  const selectAllLayers = useCustomizerStore((s) => s.selectAllLayers);
+  const deselectAll = useCustomizerStore((s) => s.deselectAll);
+  
   const router = useRouter();
 
   // Load and apply search parameters on page mount
@@ -158,6 +168,78 @@ export function CustomizerLayout() {
       setIsEraserMode(false);
     }
   }, [selectedLogoId, setIsEraserMode]);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check if target is editable to ignore shortcut interception
+      const target = e.target;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable ||
+          target.getAttribute("contenteditable") === "true")
+      ) {
+        return;
+      }
+
+      const ctrlOrCmd = e.ctrlKey || e.metaKey;
+
+      if (ctrlOrCmd) {
+        switch (e.key.toLowerCase()) {
+          case "z":
+            e.preventDefault();
+            undo();
+            break;
+          case "y":
+            e.preventDefault();
+            redo();
+            break;
+          case "c":
+            e.preventDefault();
+            copySelectedLayers();
+            break;
+          case "v":
+            e.preventDefault();
+            pasteLayers();
+            break;
+          case "d":
+            e.preventDefault();
+            duplicateSelectedLayers();
+            break;
+          case "a":
+            e.preventDefault();
+            selectAllLayers();
+            break;
+          default:
+            break;
+        }
+      } else {
+        if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault();
+          deleteSelectedLayers();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          deselectAll();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    undo,
+    redo,
+    copySelectedLayers,
+    pasteLayers,
+    duplicateSelectedLayers,
+    deleteSelectedLayers,
+    selectAllLayers,
+    deselectAll,
+  ]);
 
   const handleExport = () => {
     const triggerLocalDownload = (dataUrl, fileName) => {

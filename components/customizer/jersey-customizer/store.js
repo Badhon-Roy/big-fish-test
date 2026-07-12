@@ -3,8 +3,70 @@ import { create } from "zustand";
 const resolveVal = (arg, prev) =>
   typeof arg === "function" ? arg(prev) : arg;
 
-export const useCustomizerStore = create((set, get) => ({
-  state: {
+export const useCustomizerStore = create((originalSet, get) => {
+  let continuousTimeout = null;
+
+  const set = (fnOrObj) => {
+    const preState = get();
+    originalSet((s) => {
+      const result = typeof fnOrObj === "function" ? fnOrObj(s) : fnOrObj;
+      let updatedResult = { ...result };
+      if ("selectedLayerId" in result || "selectedLogoId" in result) {
+        const nextLayerId = "selectedLayerId" in result ? result.selectedLayerId : s.selectedLayerId;
+        const nextLogoId = "selectedLogoId" in result ? result.selectedLogoId : s.selectedLogoId;
+        
+        if (nextLayerId) {
+          updatedResult.selectedLogoId = null;
+          updatedResult.selectedLayerIds = [nextLayerId];
+        } else if (nextLogoId) {
+          updatedResult.selectedLayerId = null;
+          updatedResult.selectedLayerIds = [nextLogoId];
+        } else {
+          updatedResult.selectedLayerId = null;
+          updatedResult.selectedLogoId = null;
+          updatedResult.selectedLayerIds = [];
+        }
+      }
+      return updatedResult;
+    });
+
+    const postState = get();
+    const changed =
+      preState.state !== postState.state ||
+      preState.textLayers !== postState.textLayers ||
+      preState.logoLayers !== postState.logoLayers;
+
+    if (changed) {
+      if (postState._isUndoingRedoing) {
+        return;
+      }
+
+      const snap = {
+        state: JSON.parse(JSON.stringify(preState.state)),
+        textLayers: JSON.parse(JSON.stringify(preState.textLayers)),
+        logoLayers: JSON.parse(JSON.stringify(preState.logoLayers)),
+        selectedLayerId: preState.selectedLayerId,
+        selectedLogoId: preState.selectedLogoId,
+        selectedLayerIds: preState.selectedLayerIds || [],
+      };
+
+      if (continuousTimeout) {
+        clearTimeout(continuousTimeout);
+      } else {
+        originalSet((s) => ({
+          past: [...(s.past || []), snap],
+          future: [],
+        }));
+      }
+
+      continuousTimeout = setTimeout(() => {
+        continuousTimeout = null;
+      }, 800);
+    }
+  };
+
+  return {
+    state: {
     glbModel: "/models/shirt_baked.glb",
     primary: "#2196F3",
     primaryColorSide: "Both",
@@ -62,6 +124,11 @@ export const useCustomizerStore = create((set, get) => ({
   uploadSubTab: "logo",
   selectedLayerId: null,
   selectedLogoId: null,
+  selectedLayerIds: [],
+  past: [],
+  future: [],
+  clipboard: null,
+  _isUndoingRedoing: false,
   loadedLogoImages: {},
   isEraserMode: false,
   eraserBrushSize: 20,
@@ -355,4 +422,220 @@ export const useCustomizerStore = create((set, get) => ({
       return { layersOrder: newOrder };
     });
   },
-}));
+
+  // Undo/Redo & Selection/Clipboard Actions
+  undo: () => {
+    const { past, future, state, textLayers, logoLayers, selectedLayerId, selectedLogoId, selectedLayerIds } = get();
+    if (!past || past.length === 0) return;
+
+    if (continuousTimeout) {
+      clearTimeout(continuousTimeout);
+      continuousTimeout = null;
+    }
+
+    const previous = past[past.length - 1];
+    const newPast = past.slice(0, -1);
+
+    const current = {
+      state: JSON.parse(JSON.stringify(state)),
+      textLayers: JSON.parse(JSON.stringify(textLayers)),
+      logoLayers: JSON.parse(JSON.stringify(logoLayers)),
+      selectedLayerId,
+      selectedLogoId,
+      selectedLayerIds: selectedLayerIds || [],
+    };
+
+    originalSet({
+      _isUndoingRedoing: true,
+      state: previous.state,
+      textLayers: previous.textLayers,
+      logoLayers: previous.logoLayers,
+      selectedLayerId: previous.selectedLayerId,
+      selectedLogoId: previous.selectedLogoId,
+      selectedLayerIds: previous.selectedLayerIds || [],
+      past: newPast,
+      future: [current, ...future],
+    });
+    originalSet({ _isUndoingRedoing: false });
+  },
+
+  redo: () => {
+    const { past, future, state, textLayers, logoLayers, selectedLayerId, selectedLogoId, selectedLayerIds } = get();
+    if (!future || future.length === 0) return;
+
+    if (continuousTimeout) {
+      clearTimeout(continuousTimeout);
+      continuousTimeout = null;
+    }
+
+    const next = future[0];
+    const newFuture = future.slice(1);
+
+    const current = {
+      state: JSON.parse(JSON.stringify(state)),
+      textLayers: JSON.parse(JSON.stringify(textLayers)),
+      logoLayers: JSON.parse(JSON.stringify(logoLayers)),
+      selectedLayerId,
+      selectedLogoId,
+      selectedLayerIds: selectedLayerIds || [],
+    };
+
+    originalSet({
+      _isUndoingRedoing: true,
+      state: next.state,
+      textLayers: next.textLayers,
+      logoLayers: next.logoLayers,
+      selectedLayerId: next.selectedLayerId,
+      selectedLogoId: next.selectedLogoId,
+      selectedLayerIds: next.selectedLayerIds || [],
+      past: [...past, current],
+      future: newFuture,
+    });
+    originalSet({ _isUndoingRedoing: false });
+  },
+
+  copySelectedLayers: () => {
+    const { selectedLayerIds, textLayers, logoLayers } = get();
+    if (!selectedLayerIds || selectedLayerIds.length === 0) return;
+
+    const copied = [];
+    selectedLayerIds.forEach((id) => {
+      const textL = textLayers.find((l) => l.id === id);
+      if (textL) {
+        copied.push({ type: "text", data: { ...textL } });
+      } else {
+        const logoL = logoLayers.find((l) => l.id === id);
+        if (logoL) {
+          copied.push({ type: "logo", data: { ...logoL } });
+        }
+      }
+    });
+
+    originalSet({ clipboard: copied });
+  },
+
+  pasteLayers: () => {
+    const { clipboard, activeSide } = get();
+    if (!clipboard || clipboard.length === 0) return;
+
+    const newTextLayers = [];
+    const newLogoLayers = [];
+    const newIds = [];
+
+    clipboard.forEach((item) => {
+      const newId = `${item.data.id}-copy-${Date.now()}`;
+      newIds.push(newId);
+
+      const newLayer = {
+        ...item.data,
+        id: newId,
+        side: activeSide,
+        x: Math.min(1024, item.data.x + 40),
+        y: Math.min(1024, item.data.y + 40),
+      };
+
+      if (item.type === "text") {
+        newTextLayers.push(newLayer);
+      } else {
+        newLogoLayers.push(newLayer);
+      }
+    });
+
+    set((s) => ({
+      textLayers: [...s.textLayers, ...newTextLayers],
+      logoLayers: [...s.logoLayers, ...newLogoLayers],
+      selectedLayerIds: newIds,
+      selectedLayerId: newTextLayers.length > 0 ? newTextLayers[0].id : null,
+      selectedLogoId: newTextLayers.length === 0 && newLogoLayers.length > 0 ? newLogoLayers[0].id : null,
+    }));
+  },
+
+  duplicateSelectedLayers: () => {
+    const { selectedLayerIds, textLayers, logoLayers } = get();
+    if (!selectedLayerIds || selectedLayerIds.length === 0) return;
+
+    const newTextLayers = [];
+    const newLogoLayers = [];
+    const newIds = [];
+
+    selectedLayerIds.forEach((id) => {
+      const textL = textLayers.find((l) => l.id === id);
+      if (textL) {
+        const newId = `${textL.id}-copy-${Date.now()}`;
+        newIds.push(newId);
+        newTextLayers.push({
+          ...textL,
+          id: newId,
+          x: Math.min(1024, textL.x + 40),
+          y: Math.min(1024, textL.y + 40),
+        });
+      } else {
+        const logoL = logoLayers.find((l) => l.id === id);
+        if (logoL) {
+          const newId = `${logoL.id}-copy-${Date.now()}`;
+          newIds.push(newId);
+          newLogoLayers.push({
+            ...logoL,
+            id: newId,
+            x: Math.min(1024, logoL.x + 40),
+            y: Math.min(1024, logoL.y + 40),
+          });
+        }
+      }
+    });
+
+    set((s) => ({
+      textLayers: [...s.textLayers, ...newTextLayers],
+      logoLayers: [...s.logoLayers, ...newLogoLayers],
+      selectedLayerIds: newIds,
+      selectedLayerId: newTextLayers.length > 0 ? newTextLayers[0].id : null,
+      selectedLogoId: newTextLayers.length === 0 && newLogoLayers.length > 0 ? newLogoLayers[0].id : null,
+    }));
+  },
+
+  deleteSelectedLayers: () => {
+    const { selectedLayerIds } = get();
+    if (!selectedLayerIds || selectedLayerIds.length === 0) return;
+
+    set((s) => ({
+      textLayers: s.textLayers.filter((l) => !selectedLayerIds.includes(l.id)),
+      logoLayers: s.logoLayers.filter((l) => !selectedLayerIds.includes(l.id)),
+      selectedLayerIds: [],
+      selectedLayerId: null,
+      selectedLogoId: null,
+    }));
+  },
+
+  selectAllLayers: () => {
+    const { textLayers, logoLayers, activeSide, uploadSubTab, defaultImageSide } = get();
+    
+    const sideTextLayers = textLayers.filter((l) => l.side === activeSide);
+    const sideLogoLayers = logoLayers.filter((l) =>
+      uploadSubTab === "logo"
+        ? (l.side === activeSide && (l.type === "logo" || !l.type))
+        : (l.side === defaultImageSide && l.type === "image")
+    );
+    
+    const allSideIds = [
+      ...sideTextLayers.map((l) => l.id),
+      ...sideLogoLayers.map((l) => l.id),
+    ];
+
+    if (allSideIds.length === 0) return;
+
+    set({
+      selectedLayerIds: allSideIds,
+      selectedLayerId: sideTextLayers.length > 0 ? sideTextLayers[0].id : null,
+      selectedLogoId: sideTextLayers.length === 0 && sideLogoLayers.length > 0 ? sideLogoLayers[0].id : null,
+    });
+  },
+
+  deselectAll: () => {
+    set({
+      selectedLayerId: null,
+      selectedLogoId: null,
+      selectedLayerIds: [],
+    });
+  },
+};
+});

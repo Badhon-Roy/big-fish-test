@@ -6,6 +6,7 @@ import { useCustomizerStore } from "./store";
 export function TabColors() {
   const state = useCustomizerStore((s) => s.state);
   const updateState = useCustomizerStore((s) => s.updateState);
+  const updateStateBulk = useCustomizerStore((s) => s.updateStateBulk);
 
   const side = state.primaryColorSide || "Both";
   const activeColor =
@@ -17,29 +18,20 @@ export function TabColors() {
 
   const handleColorChange = (c) => {
     if (side === "Both") {
-      useCustomizerStore.setState((s) => ({
-        state: {
-          ...s.state,
-          primary: c,
-          primaryFront: c,
-          primaryBack: c,
-        },
-      }));
+      updateStateBulk({
+        primary: c,
+        primaryFront: c,
+        primaryBack: c,
+      });
     } else if (side === "Front") {
-      useCustomizerStore.setState((s) => ({
-        state: {
-          ...s.state,
-          primaryFront: c,
-          primary: c,
-        },
-      }));
+      updateStateBulk({
+        primaryFront: c,
+        primary: c,
+      });
     } else {
-      useCustomizerStore.setState((s) => ({
-        state: {
-          ...s.state,
-          primaryBack: c,
-        },
-      }));
+      updateStateBulk({
+        primaryBack: c,
+      });
     }
   };
 
