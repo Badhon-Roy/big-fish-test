@@ -733,7 +733,15 @@ function useJerseyDecals(state) {
       letterSpacingVal,
       lineSpacingVal,
       curveRadiusVal,
-                                                    ) => {
+      shadowEnabled,
+      shadowColor,
+      shadowBlur,
+      shadowOffsetX,
+      shadowOffsetY,
+      outlineEnabled,
+      customOutlineColor,
+      outlineWidth,
+    ) => {
       ctx.save();
       ctx.translate(x, y);
 
@@ -1915,7 +1923,7 @@ function useJerseyDecals(state) {
             layer.x,
             layer.y,
             layer.font,
-            layer.textSize,
+            layer.textSize * (layer.scale || 1.0),
             layer.color,
             false,
             "#FFFFFF",
@@ -1970,7 +1978,7 @@ function useJerseyDecals(state) {
             layer.x,
             layer.y,
             layer.font,
-            layer.textSize,
+            layer.textSize * (layer.scale || 1.0),
             layer.color,
             false,
             "#FFFFFF",
